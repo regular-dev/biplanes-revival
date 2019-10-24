@@ -87,7 +87,7 @@ net::Address MatchMaker::matchWaitForOpponent(bool &client_or_srv)
     int recvd_bytes = connection->socket.Receive(tmp_address, buf, 512);
     if (recvd_bytes > 0)
       break;
-    log_ip =  std::to_string(tmp_address.GetA()) + "." +
+    std::string log_ip =  std::to_string(tmp_address.GetA()) + "." +
               std::to_string(tmp_address.GetB()) + "." +
               std::to_string(tmp_address.GetC()) + "." +
               std::to_string(tmp_address.GetD()) + ":" +
