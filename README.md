@@ -5,6 +5,8 @@ Biplanes Revival
 It's a PC version of original cellphone game "Bluetooth Biplanes" by
 Morpheme Ltd.
 
+Download binaries for Windows: http://regular.viewdns.net/biplanes-revival
+
 Features:
 
 	- Crossplatform
