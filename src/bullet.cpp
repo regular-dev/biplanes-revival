@@ -82,21 +82,33 @@ void Bullet::UpdateCoordinates()
       {
         Destroy();
         plane_blue.Hit( fired_by );
-        local_data.hit = HIT_STATE::HIT_PLANE;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_PLANE )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_PLANE;
       }
       // HIT CHUTE
       if ( plane_blue.pilot->ChuteisHit( x, y ) )
       {
         Destroy();
         plane_blue.pilot->ChuteHit();
-        local_data.hit = HIT_STATE::HIT_CHUTE;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_CHUTE )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_CHUTE;
       }
       // HIT PILOT
       if ( plane_blue.pilot->isHit( x, y ) )
       {
         Destroy();
         plane_blue.pilot->Kill( fired_by );
-        local_data.hit = HIT_STATE::HIT_PILOT;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_PILOT )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_PILOT;
       }
     }
     else
@@ -106,14 +118,22 @@ void Bullet::UpdateCoordinates()
       {
         Destroy();
         plane_red.Hit( fired_by );
-        local_data.hit = HIT_STATE::HIT_PLANE;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_PLANE )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_PLANE;
       }
       // HIT CHUTE
       if ( plane_red.pilot->ChuteisHit( x, y ) )
       {
         Destroy();
         plane_red.pilot->ChuteHit();
-        local_data.hit = HIT_STATE::HIT_CHUTE;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_CHUTE )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_CHUTE;
       }
       // HIT PILOT
       if ( plane_red.pilot->isHit( x, y ) )
@@ -121,6 +141,11 @@ void Bullet::UpdateCoordinates()
         Destroy();
         plane_red.pilot->Kill( fired_by );
         local_data.hit = HIT_STATE::HIT_PILOT;
+
+        if ( abs( local_data.hit ) == HIT_STATE::HIT_PILOT )
+          local_data.hit = -local_data.hit;
+        else
+          local_data.hit = HIT_STATE::HIT_PILOT;
       }
     }
   }

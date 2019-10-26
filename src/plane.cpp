@@ -171,14 +171,14 @@ void Plane::Decelerate()
   if ( dead || jump )
     return;
 
-  if ( onground )
+  if ( takeoff )
     speed -= sizes.plane_incr_spd * 0.75f * deltaTime;
   else
   {
     speed -= sizes.plane_incr_spd * 0.5f * deltaTime;
 
-    if ( speed < 0 )
-      speed = 0;
+    if ( speed < 0.0f )
+      speed = 0.0f;
 
     if ( max_speed_var > sizes.plane_max_speed_def )
     {
@@ -352,12 +352,18 @@ void Plane::CollisionsUpdate()
   {
     // Crash on barn
     Crash();
-    local_data.death = DEATH_STATE::PLANE_DEATH;
+    if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
+      local_data.death = -local_data.death;
+    else
+      local_data.death = DEATH_STATE::PLANE_DEATH;
   }
   else if ( !onground && y > sizes.ground_y_collision )  // Kiss ground
   {
     Crash();
-    local_data.death = DEATH_STATE::PLANE_DEATH;
+    if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
+      local_data.death = -local_data.death;
+    else
+      local_data.death = DEATH_STATE::PLANE_DEATH;
   }
 
   // Plane collisions
@@ -368,7 +374,10 @@ void Plane::CollisionsUpdate()
       if ( plane_red.isHit( x, y ) )
       {
         Crash();
-        local_data.death = DEATH_STATE::PLANE_DEATH;
+        if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
+          local_data.death = -local_data.death;
+        else
+          local_data.death = DEATH_STATE::PLANE_DEATH;
       }
     }
     else
@@ -376,7 +385,10 @@ void Plane::CollisionsUpdate()
       if ( plane_blue.isHit( x, y ) )
       {
         Crash();
-        local_data.death = DEATH_STATE::PLANE_DEATH;
+        if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
+          local_data.death = -local_data.death;
+        else
+          local_data.death = DEATH_STATE::PLANE_DEATH;
       }
     }
   }
@@ -989,9 +1001,11 @@ void Plane::Pilot::RunUpdate()
         x < sizes.barn_x_pilot_right_collision )
   {
     Rescue();
-    local_data.death = DEATH_STATE::PILOT_RESP;
+    if ( abs( local_data.death ) == DEATH_STATE::PILOT_RESP )
+      local_data.death = -local_data.death;
+    else
+      local_data.death = DEATH_STATE::PILOT_RESP;
   }
-
 }
 
 // UPDATE PILOT DEATH
@@ -1256,7 +1270,10 @@ void Plane::Pilot::HitGroundCheck()
 
       Death();
       plane->ScoreChange( -1 );
-      local_data.death = DEATH_STATE::PILOT_DEATH;
+      if ( abs( local_data.death ) == DEATH_STATE::PILOT_DEATH )
+        local_data.death = -local_data.death;
+      else
+        local_data.death = DEATH_STATE::PILOT_DEATH;
     }
   }
 }

@@ -21,7 +21,7 @@ double StartingTime = 0.0, EndingTime = 0.0, Frequency = 0.0;
 LARGE_INTEGER StartingTime, EndingTime, Frequency;
 #endif
 
-Packet opponent_data;
+Packet opponent_data, opponent_data_prev;
 Packet local_data;
 bool opponent_connected = false;
 bool connection_changed = false;
@@ -55,7 +55,6 @@ const int PacketSize = sizeof( Packet ) + 12;
 
 double send_coords_time = 0.0;
 
-
 SDL_Event event;
 const SDL_Keycode DEFAULT_THROTTLE_UP = SDLK_UP;
 const SDL_Keycode DEFAULT_THROTTLE_DOWN = SDLK_DOWN;
@@ -87,7 +86,6 @@ void DrawGame();
 void prepare_local_data();
 void transform_opponent_data();
 void prepare_plane_coords();
-void events_reset();
 
 int main( int argc, char *args[] )
 {
@@ -341,7 +339,6 @@ void game_loop()
     unsigned char packet_local[PacketSize];
     memcpy( packet_local, &local_data, sizeof( local_data ) );
     connection->SendPacket( packet_local, sizeof( packet_local ) );
-    events_reset();
   }
   ticktime += deltaTime;
 
@@ -349,21 +346,6 @@ void game_loop()
     send_coords_time = 0.0;
 
   send_coords_time += deltaTime;
-
-  // show packets that were acked this frame
-#ifdef SHOW_ACKS
-  unsigned int *acks = NULL;
-  int ack_count = 0;
-  connection->GetReliabilitySystem().GetAcks( &acks, ack_count );
-  if ( ack_count > 0 )
-  {
-    printf( "acks: %d", acks[0] );
-    for ( int i = 1; i < ack_count; ++i )
-      printf( ",%d", acks[i] );
-    printf( "\n" );
-  }
-#endif
-
 
   // Rendering
   DrawGame();
@@ -447,6 +429,7 @@ void transform_opponent_data()
   data.dir        = opponent_data.dir;
   data.pilot_x    = opponent_data.pilot_x * sizes.screen_width;
   data.pilot_y    = opponent_data.pilot_y * sizes.screen_height;
+
   if ( srv_or_cli == SRV_CLI::CLIENT )
   {
     plane_blue.setDir( data.dir );
@@ -460,11 +443,13 @@ void transform_opponent_data()
     plane_red.pilot->setY( data.pilot_y );
   }
 
-  if ( opponent_data.hit > HIT_STATE::HIT_NONE )
+
+  if ( opponent_data.hit != opponent_data_prev.hit )
   {
     switch( opponent_data.hit )
     {
       case HIT_STATE::HIT_PLANE:
+      case -HIT_STATE::HIT_PLANE:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
           plane_red.Hit( (int) srv_or_cli );
@@ -474,6 +459,7 @@ void transform_opponent_data()
         break;
       }
       case HIT_STATE::HIT_CHUTE:
+      case -HIT_STATE::HIT_CHUTE:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
           plane_red.pilot->ChuteHit();
@@ -483,6 +469,7 @@ void transform_opponent_data()
         break;
       }
       case HIT_STATE::HIT_PILOT:
+      case -HIT_STATE::HIT_PILOT:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
           plane_red.pilot->Kill( (int) srv_or_cli );
@@ -492,14 +479,14 @@ void transform_opponent_data()
         break;
       }
     }
-    opponent_data.hit = HIT_STATE::HIT_NONE;
   }
 
-  if ( opponent_data.death > DEATH_STATE::DEATH_NONE )
+  if ( opponent_data.death != opponent_data_prev.death )
   {
     switch( opponent_data.death )
     {
       case DEATH_STATE::PLANE_DEATH:
+      case -DEATH_STATE::PLANE_DEATH:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
           plane_red.Crash();
@@ -509,6 +496,7 @@ void transform_opponent_data()
         break;
       }
       case DEATH_STATE::PILOT_DEATH:
+      case -DEATH_STATE::PILOT_DEATH:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
         {
@@ -523,6 +511,7 @@ void transform_opponent_data()
         break;
       }
       case DEATH_STATE::PILOT_RESP:
+      case -DEATH_STATE::PILOT_RESP:
       {
         if ( srv_or_cli == SRV_CLI::SERVER )
           plane_red.pilot->Rescue();
@@ -532,29 +521,21 @@ void transform_opponent_data()
         break;
       }
     }
-    opponent_data.death = DEATH_STATE::DEATH_NONE;
   }
+
+  opponent_data_prev = opponent_data;
+
 
   if ( send_coords_time < 0.25 )
     return;
 
 
-  data.x          = opponent_data.x * sizes.screen_width;
-  data.y          = opponent_data.y * sizes.screen_height;
+  data.x = opponent_data.x * sizes.screen_width;
+  data.y = opponent_data.y * sizes.screen_height;
 
 
   if ( srv_or_cli == SRV_CLI::CLIENT )
     plane_blue.setCoords( data );
   else
     plane_red.setCoords( data );
-}
-
-
-void events_reset()
-{
-  if ( local_data.hit > HIT_STATE::HIT_NONE )
-    local_data.hit = HIT_STATE::HIT_NONE;
-
-  if ( local_data.death > DEATH_STATE::DEATH_NONE )
-    local_data.death = DEATH_STATE::DEATH_NONE;
 }
