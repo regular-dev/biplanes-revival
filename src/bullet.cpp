@@ -63,7 +63,7 @@ void Bullet::UpdateCoordinates()
 
   if (  x > sizes.screen_width ||
         x < 0.0f ||
-        y < 0.0f )
+        y < 0.0f - sizes.bullet_sizey / 2 )
     Destroy();
   else if ( ( x > sizes.barn_x_bullet_collision &&
               x < sizes.barn_x_bullet_collision + sizes.barn_sizex &&
