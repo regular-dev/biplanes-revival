@@ -1,9 +1,26 @@
-#include "../include/sdl.h"
-#include "../include/utility.h"
-#include "../include/variables.h"
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-typedef int32_t s32;
+#include "include/sdl.h"
+#include "include/utility.h"
+#include "include/variables.h"
+
 
 int SCREEN_HEIGHT;
 int SCREEN_WIDTH;
@@ -17,7 +34,7 @@ SDL_Renderer *gRenderer = NULL;
 bool SDL_init()
 {
 	// Setup SDL
-  log_message( "SDL Startup:: Initializing SDL..." );
+  log_message( "SDL Startup: Initializing SDL..." );
 
 	if ( SDL_InitSubSystem( SDL_INIT_VIDEO ) != 0 )
   {
@@ -109,7 +126,7 @@ bool SDL_init()
   else
   {
     Mix_ReserveChannels( 2 );
-    sound_enable = true;
+    sound_initialized = true;
   }
   log_message( "Done!\n" );
 
@@ -204,7 +221,7 @@ Mix_Chunk *loadSound( std::string path )
 
 void playSound( Mix_Chunk *sound, unsigned char channel, bool repeating )
 {
-  if ( !sound_enable )
+  if ( !sound_initialized )
     return;
 
   if ( repeating )

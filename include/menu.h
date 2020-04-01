@@ -1,10 +1,29 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #ifndef MENU_H
 #define MENU_H
 
 #include <map>
 
-#include "structures.h"
-#include "utility.h"
+#include "include/structures.h"
+#include "include/utility.h"
 
 
 class Menu
@@ -65,18 +84,29 @@ void game_close();
 void menu_main();
 void menu_settings_controls();
 void menu_help();
+void menu_recent_stats();
+void menu_total_stats_page1();
+void menu_total_stats_page2();
+void stats_update();
 
 void menu_mp();
-void menu_mp_help();
 
 void menu_mp_mmake();
 void menu_mp_mmake_find_game();
-void menu_mp_mmake_help();
 
 void menu_mp_dc();
 void menu_mp_dc_host();
 void menu_mp_dc_join();
+
 void menu_mp_dc_help();
+void menu_mp_help_page1();
+void menu_mp_help_page2();
+void menu_mp_help_page3();
+void menu_mp_help_page4();
+void menu_mp_help_page5();
+void menu_mp_help_page6();
+void menu_mp_help_page7();
+void menu_mp_help_page8();
 
 void menu_pause();
 void menu_copyright();

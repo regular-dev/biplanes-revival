@@ -1,6 +1,25 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #include <math.h>
 
-#include "../include/variables.h"
+#include "include/variables.h"
 
 
 void BulletSpawner::SpawnBullet( float plane_x, float plane_y, float plane_dir, bool plane_type )
@@ -66,7 +85,7 @@ void Bullet::UpdateCoordinates()
         y < 0.0f - sizes.bullet_sizey / 2 )
     Destroy();
   else if ( ( x > sizes.barn_x_bullet_collision &&
-              x < sizes.barn_x_bullet_collision + sizes.barn_sizex &&
+              x < sizes.barn_x_bullet_collision + sizes.barn_sizex * 0.95f &&
               y > sizes.barn_y_bullet_collision ) ||
               y > sizes.bullet_ground_collision )
     HitGround();
@@ -82,11 +101,6 @@ void Bullet::UpdateCoordinates()
       {
         Destroy();
         plane_blue.Hit( fired_by );
-
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_PLANE )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_PLANE;
       }
       // HIT CHUTE
       if ( plane_blue.pilot->ChuteisHit( x, y ) )
@@ -94,10 +108,7 @@ void Bullet::UpdateCoordinates()
         Destroy();
         plane_blue.pilot->ChuteHit();
 
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_CHUTE )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_CHUTE;
+        event_push( (unsigned char) EVENTS::HIT_CHUTE );
       }
       // HIT PILOT
       if ( plane_blue.pilot->isHit( x, y ) )
@@ -105,10 +116,7 @@ void Bullet::UpdateCoordinates()
         Destroy();
         plane_blue.pilot->Kill( fired_by );
 
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_PILOT )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_PILOT;
+        event_push( (unsigned char) EVENTS::HIT_PILOT );
       }
     }
     else
@@ -118,11 +126,6 @@ void Bullet::UpdateCoordinates()
       {
         Destroy();
         plane_red.Hit( fired_by );
-
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_PLANE )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_PLANE;
       }
       // HIT CHUTE
       if ( plane_red.pilot->ChuteisHit( x, y ) )
@@ -130,22 +133,15 @@ void Bullet::UpdateCoordinates()
         Destroy();
         plane_red.pilot->ChuteHit();
 
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_CHUTE )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_CHUTE;
+        event_push( (unsigned char) EVENTS::HIT_CHUTE );
       }
       // HIT PILOT
       if ( plane_red.pilot->isHit( x, y ) )
       {
         Destroy();
         plane_red.pilot->Kill( fired_by );
-        local_data.hit = HIT_STATE::HIT_PILOT;
 
-        if ( abs( local_data.hit ) == HIT_STATE::HIT_PILOT )
-          local_data.hit = -local_data.hit;
-        else
-          local_data.hit = HIT_STATE::HIT_PILOT;
+        event_push( (unsigned char) EVENTS::HIT_PILOT );
       }
     }
   }

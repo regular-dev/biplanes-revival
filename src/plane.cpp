@@ -1,7 +1,26 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #include <math.h>
 
-#include "../include/structures.h"
-#include "../include/variables.h"
+#include "include/structures.h"
+#include "include/variables.h"
 
 
 Plane::Plane( bool construct_type )
@@ -15,6 +34,7 @@ Plane::Plane( bool construct_type )
   fire_cooldown = new Timer( sizes.plane_fire_cooldown_time );
   pitch_cooldown = new Timer( sizes.plane_pitch_cooldown_time );
   dead_cooldown = new Timer( sizes.plane_dead_cooldown_time );
+  protection = new Timer( sizes.plane_spawn_protection_time );
 
   smk_anim = new Timer( sizes.smk_frame_time );
   smk_period = new Timer( sizes.smk_anim_period );
@@ -29,6 +49,7 @@ Plane::~Plane()
   delete fire_cooldown;
   delete pitch_cooldown;
   delete dead_cooldown;
+  delete protection;
   delete smk_anim;
   delete smk_period;
   delete fire_anim;
@@ -102,7 +123,9 @@ void Plane::InitTimers()
 {
   fire_cooldown->SetNewCounter( sizes.plane_fire_cooldown_time );
   pitch_cooldown->SetNewCounter( sizes.plane_pitch_cooldown_time );
+
   dead_cooldown->SetNewCounter( sizes.plane_dead_cooldown_time );
+  protection->SetNewCounter( sizes.plane_spawn_protection_time );
 
   smk_anim->SetNewCounter( sizes.smk_frame_time );
   smk_period->SetNewCounter( sizes.smk_anim_period );
@@ -120,6 +143,7 @@ void Plane::Update()
   CoordinatesUpdate();
   CollisionsUpdate();
   AbandonedUpdate();
+
   if ( jump )
     pilot->Update();
 
@@ -127,7 +151,9 @@ void Plane::Update()
 
   pitch_cooldown->Update();
   fire_cooldown->Update();
+
   dead_cooldown->Update();
+  protection->Update();
 
   smk_anim->Update();
   smk_period->Update();
@@ -213,11 +239,19 @@ void Plane::Turn( unsigned char input_dir )
 // SHOOT
 void Plane::Shoot()
 {
-  if ( jump || dead || onground )
+  if ( jump || dead || onground || !protection->isReady() )
     return;
 
-  if ( fire_cooldown->isReady() )
+  if ( fire_cooldown->isReady() || type != (int) srv_or_cli )
   {
+    if ( type == (int) srv_or_cli )
+    {
+      if ( opponent_connected && !game_finished )
+        stats_recent.shots++;
+
+      event_push( (unsigned char) EVENTS::SHOOT );
+    }
+
     fire_cooldown->Start();
     playSound( sounds.shoot, -1, false );
 
@@ -228,11 +262,14 @@ void Plane::Shoot()
 // JUMP
 void Plane::Jump()
 {
-  if ( dead || onground )
+  if ( dead || onground || !protection->isReady() )
     return;
 
   jump = true;
   pilot->Bail( x, y, type == PLANE_TYPE::RED ? dir + 90 : dir - 90 );
+
+  if ( type != (int) srv_or_cli )
+    pilot->ChuteUnlock();
 }
 
 
@@ -250,7 +287,7 @@ void Plane::SpeedUpdate()
   {
     if ( dir == 0 )                         // 90 climb
     {
-      speed -= sizes.plane_incr_spd * 0.170f * deltaTime;
+      speed -= sizes.plane_incr_spd * 0.225f * deltaTime;
       max_speed_var = speed;
     }
     else if ( dir <= 25 || dir >= 330 )     // 75 climb
@@ -308,8 +345,13 @@ void Plane::CoordinatesUpdate()
 {
   if ( dead )
   {
-    if ( !jump && dead_cooldown->isReady() )
+    if ( !jump && dead_cooldown->isReady() && type == (int) srv_or_cli )
+    {
       Respawn();
+      ResetSpawnProtection();
+
+      event_push( (unsigned char) EVENTS::PLANE_RESP );
+    }
     return;
   }
   else if ( onground && !takeoff )
@@ -352,45 +394,13 @@ void Plane::CollisionsUpdate()
   {
     // Crash on barn
     Crash();
-    if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
-      local_data.death = -local_data.death;
-    else
-      local_data.death = DEATH_STATE::PLANE_DEATH;
+    event_push( (unsigned char) EVENTS::PLANE_DEATH );
   }
-  else if ( !onground && y > sizes.ground_y_collision )  // Kiss ground
+  else if ( !onground && y > sizes.ground_y_collision )
   {
+    // Kiss ground
     Crash();
-    if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
-      local_data.death = -local_data.death;
-    else
-      local_data.death = DEATH_STATE::PLANE_DEATH;
-  }
-
-  // Plane collisions
-  if ( PLANE_COLLISIONS )
-  {
-    if ( type == PLANE_TYPE::BLUE )
-    {
-      if ( plane_red.isHit( x, y ) )
-      {
-        Crash();
-        if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
-          local_data.death = -local_data.death;
-        else
-          local_data.death = DEATH_STATE::PLANE_DEATH;
-      }
-    }
-    else
-    {
-      if ( plane_blue.isHit( x, y ) )
-      {
-        Crash();
-        if ( abs( local_data.death ) == DEATH_STATE::PLANE_DEATH )
-          local_data.death = -local_data.death;
-        else
-          local_data.death = DEATH_STATE::PLANE_DEATH;
-      }
-    }
+    event_push( (unsigned char) EVENTS::PLANE_DEATH );
   }
 
   if ( jump )
@@ -436,7 +446,14 @@ void Plane::AnimationsUpdate()
     textures.destrect.y = y - sizes.plane_sizey / 2;
     textures.destrect.w = sizes.plane_sizex;
     textures.destrect.h = sizes.plane_sizey;
+
     if ( type == PLANE_TYPE::BLUE )
+    {
+      if ( protection->isReady() )
+        SDL_SetTextureAlphaMod( textures.texture_biplane_b, 255 );
+      else
+        SDL_SetTextureAlphaMod( textures.texture_biplane_b, 127 );
+
       SDL_RenderCopyEx( gRenderer,
                         textures.texture_biplane_b,
                         NULL,
@@ -444,7 +461,14 @@ void Plane::AnimationsUpdate()
                         dir - 90.0,
                         NULL,
                         SDL_FLIP_NONE );
+    }
     else
+    {
+      if ( protection->isReady() )
+        SDL_SetTextureAlphaMod( textures.texture_biplane_r, 255 );
+      else
+        SDL_SetTextureAlphaMod( textures.texture_biplane_r, 127 );
+
       SDL_RenderCopyEx( gRenderer,
                         textures.texture_biplane_r,
                         NULL,
@@ -452,6 +476,20 @@ void Plane::AnimationsUpdate()
                         dir + 90.0,
                         NULL,
                         SDL_FLIP_NONE );
+    }
+
+    if ( show_hitboxes )
+    {
+      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+      SDL_RenderDrawRect( gRenderer, &hitbox );
+
+      SDL_Rect plane_center;
+      plane_center.x = x - sizes.plane_sizex * 0.05f;
+      plane_center.y = y - sizes.plane_sizey * 0.05f;
+      plane_center.w = sizes.plane_sizex * 0.1f;
+      plane_center.h = sizes.plane_sizey * 0.1f;
+      SDL_RenderDrawRect( gRenderer, &plane_center );
+    }
   }
 
   if ( jump )
@@ -608,10 +646,11 @@ void Plane::HitboxUpdate()
 {
   if ( dead )
     return;
+
   hitbox.x = x - sizes.plane_sizex / 3;
   hitbox.y = y - sizes.plane_sizey / 3;
-  hitbox.w = sizes.plane_sizex;
-  hitbox.h = sizes.plane_sizey;
+  hitbox.w = sizes.plane_sizex / 3 * 2;
+  hitbox.h = sizes.plane_sizey / 3 * 2;
 }
 
 // TAKEOFF UPDATE
@@ -649,6 +688,19 @@ void Plane::Hit( bool hit_by )
   if ( dead )
     return;
 
+  if ( type == (int) srv_or_cli )
+  {
+    if ( protection->isReady() )
+      event_push( (unsigned char) EVENTS::HIT_PLANE );
+    else
+      return;
+  }
+  else if ( opponent_connected && !game_finished )
+    stats_recent.plane_hits++;
+
+  if ( HARDCORE_MODE )
+    hp = 0;
+
   if ( hp > 0 )
   {
     playSound( sounds.hit, -1, false );
@@ -656,7 +708,16 @@ void Plane::Hit( bool hit_by )
   }
   else
   {
+    if ( opponent_connected && !game_finished )
+    {
+      if ( type != (int) srv_or_cli )
+        stats_recent.plane_kills++;
+      else
+        stats_recent.deaths++;
+    }
+
     Explode();
+
     if ( hit_by == PLANE_TYPE::BLUE )
       plane_blue.ScoreChange( 1 );
     else
@@ -682,7 +743,13 @@ void Plane::Crash()
   Explode();
 
   if ( !jump )
+  {
     ScoreChange( -1 );
+
+    if ( type == (int) srv_or_cli )
+      if ( opponent_connected && !game_finished )
+        stats_recent.crashes++;
+  }
 }
 
 // RESPAWN
@@ -699,6 +766,7 @@ void Plane::Respawn()
   fire = false;
   fire_cooldown->Stop();
   pitch_cooldown->Stop();
+  protection->Stop();
 
   x = type == PLANE_TYPE::RED ? sizes.plane_red_landx : sizes.plane_blue_landx;
   y = sizes.plane_landy;
@@ -716,24 +784,63 @@ void Plane::Respawn()
   AnimationsReset();
 }
 
+void Plane::ResetSpawnProtection()
+{
+  if ( type == PLANE_TYPE::RED )
+  {
+    if ( !plane_blue.onground && !plane_blue.dead )
+      protection->Start();
+    else
+      protection->Stop();
+  }
+  else
+  {
+    if ( !plane_red.onground && !plane_red.dead )
+      protection->Start();
+    else
+      protection->Stop();
+  }
+}
+
 void Plane::ResetScore()
 {
   score = 0;
 }
 
-
 void Plane::ScoreChange( char deltaScore )
 {
   if ( deltaScore < 0 && score < -deltaScore )
-    score = 0;
+    ResetScore();
   else
     score += deltaScore;
+
+  if ( !opponent_connected )
+    return;
+
+  if ( score >= sizes.winScore && !game_finished )
+  {
+    if ( type == (int) srv_or_cli )
+    {
+      playSound( sounds.victory, -1, false );
+      menu.setMessage( MESSAGE_TYPE::GAME_WON );
+      stats_recent.wins++;
+    }
+    else
+    {
+      playSound( sounds.loss, -1, false );
+      menu.setMessage( MESSAGE_TYPE::GAME_LOST );
+      stats_recent.losses++;
+    }
+
+    game_finished = true;
+    stats_update();
+  }
 }
 
 // CHECK FOR COLLISION
 bool Plane::isHit( float check_x, float check_y )
 {
-  if( dead )
+  if ( dead )
     return false;
 
   if (  check_x > hitbox.x &&
@@ -875,6 +982,14 @@ void Plane::Pilot::MoveIdle()
 // PILOT EJECT
 void Plane::Pilot::Bail( float plane_x, float plane_y, float bail_dir )
 {
+  if ( plane->type == (int) srv_or_cli )
+  {
+    if ( opponent_connected && !game_finished )
+      stats_recent.jumps++;
+
+    event_push( (unsigned char) EVENTS::EJECT );
+  }
+
   x = plane_x;
   y = plane_y;
   dir = bail_dir;
@@ -894,6 +1009,9 @@ void Plane::Pilot::OpenChute()
 {
   if ( !chute && !run && chute_state == CHUTE_STATE::CHUTE_IDLE )
   {
+    if ( plane->type == (int) srv_or_cli )
+      event_push( (unsigned char) EVENTS::EJECT );
+
     chute = true;
     gravity = sizes.pilot_chute_gravity;
   }
@@ -1000,11 +1118,11 @@ void Plane::Pilot::RunUpdate()
   if  ( x > sizes.barn_x_pilot_left_collision &&
         x < sizes.barn_x_pilot_right_collision )
   {
+    if ( opponent_connected && !game_finished )
+      stats_recent.rescues++;
+
     Rescue();
-    if ( abs( local_data.death ) == DEATH_STATE::PILOT_RESP )
-      local_data.death = -local_data.death;
-    else
-      local_data.death = DEATH_STATE::PILOT_RESP;
+    event_push( (unsigned char) EVENTS::PLANE_RESP );
   }
 }
 
@@ -1019,7 +1137,17 @@ void Plane::Pilot::DeathUpdate()
     angel_anim->Start();
 
     if ( angel_frame == 3 )
-      plane->Respawn();
+    {
+      if ( plane->getType() == (int) srv_or_cli )
+      {
+        plane->Respawn();
+        plane->ResetSpawnProtection();
+
+        event_push( (unsigned char) EVENTS::PLANE_RESP );
+      }
+      else
+        return;
+    }
     else
       angel_frame++;
 
@@ -1055,6 +1183,12 @@ void Plane::Pilot::AnimationsUpdate()
     else
       FallAnimUpdate();
   }
+
+  if ( show_hitboxes )
+  {
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &pilot_hitbox );
+  }
 }
 
 // RESET ANIMATIONS
@@ -1087,11 +1221,16 @@ void Plane::Pilot::FallAnimUpdate()
   textures.destrect.y = y - sizes.pilot_sizey / 2;
   textures.destrect.w = sizes.pilot_sizex;
   textures.destrect.h = sizes.pilot_sizey;
-  SDL_RenderCopy( gRenderer,
-                  textures.anim_pilot_fall,
-                  &textures.anim_pilot_fall_rect[fall_frame],
-                  &textures.destrect );
-
+  if ( plane->type == PLANE_TYPE::RED )
+    SDL_RenderCopy( gRenderer,
+                    textures.anim_pilot_fall_r,
+                    &textures.anim_pilot_fall_rect[fall_frame],
+                    &textures.destrect );
+  else
+    SDL_RenderCopy( gRenderer,
+                    textures.anim_pilot_fall_b,
+                    &textures.anim_pilot_fall_rect[fall_frame],
+                    &textures.destrect );
 }
 
 // UPDATE PILOT CHUTE ANIMATION
@@ -1117,10 +1256,22 @@ void Plane::Pilot::ChuteAnimUpdate()
     textures.destrect.y = y - sizes.pilot_sizey / 2;
     textures.destrect.w = sizes.pilot_sizex;
     textures.destrect.h = sizes.pilot_sizey;
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_fall,
-                    &textures.anim_pilot_fall_rect[fall_frame],
-                    &textures.destrect );
+    if ( plane->type == PLANE_TYPE::RED )
+      SDL_RenderCopy( gRenderer,
+                      textures.anim_pilot_fall_r,
+                      &textures.anim_pilot_fall_rect[fall_frame],
+                      &textures.destrect );
+    else
+      SDL_RenderCopy( gRenderer,
+                      textures.anim_pilot_fall_b,
+                      &textures.anim_pilot_fall_rect[fall_frame],
+                      &textures.destrect );
+
+    if ( show_hitboxes )
+    {
+      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+      SDL_RenderDrawRect( gRenderer, &chute_hitbox );
+    }
   }
 }
 
@@ -1133,13 +1284,28 @@ void Plane::Pilot::RunAnimUpdate()
   textures.destrect.h = sizes.pilot_sizey;
 
   if ( dir == 270 )
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_run,
+    if ( plane->type == PLANE_TYPE::RED )
+      SDL_RenderCopy( gRenderer,
+                    textures.anim_pilot_run_r,
+                    &textures.anim_pilot_run_rect[run_frame],
+                    &textures.destrect );
+    else
+      SDL_RenderCopy( gRenderer,
+                    textures.anim_pilot_run_b,
                     &textures.anim_pilot_run_rect[run_frame],
                     &textures.destrect );
   else
-    SDL_RenderCopyEx( gRenderer,
-                    textures.anim_pilot_run,
+    if ( plane->type == PLANE_TYPE::RED )
+      SDL_RenderCopyEx( gRenderer,
+                    textures.anim_pilot_run_r,
+                    &textures.anim_pilot_run_rect[run_frame],
+                    &textures.destrect,
+                    NULL,
+                    NULL,
+                    SDL_FLIP_HORIZONTAL );
+    else
+      SDL_RenderCopyEx( gRenderer,
+                    textures.anim_pilot_run_b,
                     &textures.anim_pilot_run_rect[run_frame],
                     &textures.destrect,
                     NULL,
@@ -1226,6 +1392,10 @@ void Plane::Pilot::setY( float new_y )
 // PILOT DESTROY CHUTE
 void Plane::Pilot::ChuteHit()
 {
+  if ( plane->type != (int) srv_or_cli )
+    if ( opponent_connected && !game_finished )
+      stats_recent.chute_hits++;
+
   playSound( sounds.hitChute, -1, false );
   chute_state = CHUTE_STATE::CHUTE_DESTROYED;
   chute = false;
@@ -1248,6 +1418,10 @@ void Plane::Pilot::Death()
 // PILOT KILL
 void Plane::Pilot::Kill( bool killed_by )
 {
+  if ( plane->type != (int) srv_or_cli )
+    if ( opponent_connected && !game_finished )
+      stats_recent.pilot_hits++;
+
   Death();
   if ( killed_by == PLANE_TYPE::BLUE )
     plane_blue.ScoreChange( 2 );
@@ -1260,20 +1434,24 @@ void Plane::Pilot::HitGroundCheck()
 {
   if ( y > sizes.ground_y_pilot_collision )
   {
+    if ( plane->getType() != (int) srv_or_cli )
+      return;
+
     // SURVIVE LANDING
     if ( vspeed >= -sizes.pilot_chute_gravity )
+    {
       FallSurvive();
+      event_push( (unsigned char) EVENTS::PILOT_LAND );
+    }
     else
     {
-      if ( plane->getType() != (int) srv_or_cli )
-        return;
+      if ( plane->getType() == (int) srv_or_cli )
+        if ( opponent_connected && !game_finished )
+          stats_recent.falls++;
 
       Death();
       plane->ScoreChange( -1 );
-      if ( abs( local_data.death ) == DEATH_STATE::PILOT_DEATH )
-        local_data.death = -local_data.death;
-      else
-        local_data.death = DEATH_STATE::PILOT_DEATH;
+      event_push( (unsigned char) EVENTS::PILOT_DEATH );
     }
   }
 }
@@ -1295,6 +1473,7 @@ void Plane::Pilot::FallSurvive()
 void Plane::Pilot::Rescue()
 {
   plane->Respawn();
+  plane->ResetSpawnProtection();
 }
 
 // PILOT RESPAWN
@@ -1349,9 +1528,6 @@ void Plane::setCoords( Plane_Data data )
 {
   x = data.x;
   y = data.y;
-
-//  pilot->setX( data.pilot_x );
-//  pilot->setY( data.pilot_y );
 }
 
 void Plane::setDir( float new_dir )

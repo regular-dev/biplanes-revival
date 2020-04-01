@@ -1,7 +1,27 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #ifndef STRUCTURES_H
 #define STRUCTURES_H
 
-#include "utility.h"
+#include "include/utility.h"
+
 
 struct Plane_Data
 {
@@ -26,12 +46,13 @@ class Plane
   float max_speed_var;
 
   bool fire;
-  Timer *fire_cooldown;
-  Timer *pitch_cooldown;
+  Timer* fire_cooldown;
+  Timer* pitch_cooldown;
 
   unsigned char hp;
   bool dead;
-  Timer *dead_cooldown;
+  Timer* dead_cooldown;
+  Timer* protection;
 
   bool onground;
   bool takeoff;
@@ -40,15 +61,15 @@ class Plane
   char smk_frame[5];
   SDL_Rect smk_destrect[5];
 
-  Timer *smk_anim;
-  Timer *smk_period;
+  Timer* smk_anim;
+  Timer* smk_period;
   char smk_rect;
 
   char fire_frame;
-  Timer *fire_anim;
+  Timer* fire_anim;
 
   char expl_frame;
-  Timer *expl_anim;
+  Timer* expl_anim;
 
   SDL_Rect hitbox;
 
@@ -82,6 +103,7 @@ public:
   void Explode();
   void Crash();
   void Respawn();
+  void ResetSpawnProtection();
   void ResetScore();
 
   void ScoreChange( char );
@@ -98,7 +120,7 @@ public:
 
   class Input
   {
-    Plane *plane;
+    Plane* plane;
 
   public:
     Input( Plane* );
@@ -155,7 +177,7 @@ public:
     void setY( float );
 
   private:
-    Plane *plane;
+    Plane* plane;
     bool run;
     bool chute;
     bool dead;
@@ -169,24 +191,24 @@ public:
     float gravity;
 
     char fall_frame;
-    Timer *fall_anim;
+    Timer* fall_anim;
 
     char chute_state;
-    Timer *chute_anim;
+    Timer* chute_anim;
 
     unsigned char run_frame;
-    Timer *run_anim;
+    Timer* run_anim;
 
     char angel_frame;
     char angel_loop;
-    Timer *angel_anim;
+    Timer* angel_anim;
 
     SDL_Rect pilot_hitbox;
     SDL_Rect chute_hitbox;
   };
 
-  Input *input;
-  Pilot *pilot;
+  Input* input;
+  Pilot* pilot;
 };
 
 

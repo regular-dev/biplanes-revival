@@ -1,133 +1,300 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#include "include/matchmake.hpp"
+#include "include/picojson.h"
+
 #include <sstream>
+#include <chrono>
 
-#include "../include/matchmake.hpp"
-#include "../include/picojson.h"
-#include "../include/tcpsock.hpp"
 
-MatchMaker &MatchMaker::operator=(MatchMaker &) {}
-MatchMaker::MatchMaker(const MatchMaker &) {}
+MatchMaker& MatchMaker::operator= ( MatchMaker& ) {}
+MatchMaker::MatchMaker( const MatchMaker& ) {}
 MatchMaker::MatchMaker()
 {
-  if (net::InitializeSockets())
+  if ( net::InitializeSockets() )
   {
-    log_message("NETWORK MMAKE:: Failed to initialize sockets!\n");
-    menu.setMessage(MESSAGE_TYPE::SOCKET_INIT_FAILED);
+    log_message( "NETWORK MMAKE: Failed to initialize sockets!\n" );
+    menu.setMessage( MESSAGE_TYPE::SOCKET_INIT_FAILED );
+    return;
   }
+
+  _mmakeServAddr = toAddress( MATCHMAKE_SRV_IP, std::to_string( MATCHMAKE_SRV_PORT ) );
+  timer = new Timer( 0.0f );
+
+  srand( time(NULL) );
+
+  m_mm_stream_sock.Open( MATCHMAKE_SOCKET_PORT );
 }
 
 void MatchMaker::matchInitForOpponent()
 {
-  net::Address address = toAddress(MATCHMAKE_SRV_IP, std::to_string(MATCHMAKE_SRC_PORT));
-  // MatchMaker SRV IP
-  connection->Start(MATCHMAKE_SRC_PORT);
-  connection->Connect(address);
-  matchSendStatus(MatchConnectStatus::FIND, address);
-  // we also need to get agree from server
+  m_client_id = rand() % 1000000;
+
+  connection->Start( _mmakeServAddr.GetPort() );
+  connection->Connect( _mmakeServAddr );
+
+  _state = MatchMakerState::FIND_BEGIN;
+  menu.setMessage( MESSAGE_TYPE::MMAKE_CONNECTING_TO_SERVER );
+  log_message( "NETWORK MMAKE: Connecting to matchmake server", "\n" );
 }
 
-net::Address MatchMaker::matchWaitForOpponent(bool &client_or_srv)
+void MatchMaker::update()
 {
-  char buf[512];
-  net::Address tmp_address;
-  int recvd_bytes;
-  net::Address badopp(0, 0, 0, 0, 0); // 0.0.0.0:0
+  timer->Update();
 
-  recvd_bytes = connection->socket.Receive(tmp_address, buf, 512);
-  if (!(recvd_bytes > 0)) // if received nothing then exit from func
-    return badopp;
-
-  std::string str_recvd(buf);
-  picojson::value json_recvd;
-
-  std::string parse_errs = picojson::parse(json_recvd, str_recvd);
-
-  if (!parse_errs.empty())
+  switch ( _state )
   {
-    log_message(parse_errs.c_str());
-    return badopp;
-  }
-
-  std::string opp_ip = "";
-  std::string opp_port = "";
-  // just output gathered json
-  const picojson::value::object &obj = json_recvd.get<picojson::object>();
-  for (picojson::value::object::const_iterator i = obj.begin();
-       i != obj.end();
-       ++i)
-  {
-    net::Address opp_ip_port;
-    if (i->first == "ip")
-    {
-      opp_ip = i->second.to_str();
-    }
-    if (i->first == "port")
-    {
-      opp_port = i->second.to_str();
-    }
-    if (i->first == "cs")
-    {
-      if (i->second.to_str() == "server")
-        client_or_srv = false;
-      else
-        client_or_srv = true;
-    }
-  }
-  log_message("NETWORK MMAKE: Opponent ip: ", opp_ip.c_str(),  "\n");
-  log_message("NETWORK MMAKE: Opponent port: ", opp_port.c_str(),  "\n");
-
-  ///////////////////
-  // PART TWO P2P ///
-  ///////////////////
-
-  matchSendStatus(MatchConnectStatus::P2PACCEPT, toAddress(opp_ip, opp_port));
-  int refuse_connect_sec = 0;
-
-  while (1)
-  {
-    int recvd_bytes = connection->socket.Receive(tmp_address, buf, 512);
-    if (recvd_bytes > 0)
+    case MatchMakerState::IDLE:
       break;
-    std::string log_ip =  std::to_string(tmp_address.GetA()) + "." +
-              std::to_string(tmp_address.GetB()) + "." +
-              std::to_string(tmp_address.GetC()) + "." +
-              std::to_string(tmp_address.GetD()) + ":" +
-              std::to_string(tmp_address.GetPort()); // ip : port output
 
-    log_message("NETWORK MMAKE: Opponent address: ", log_ip, "\n\n");
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-    sleep(1);
-#elif PLATFORM == PLATFORM_WINDOWS
-    Sleep(1000);
-#endif
-    refuse_connect_sec++;
-    if (refuse_connect_sec >= MATCH_MAKE_TIMEOUT)
+    case MatchMakerState::FIND_BEGIN:
     {
-      // return second octet 0.1.0.0 2000 if timeout
-      return net::Address(0, 1, 0, 0, 0);
+      if ( !timer->isReady() )
+        break;
+
+      // send from mm_socket
+      picojson::object msg_mm_socket;
+      msg_mm_socket[MATCHMAKE_MSG_TYPE] = picojson::value( (double) MatchConnectStatus::MMSTREAM );
+      msg_mm_socket[MATCHMAKE_MSG_CID]  = picojson::value( (double) m_client_id );
+
+      std::string str_msg_mm_socket = picojson::value(msg_mm_socket).serialize();
+      m_mm_stream_sock.Send( _mmakeServAddr, str_msg_mm_socket.c_str(), str_msg_mm_socket.size() );
+      log_message( "NETWORK MMAKE: Sent status to matchmake server from mm_socket", "\n" );
+
+      timer->SetNewCounter( 0.6f );
+      timer->Start();
+
+      _state = MatchMakerState::FIND_END;
+
+      break;
     }
+    case MatchMakerState::FIND_END:
+    {
+      if ( !timer->isReady() )
+        break;
+
+      matchSendStatus( MatchConnectStatus::FIND, _mmakeServAddr );
+      log_message( "NETWORK MMAKE: Sent status to matchmake server from game socket", "\n" );
+      log_message( "NETWORK MMAKE: Waiting for matchmake server reply...", "\n" );
+
+      timer->SetNewCounter( 5.0f );
+      timer->Start();
+
+      _state = MatchMakerState::MATCH_WAIT;
+
+      break;
+    }
+    case MatchMakerState::MATCH_WAIT:
+    {
+      char buf[512];
+      net::Address tmp_address;
+      int recvd_bytes;
+
+      recvd_bytes = m_mm_stream_sock.Receive( tmp_address, buf, 512 );
+      if ( recvd_bytes <= 0 )
+      {
+        if ( timer->isReady() )
+          _state = MatchMakerState::FIND_BEGIN;
+
+        break;
+      }
+
+      log_message( "NETWORK MMAKE: Received reply from matchmake server", "\n" );
+
+      std::string str_recvd( buf );
+      picojson::value json_recvd;
+
+      std::string parse_errs = picojson::parse( json_recvd, str_recvd );
+
+      if ( !parse_errs.empty() )
+      {
+        log_message( "NETWORK MMAKE: Failed to parse json from matchmake server:", "\n" );
+        log_message( parse_errs.c_str() );
+        log_message( "\n", "\n" );
+        menu.setMessage( MESSAGE_TYPE::MMAKE_BAD_SERVER_REPLY );
+        break;
+      }
+
+      bool foundOpponent = false;
+      std::string opp_ip = "";
+      std::string opp_port = "";
+      std::string instanceSrvCli = "";
+
+      const picojson::value::object& obj = json_recvd.get<picojson::object>();
+      for ( picojson::value::object::const_iterator i = obj.begin();
+            i != obj.end();
+            ++i )
+      {
+        if ( i->first == "type" )
+        {
+          int msgType = i->second.get <double> ();
+          if ( msgType == (int) MatchConnectStatus::MMECHO )
+          {
+            log_message( "NETWORK MMAKE: Matchmake server echo", "\n", "\n" );
+            menu.setMessage( MESSAGE_TYPE::MMAKE_SEARCHING_OPP );
+            _state = MatchMakerState::FIND_BEGIN;
+            break;
+          }
+          else if ( msgType == (int) MatchConnectStatus::MMOPPONENT )
+          {
+            log_message( "NETWORK MMAKE: Found opponent!", "\n" );
+            foundOpponent = true;
+          }
+        }
+        if ( i->first == "ip" )
+          opp_ip = i->second.to_str();
+
+        if ( i->first == "port" )
+          opp_port = i->second.to_str();
+
+        if ( i->first == "cs" )
+        {
+          if ( i->second.to_str() == "server" )
+            _srv_or_cli = false;
+          else
+            _srv_or_cli = true;
+
+          instanceSrvCli = i->second.to_str();
+        }
+      }
+      if ( !foundOpponent )
+        break;
+
+      _opponentAddress = toAddress( opp_ip, opp_port );
+
+      menu.setMessage( MESSAGE_TYPE::P2P_ESTABLISHING );
+      log_message( "NETWORK MMAKE: Opponent address: " );
+      log_message( opp_ip.c_str(), ":", opp_port.c_str(), "\n" );
+      log_message( "NETWORK MMAKE: Game instance is: ", instanceSrvCli, "\n" );
+
+      log_message( "NETWORK MMAKE: Executing NAT hole punching...", "\n" );
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+      if ( _srv_or_cli )
+      {
+        // wait for opp nat entry
+        timer->SetNewCounter( 3.0f );
+        timer->Start();
+      }
+      _state = MatchMakerState::MATCH_NAT_PUNCH_1;
+
+      break;
+    }
+    case MatchMakerState::MATCH_NAT_PUNCH_1:
+    {
+      if ( !timer->isReady() )
+        break;
+
+      // send several: first packet could be dropped by nat
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+
+      timer->SetNewCounter( 0.025f );
+      timer->Start();
+
+      _state = MatchMakerState::MATCH_NAT_PUNCH_2;
+
+      break;
+    }
+    case MatchMakerState::MATCH_NAT_PUNCH_2:
+    {
+      if ( !timer->isReady() )
+        break;
+
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+
+      log_message( "NETWORK MMAKE: Finished NAT hole punching", "\n" );
+      log_message( "NETWORK MMAKE: Awaiting opponent reply...", "\n" );
+      menu.setMessage( MESSAGE_TYPE::P2P_WAIT_ANSWER );
+
+      timer->SetNewCounter( MATCH_MAKE_TIMEOUT );
+      timer->Start();
+
+      _state = MatchMakerState::MATCH_NAT_PUNCH_3;
+
+      break;
+    }
+    case MatchMakerState::MATCH_NAT_PUNCH_3:
+    {
+      char buf[512];
+      int recvd_bytes = connection->socket.Receive( _opponentAddress, buf, 512 );
+      if ( recvd_bytes > 0 )
+      {
+        _state = MatchMakerState::MATCH_READY;
+        break;
+      }
+
+      if ( timer->isReady() )
+      {
+        _state = MatchMakerState::MATCH_TIMEOUT;
+        break;
+      }
+      break;
+    }
+    default:
+      break;
   }
-  return tmp_address;
 }
 
-void MatchMaker::matchSendStatus(MatchConnectStatus mcs, net::Address addr_send)
+void MatchMaker::Reset()
+{
+  _state = MatchMakerState::IDLE;
+}
+
+MatchMakerState MatchMaker::state()
+{
+  return _state;
+}
+
+bool MatchMaker::srv_or_cli()
+{
+  return _srv_or_cli;
+}
+
+net::Address MatchMaker::opponentAddress()
+{
+  return _opponentAddress;
+}
+
+void MatchMaker::matchSendStatus( MatchConnectStatus mcs, net::Address addr_send )
 {
   picojson::object payload_json;
-  payload_json[MATCHMAKE_MSG_TYPE] = picojson::value((double)mcs);
 
-  if (mcs == MatchConnectStatus::FIND)
-    payload_json[MATCHMAKE_MSG_PASS] = picojson::value(passwd);
+  payload_json[MATCHMAKE_MSG_CID] = picojson::value((double)m_client_id);
+  payload_json[MATCHMAKE_MSG_TYPE] = picojson::value((double)mcs);
+  if ( mcs == MatchConnectStatus::FIND )
+    payload_json[MATCHMAKE_MSG_PASS] = picojson::value( passwd );
 
   std::string payload_string = picojson::value(payload_json).serialize();
 
-  connection->socket.Send(addr_send, payload_string.c_str(), payload_string.size());
+  connection->socket.Send( addr_send, payload_string.c_str(), payload_string.size() );
 }
 
-net::Address toAddress(std::string inputAddr, std::string inputPort)
+
+net::Address toAddress( std::string inputAddr, std::string inputPort )
 {
-  std::stringstream s(inputAddr);
+  std::stringstream s( inputAddr );
   int a, b, c, d;
   char ch;
   s >> a >> ch >> b >> ch >> c >> ch >> d;
 
-  return net::Address(a, b, c, d, stoi(inputPort));
+  return net::Address( a, b, c, d, stoi( inputPort ) );
 }

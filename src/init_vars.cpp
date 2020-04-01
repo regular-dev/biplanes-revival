@@ -1,6 +1,42 @@
-#include "../include/init_vars.h"
-#include "../include/variables.h"
-#include "../include/utility.h"
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#include "include/init_vars.h"
+#include "include/variables.h"
+#include "include/utility.h"
+
+
+// Set packet values to defaults
+void erasePacket( Packet& packet )
+{
+  packet.pitch      = 0;
+  packet.throttle   = 0;
+  packet.disconnect = false;
+
+  packet.x          = 0.0f;
+  packet.y          = 0.0f;
+  packet.dir        = 0.0f;
+  packet.pilot_x    = 0.0f;
+  packet.pilot_y    = 0.0f;
+
+  std::fill( packet.events, packet.events + sizeof( packet.events ), 'n' );
+}
 
 
 // Specify sizes
@@ -11,6 +47,8 @@ void init_vars()
 
   sizes.button_sizex = sizes.screen_width - sizes.screen_width * 0.016f;
   sizes.button_sizey = sizes.screen_height * 0.0577f;
+
+  sizes.winScore = 10;
 
   // Plane
   plane_blue.InitTimers();
@@ -28,6 +66,8 @@ void init_vars()
   sizes.plane_incr_rot = 22.5f;
 
   sizes.plane_dead_cooldown_time = 3.0f;
+  sizes.plane_spawn_protection_time = 2.0f;
+
   sizes.plane_pitch_cooldown_time = 0.1f;
   sizes.plane_fire_cooldown_time = 0.65f;
 
@@ -91,21 +131,22 @@ void init_vars()
   sizes.barn_sizex = sizes.screen_width * 0.1367f;
   sizes.barn_sizey = sizes.screen_height * 0.105769f;
 
-  sizes.barn_x_collision = sizes.screen_width * 0.426f;
+  sizes.barn_x_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5f;
   sizes.barn_y_collision = sizes.screen_height * 0.788f;
 
-  sizes.barn_x_pilot_left_collision = sizes.screen_width * 0.44f;
-  sizes.barn_x_pilot_right_collision = sizes.screen_width * 0.422f + sizes.barn_sizex;
+  sizes.barn_x_pilot_left_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.4f;
+  sizes.barn_x_pilot_right_collision = sizes.screen_width * 0.5f + sizes.barn_sizex * 0.4f;
 
-  sizes.barn_x_bullet_collision = sizes.screen_width * 0.42f;
+  sizes.barn_x_bullet_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.475f;
   sizes.barn_y_bullet_collision = sizes.screen_height * 0.81f;
 
 
   // Clouds
   if ( clouds.empty() )
   {
-    clouds.push_back( Cloud( false ) );
-    clouds.push_back( Cloud( true ) );
+    clouds.resize( 8 );
+    for ( unsigned int i = 0; i < clouds.size(); i++ )
+      clouds[i] = Cloud( i % 2, i );
   }
   sizes.cloud_sizex = sizes.screen_width * 0.2695f;
   sizes.cloud_sizey = sizes.screen_height * 0.1538f;
@@ -228,11 +269,13 @@ void textures_load()
     textures.anim_pilot_angel_rect[i].h = 8;
   }
 
-  textures.anim_pilot_fall = loadTexture( "assets/ingame/pilot/ingame_fall.png" );
+  textures.anim_pilot_fall_r = loadTexture( "assets/ingame/pilot/ingame_fall_r.png" );
+  textures.anim_pilot_fall_b = loadTexture( "assets/ingame/pilot/ingame_fall_b.png" );
   textures.anim_pilot_fall_rect[0] = { 0, 0, 7, 7 };
   textures.anim_pilot_fall_rect[1] = { 7, 0, 7, 7 };
 
-  textures.anim_pilot_run = loadTexture( "assets/ingame/pilot/ingame_run.png" );
+  textures.anim_pilot_run_r = loadTexture( "assets/ingame/pilot/ingame_run_r.png" );
+  textures.anim_pilot_run_b = loadTexture( "assets/ingame/pilot/ingame_run_b.png" );
   textures.anim_pilot_run_rect[0] = { 0, 0, 7, 7 };
   for ( int i = 1; i < 3; i++ )
   {
@@ -277,6 +320,8 @@ void sounds_load()
     sounds.fall = loadSound( "assets/sounds/fall.wav" );
     sounds.chute = loadSound( "assets/sounds/chute.wav" );
     sounds.dead = loadSound( "assets/sounds/dead.wav" );
+    sounds.victory = loadSound( "assets/sounds/victory.wav" );
+    sounds.loss = loadSound( "assets/sounds/loss.wav" );
 
     log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
 }

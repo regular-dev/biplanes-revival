@@ -1,8 +1,30 @@
-#include "../include/menu.h"
-#include "../include/render.h"
-#include "../include/init_vars.h"
-#include "../include/matchmake.hpp"
-#include "../include/variables.h"
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#include <cmath>
+
+#include "include/menu.h"
+#include "include/render.h"
+#include "include/init_vars.h"
+#include "include/matchmake.hpp"
+#include "include/variables.h"
+
 
 Menu::Menu()
 {
@@ -11,15 +33,25 @@ Menu::Menu()
   buttons[ROOMS::MENU_MAIN] = MENU_MAIN::EXIT;
   buttons[ROOMS::MENU_SETTINGS_CONTROLS] = MENU_SETTINGS_CONTROLS::BACK;
   buttons[ROOMS::MENU_HELP] = 0;
+
   buttons[ROOMS::MENU_MP] = MENU_MP::BACK;
-  buttons[ROOMS::MENU_MP_HELP] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE1] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE2] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE3] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE4] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE5] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE6] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE7] = 0;
+  buttons[ROOMS::MENU_MP_HELP_PAGE8] = 0;
+
   buttons[ROOMS::MENU_MP_MMAKE] = MENU_MP_MMAKE::BACK;
   buttons[ROOMS::MENU_MP_MMAKE_FIND_GAME] = MENU_MP_MMAKE::BACK;
-  buttons[ROOMS::MENU_MP_MMAKE_HELP] = 0;
+
   buttons[ROOMS::MENU_MP_DC] = MENU_MP_DC::BACK;
   buttons[ROOMS::MENU_MP_DC_HOST] = MENU_MP_DC_HOST::BACK;
   buttons[ROOMS::MENU_MP_DC_JOIN] = MENU_MP_DC_JOIN::BACK;
   buttons[ROOMS::MENU_MP_DC_HELP] = 0;
+
   buttons[ROOMS::MENU_PAUSE] = MENU_PAUSE::DISCONNECT;
 
   current_room = ROOMS::MENU_COPYRIGHT;
@@ -29,7 +61,7 @@ Menu::Menu()
 
   inputIp = SERVER_IP;
   inputPortHost = std::to_string( HOST_PORT );
-  inputPortClient = std::to_string( CLIENT_PORT );
+  inputPortClient = std::to_string( SERVER_PORT );
   inputPass = MMAKE_PASSWORD;
 }
 
@@ -82,9 +114,44 @@ void Menu::DrawMenu()
     menu_mp();
     break;
   }
-  case ROOMS::MENU_MP_HELP:
+  case ROOMS::MENU_MP_HELP_PAGE1:
   {
-    menu_mp_help();
+    menu_mp_help_page1();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE2:
+  {
+    menu_mp_help_page2();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE3:
+  {
+    menu_mp_help_page3();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE4:
+  {
+    menu_mp_help_page4();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE5:
+  {
+    menu_mp_help_page5();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE6:
+  {
+    menu_mp_help_page6();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE7:
+  {
+    menu_mp_help_page7();
+    break;
+  }
+  case ROOMS::MENU_MP_HELP_PAGE8:
+  {
+    menu_mp_help_page8();
     break;
   }
   case ROOMS::MENU_MP_MMAKE:
@@ -96,50 +163,50 @@ void Menu::DrawMenu()
   {
     menu_mp_mmake();
 
-    bool tmp_cli_or_srv = true; // default as client
+    MatchMakerState mmakeState = MatchMaker::Inst().state();
 
-    net::Address opp = MatchMaker::Inst().matchWaitForOpponent( tmp_cli_or_srv );
-
-    if ( opp.GetA() == 0 )
+    if ( mmakeState == MatchMakerState::MATCH_READY )
     {
-      if ( opp.GetB() == 1 )
+      if ( MatchMaker::Inst().srv_or_cli() )
       {
-        ChangeRoom( ROOMS::MENU_MP_MMAKE );
-        log_message( "NETWORK: Peer-to-Peer connection timeout!\n" );
-        setMessage( MESSAGE_TYPE::MMAKE_PTP_TIMEOUT );
+        net::Address opp = MatchMaker::Inst().opponentAddress();
+        srv_or_cli = SRV_CLI::CLIENT;
+        SERVER_IP =
+            std::to_string( opp.GetA() ) +
+            std::string( "." ) +
+            std::to_string( opp.GetB() ) +
+            std::string( "." ) +
+            std::to_string( opp.GetC() ) +
+            std::string( "." ) +
+            std::to_string( opp.GetD() );
+
+        SERVER_PORT = opp.GetPort();
+      }
+      else
+        srv_or_cli = SRV_CLI::SERVER;
+
+      if ( game_init() )
+      {
+        log_message( "\nLOG: Failed to initialize game!\n\n" );
+        connection->Stop();
+
+        ReturnToMainMenu();
+      }
+      else
+      {
+        MatchMaker::Inst().Reset();
+        ChangeRoom( ROOMS::GAME );
       }
       break;
     }
-    if ( tmp_cli_or_srv )
+    else if ( mmakeState == MatchMakerState::MATCH_TIMEOUT )
     {
-      srv_or_cli = SRV_CLI::CLIENT;
-      SERVER_IP =
-          std::to_string( opp.GetA() ) +
-          std::string( "." ) +
-          std::to_string( opp.GetB() ) +
-          std::string( "." ) +
-          std::to_string( opp.GetC() ) +
-          std::string( "." ) +
-          std::to_string( opp.GetD() );
-
-      CLIENT_PORT = opp.GetPort();
+      MatchMaker::Inst().Reset();
+      ChangeRoom( ROOMS::MENU_MP_MMAKE );
+      log_message( "NETWORK: Peer-to-Peer connection timeout!\n" );
+      setMessage( MESSAGE_TYPE::MMAKE_PTP_TIMEOUT );
+      break;
     }
-    else
-      srv_or_cli = SRV_CLI::SERVER;
-
-    if ( game_init() )
-    {
-      log_message( "\nLOG: Failed to initialize game!\n\n" );
-//      PROCESS GAME INIT FAILURE
-    }
-    else
-      ChangeRoom( ROOMS::GAME );
-
-    break;
-  }
-  case ROOMS::MENU_MP_MMAKE_HELP:
-  {
-    menu_mp_mmake_help();
     break;
   }
   case ROOMS::MENU_MP_DC:
@@ -172,6 +239,21 @@ void Menu::DrawMenu()
     menu_help();
     break;
   }
+  case ROOMS::MENU_RECENT_STATS:
+  {
+    menu_recent_stats();
+    break;
+  }
+  case ROOMS::MENU_TOTAL_STATS_PAGE1:
+  {
+    menu_total_stats_page1();
+    break;
+  }
+  case ROOMS::MENU_TOTAL_STATS_PAGE2:
+  {
+    menu_total_stats_page2();
+    break;
+  }
   case ROOMS::MENU_PAUSE:
   {
     menu_pause();
@@ -202,7 +284,7 @@ void Menu::DrawMenu()
   case MESSAGE_TYPE::CLIENT_CONNECTING:
   {
     char textbuf[40];
-    sprintf( textbuf, "Connecting to %s:%d", SERVER_IP.c_str(), CLIENT_PORT );
+    sprintf( textbuf, "Connecting to %s:%d", SERVER_IP.c_str(), SERVER_PORT );
     draw_text( textbuf, 0, 0 );
     break;
   }
@@ -255,9 +337,39 @@ void Menu::DrawMenu()
     }
     break;
   }
-  case MESSAGE_TYPE::SEARCHING_FOR_OPP:
+  case MESSAGE_TYPE::GAME_WON:
+  {
+    draw_text( "            You won!            ", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::GAME_LOST:
+  {
+    draw_text( "           You  lost!           ", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::MMAKE_CONNECTING_TO_SERVER:
+  {
+    draw_text( "Connecting to matchmake server...", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::MMAKE_BAD_SERVER_REPLY:
+  {
+    draw_text( "Bad matchmake server reply!", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::MMAKE_SEARCHING_OPP:
   {
     draw_text( "Searching for opponent...", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::P2P_ESTABLISHING:
+  {
+    draw_text( "Establishing p2p connection...", 0, 0 );
+    break;
+  }
+  case MESSAGE_TYPE::P2P_WAIT_ANSWER:
+  {
+    draw_text( "Waiting for opponent answer...", 0, 0 );
     break;
   }
   case MESSAGE_TYPE::MMAKE_PTP_TIMEOUT:
@@ -296,7 +408,8 @@ void Menu::UpdateControls()
         !keyboard_state[SDL_SCANCODE_DOWN] &&
         !keyboard_state[SDL_SCANCODE_UP] &&
         !keyboard_state[SDL_SCANCODE_SPACE] &&
-        !keyboard_state[SDL_SCANCODE_ESCAPE] && button_pressed )
+        !keyboard_state[SDL_SCANCODE_ESCAPE] &&
+        !keyboard_state[SDL_SCANCODE_F1] && button_pressed )
     button_pressed = false;
 
   if ( current_room != ROOMS::GAME )
@@ -317,6 +430,12 @@ void Menu::UpdateControls()
         ResetKey();
       else if ( keyboard_state[SDL_SCANCODE_SPACE] && !button_pressed )
         GoBack();
+      else if ( keyboard_state[SDL_SCANCODE_F1] && !button_pressed )
+        if ( current_room == ROOMS::MENU_MAIN )
+        {
+          setMessage( MESSAGE_TYPE::NONE );
+          ChangeRoom( ROOMS::MENU_RECENT_STATS );
+        }
 
       if ( event.type == SDL_QUIT && !game_pause )
         game_exit = true;
@@ -403,6 +522,7 @@ void Menu::Select()
         case MENU_MAIN::HELP:
         {
           ChangeRoom( ROOMS::MENU_HELP );
+//          ChangeRoom( ROOMS::MENU_STATS );
           break;
         }
         default:
@@ -431,7 +551,7 @@ void Menu::Select()
         }
         case MENU_MP::HELP:
         {
-          ChangeRoom( ROOMS::MENU_MP_HELP );
+          ChangeRoom( ROOMS::MENU_MP_HELP_PAGE1 );
           break;
         }
         case MENU_MP::BACK:
@@ -444,7 +564,42 @@ void Menu::Select()
       }
       break;
     }
-    case ROOMS::MENU_MP_HELP:
+    case ROOMS::MENU_MP_HELP_PAGE1:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE2:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE3:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE4:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE5:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE6:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE7:
+    {
+      GoBack();
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE8:
     {
       GoBack();
       break;
@@ -455,10 +610,13 @@ void Menu::Select()
       {
         case MENU_MP_MMAKE::FIND_GAME:
         {
-          ChangeRoom( ROOMS::MENU_MP_MMAKE_FIND_GAME );
-          setMessage( MESSAGE_TYPE::SEARCHING_FOR_OPP );
-          MatchMaker::Inst().setPassword( MMAKE_PASSWORD );
+          setMessage( MESSAGE_TYPE::MMAKE_SEARCHING_OPP );
+          //  Password = prefix + userPassword
+          std::string prefixedPassword = MMAKE_PASSWORD_PREFIX + MMAKE_PASSWORD;
+          MatchMaker::Inst().setPassword( prefixedPassword );
           MatchMaker::Inst().matchInitForOpponent();
+
+          ChangeRoom( ROOMS::MENU_MP_MMAKE_FIND_GAME );
           break;
         }
         case MENU_MP_MMAKE::SPECIFY_PASSWORD:
@@ -466,9 +624,10 @@ void Menu::Select()
           ToggleTyping( SPECIFY::PASSWORD );
           break;
         }
-        case MENU_MP_MMAKE::HELP:
+        case MENU_MP_MMAKE::HARDCORE_MODE:
         {
-          ChangeRoom( ROOMS::MENU_MP_MMAKE_HELP );
+          HARDCORE_MODE = !HARDCORE_MODE;
+          settings_write();
           break;
         }
         default:
@@ -480,11 +639,6 @@ void Menu::Select()
     {
 
       //      Server Browser?
-      break;
-    }
-    case ROOMS::MENU_MP_MMAKE_HELP:
-    {
-      GoBack();
       break;
     }
     case ROOMS::MENU_MP_DC:
@@ -501,7 +655,7 @@ void Menu::Select()
         {
           ChangeRoom( ROOMS::MENU_MP_DC_JOIN );
           inputIp = SERVER_IP;
-          inputPortClient = std::to_string( CLIENT_PORT );
+          inputPortClient = std::to_string( SERVER_PORT );
           break;
         }
         case MENU_MP_DC::HELP:
@@ -524,7 +678,9 @@ void Menu::Select()
           if ( game_init() )
           {
             log_message( "\nLOG: Failed to initialize game!\n\n" );
-//            PROCESS GAME INIT FAILURE
+            connection->Stop();
+
+            ReturnToMainMenu();
           }
           else
             ChangeRoom( ROOMS::GAME );
@@ -537,7 +693,7 @@ void Menu::Select()
         }
         case MENU_MP_DC_HOST::HARDCORE_MODE:
         {
-          PLANE_COLLISIONS = !PLANE_COLLISIONS;
+          HARDCORE_MODE = !HARDCORE_MODE;
           settings_write();
           break;
         }
@@ -553,11 +709,14 @@ void Menu::Select()
         case MENU_MP_DC_JOIN::JOIN:
         {
           srv_or_cli = SRV_CLI::CLIENT;
+          HARDCORE_MODE = true;
 
           if ( game_init() )
           {
             log_message( "\nLOG: Failed to initialize game!\n\n" );
-//            PROCESS GAME INIT FAILURE
+            connection->Stop();
+
+            ReturnToMainMenu();
           }
           else
             ChangeRoom( ROOMS::GAME );
@@ -689,7 +848,7 @@ void Menu::GoBack()
     case ROOMS::MENU_MAIN:
     {
   //    Exit confirmation?
-//      game_exit = true;
+//      game_exit = true; // exit with ESCAPE key
       break;
     }
     case ROOMS::MENU_MP:
@@ -697,7 +856,42 @@ void Menu::GoBack()
       ChangeRoom( ROOMS::MENU_MAIN );
       break;
     }
-    case ROOMS::MENU_MP_HELP:
+    case ROOMS::MENU_MP_HELP_PAGE1:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE2 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE2:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE3 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE3:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE4 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE4:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE5 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE5:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE6 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE6:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE7 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE7:
+    {
+      ChangeRoom( ROOMS::MENU_MP_HELP_PAGE8 );
+      break;
+    }
+    case ROOMS::MENU_MP_HELP_PAGE8:
     {
       ChangeRoom( ROOMS::MENU_MP );
       break;
@@ -709,14 +903,12 @@ void Menu::GoBack()
     }
     case ROOMS::MENU_MP_MMAKE_FIND_GAME:
     {
+      MatchMaker::Inst().Reset();
+      MatchMaker::Inst().matchSendStatus( MatchConnectStatus::GOODBYE, toAddress( MATCHMAKE_SRV_IP, std::to_string( MATCHMAKE_SRV_PORT ) ) );
+      log_message( "NETWORK MMAKE: Sent goodbye message to matchmake server", "\n" );
+
       ChangeRoom( ROOMS::MENU_MP );
-      MatchMaker::Inst().matchSendStatus( MatchConnectStatus::GOODBYE, toAddress( MATCHMAKE_SRV_IP, std::to_string( MATCHMAKE_SRC_PORT ) ) );
       setMessage( MESSAGE_TYPE::NONE );
-      break;
-    }
-    case ROOMS::MENU_MP_MMAKE_HELP:
-    {
-      ChangeRoom( ROOMS::MENU_MP_MMAKE );
       break;
     }
     case ROOMS::MENU_MP_DC:
@@ -757,6 +949,21 @@ void Menu::GoBack()
         ChangeRoom( ROOMS::MENU_PAUSE );
       else
         ChangeRoom( ROOMS::MENU_MAIN );
+      break;
+    }
+    case ROOMS::MENU_RECENT_STATS:
+    {
+      ChangeRoom( ROOMS::MENU_TOTAL_STATS_PAGE1 );
+      break;
+    }
+    case ROOMS::MENU_TOTAL_STATS_PAGE1:
+    {
+      ChangeRoom( ROOMS::MENU_TOTAL_STATS_PAGE2 );
+      break;
+    }
+    case ROOMS::MENU_TOTAL_STATS_PAGE2:
+    {
+      ChangeRoom( ROOMS::MENU_MAIN );
       break;
     }
     case ROOMS::GAME:
@@ -819,11 +1026,11 @@ void Menu::EndTyping( unsigned char var_to_specify )
       else
       {
         if ( checkPort( inputPortClient ) )
-          CLIENT_PORT = stoi( inputPortClient );
+          SERVER_PORT = stoi( inputPortClient );
         else
         {
-          CLIENT_PORT = DEFAULT_CLIENT_PORT;
-          inputPortClient = std::to_string( CLIENT_PORT );
+          SERVER_PORT = DEFAULT_SERVER_PORT;
+          inputPortClient = std::to_string( SERVER_PORT );
         }
       }
       break;
@@ -1045,9 +1252,15 @@ void Menu::ResetKey()
 
 void Menu::ReturnToMainMenu()
 {
+  if ( !game_finished )
+    stats_update();
+
+  game_finished = false;
   game_pause = false;
+
   SDL_SetWindowResizable( gWindow, SDL_TRUE );
   ChangeRoom( ROOMS::MENU_MAIN );
+
   button_pressed = false;
 }
 
@@ -1116,6 +1329,10 @@ void menu_main()
   draw_text( "Controls          ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
   draw_text( "Quit              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+
+  draw_text( "Navigate menu with arrow keys   ", sizes.screen_width * 0.005, sizes.screen_height * 0.65 );
+  draw_text( "Press[RETURN] to enter submenu  ", sizes.screen_width * 0.005, sizes.screen_height * 0.70 );
+  draw_text( "  Press [F1] to see your stats  ", sizes.screen_width * 0.005, sizes.screen_height * 0.75 );
 }
 
 // MULTIPLAYER SELECT
@@ -1154,6 +1371,7 @@ void menu_mp_mmake()
   draw_background();
   draw_barn();
 
+  std::string hardcore = HARDCORE_MODE == true ? "On" : "Off";
 
   // Menu box
   textures.destrect = { 0, sizes.screen_height * 0.3, sizes.screen_width, sizes.screen_height * 0.288 };
@@ -1169,13 +1387,14 @@ void menu_mp_mmake()
   draw_text( "Find Game         ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Password:         ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( menu.getInputPass().c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Help              ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( "Hardcore mode:    ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( hardcore.c_str(),            sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
   draw_text( "Back              ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
 
   if ( menu.getSpecifyingVar( SPECIFY::PASSWORD ) )
   {
-    draw_text( "Press [ENTER] to finish ", sizes.screen_width * 0.25, sizes.screen_height * 0.6 );
-    draw_text( " entering  password...  ", sizes.screen_width * 0.25, sizes.screen_height * 0.65 );
+    draw_text( "Press [RETURN] to finish", sizes.screen_width * 0.25, sizes.screen_height * 0.6 );
+    draw_text( " specifying password... ", sizes.screen_width * 0.25, sizes.screen_height * 0.65 );
   }
   else
   {
@@ -1188,7 +1407,14 @@ void menu_mp_mmake()
       }
       case MENU_MP_MMAKE::SPECIFY_PASSWORD:
       {
-        draw_text( "Press [ENTER] to specify password", sizes.screen_width * 0.005, sizes.screen_height * 0.65 );
+        draw_text( "Press[RETURN]to specify password", sizes.screen_width * 0.005, sizes.screen_height * 0.65 );
+        break;
+      }
+      case MENU_MP_MMAKE::HARDCORE_MODE:
+      {
+        draw_text( "Enable one-shot kills           ", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
+        draw_text( "Both opponents  should have this", sizes.screen_width * 0.005, sizes.screen_height * 0.700 );
+        draw_text( "           turned  on           ", sizes.screen_width * 0.005, sizes.screen_height * 0.750 );
         break;
       }
       default:
@@ -1200,31 +1426,6 @@ void menu_mp_mmake()
 // MULTIPLAYER MMAKE FIND GAME
 void menu_mp_mmake_find_game()
 {
-}
-
-// MULTIPLAYER MMAKE HELP
-void menu_mp_mmake_help()
-{
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
-  SDL_RenderClear( gRenderer );
-
-  char textbuf[30];
-
-  draw_text(        "           MMAKE HELP:          ", 0, sizes.screen_height * 0.175 );
-  draw_text(        "   Make sure your anti-virus    ", 0, sizes.screen_height * 0.250 );
-  draw_text(        "and firewall don't block access ", 0, sizes.screen_height * 0.300 );
-  draw_text(        " to the Internet for this game. ", 0, sizes.screen_height * 0.350 );
-
-  draw_text(        "            For HOST:           ", 0, sizes.screen_height * 0.475 );
-  draw_text(        "  Make sure your firewall and   ", 0, sizes.screen_height * 0.550 );
-  draw_text(        "  router don't block incoming   ", 0, sizes.screen_height * 0.600 );
-  sprintf( textbuf, "  connections at port   %d", HOST_PORT );
-  draw_text( textbuf,                                   0, sizes.screen_height * 0.650 );
-  draw_text(        "  and the client  is provided   ", 0, sizes.screen_height * 0.700 );
-  draw_text(        "  with your public IP address.  ", 0, sizes.screen_height * 0.750 );
-  draw_text(        "       Or you can use any       ", 0, sizes.screen_height * 0.800 );
-  draw_text(        "Virtual Private Network software", 0, sizes.screen_height * 0.850 );
-  draw_text(        " (for example, LogMeIn Hamachi) ", 0, sizes.screen_height * 0.900 );
 }
 
 // MULTIPLAYER DC
@@ -1260,7 +1461,7 @@ void menu_mp_dc_host()
   SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
   SDL_RenderClear( gRenderer );
 
-  std::string hardcore = PLANE_COLLISIONS == true ? "On" : "Off";
+  std::string hardcore = HARDCORE_MODE == true ? "On" : "Off";
 
   draw_background();
   draw_barn();
@@ -1286,8 +1487,8 @@ void menu_mp_dc_host()
 
   if ( menu.getSpecifyingVar( SPECIFY::PORT ) )
   {
-    draw_text( "  Press [ENTER]  to finish  ",  sizes.screen_width * 0.250, sizes.screen_height * 0.60 );
-    draw_text( "entering port for hosting...",  sizes.screen_width * 0.250, sizes.screen_height * 0.65 );
+    draw_text( "Press [RETURN] to finish",  sizes.screen_width * 0.250, sizes.screen_height * 0.60 );
+    draw_text( "     specifying port...     ",  sizes.screen_width * 0.250, sizes.screen_height * 0.65 );
   }
   else
   {
@@ -1302,12 +1503,12 @@ void menu_mp_dc_host()
       }
       case MENU_MP_DC_HOST::SPECIFY_PORT:
       {
-        draw_text( "Press [ENTER] to specify port", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
+        draw_text( "Press [RETURN] to specify port", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
         break;
       }
       case MENU_MP_DC_HOST::HARDCORE_MODE:
       {
-        draw_text( "Enable collisions between planes", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
+        draw_text( "Enable one-shot kills         ", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
         break;
       }
       default:
@@ -1343,15 +1544,15 @@ void menu_mp_dc_join()
   draw_text( menu.getInputPortClient().c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
   draw_text( "Back                ",            sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
 
-  if ( menu.getSpecifyingVar( SPECIFY::PORT ) )
+  if ( menu.getSpecifyingVar( SPECIFY::IP ) )
   {
-    draw_text( "Press [ENTER] to finish",       sizes.screen_width * 0.250, sizes.screen_height * 0.600 );
-    draw_text( "entering  server  IP...",       sizes.screen_width * 0.250, sizes.screen_height * 0.650 );
+    draw_text( "Press [RETURN] to finish",       sizes.screen_width * 0.250, sizes.screen_height * 0.600 );
+    draw_text( "specifying server IP... ",       sizes.screen_width * 0.250, sizes.screen_height * 0.650 );
   }
   else if ( menu.getSpecifyingVar( SPECIFY::PORT ) )
   {
-    draw_text( "Press [ENTER] to finish",       sizes.screen_width * 0.250, sizes.screen_height * 0.600 );
-    draw_text( "entering server port...",       sizes.screen_width * 0.250, sizes.screen_height * 0.650 );
+    draw_text( "Press [RETURN] to finish",       sizes.screen_width * 0.250, sizes.screen_height * 0.600 );
+    draw_text( "specifying server port  ",       sizes.screen_width * 0.250, sizes.screen_height * 0.650 );
   }
   else
   {
@@ -1360,18 +1561,18 @@ void menu_mp_dc_join()
       case MENU_MP_DC_JOIN::JOIN:
       {
         char textbuf[33];
-        sprintf( textbuf, "Connect to %s:%d", (char*) SERVER_IP.data(), CLIENT_PORT );
+        sprintf( textbuf, "Connect to %s:%d", (char*) SERVER_IP.data(), SERVER_PORT );
         draw_text( textbuf,                         sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
         break;
       }
       case MENU_MP_DC_JOIN::SPECIFY_IP:
       {
-        draw_text( "Press [ENTER] to specify IP",   sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
+        draw_text( "Press [RETURN] to specify IP",   sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
         break;
       }
       case MENU_MP_DC_JOIN::SPECIFY_PORT:
       {
-        draw_text( "Press [ENTER] to specify port", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
+        draw_text( "Press [RETURN] to specify port", sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
         break;
       }
       default:
@@ -1399,88 +1600,190 @@ void menu_mp_dc_help()
 
   sprintf( textbuf,   "  connections at port   %d", HOST_PORT );
   draw_text( textbuf,                                      0, sizes.screen_height * 0.650 );
-  draw_text(          "  and the client  is provided    ", 0, sizes.screen_height * 0.700 );
+  draw_text(          "  and your opponent is provided  ", 0, sizes.screen_height * 0.700 );
   draw_text(          "  with your public IP address.   ", 0, sizes.screen_height * 0.750 );
   draw_text(          "       Or you can use any        ", 0, sizes.screen_height * 0.800 );
   draw_text(          "Virtual Private Network software ", 0, sizes.screen_height * 0.850 );
-  draw_text(          " (for example, LogMeIn Hamachi)  ", 0, sizes.screen_height * 0.900 );
+  draw_text(          " (LogMeIn Hamachi, Tunngle, etc) ", 0, sizes.screen_height * 0.900 );
 }
 
-// MULTIPLAYER HELP
-void menu_mp_help()
+// MULTIPLAYER HELP PAGE 1
+void menu_mp_help_page1()
 {
   SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
   SDL_RenderClear( gRenderer );
 
-  char textbuf[30];
-  draw_text(        "             MP HELP:            ", 0, sizes.screen_height * 0.175 );
-  draw_text(        "   Make sure your anti-virus     ", 0, sizes.screen_height * 0.250 );
-  draw_text(        "and firewall don't block access  ", 0, sizes.screen_height * 0.300 );
-  draw_text(        " to the Internet for this game.  ", 0, sizes.screen_height * 0.350 );
+  draw_text(        "       Multiplayer  HELP:       ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "   Make sure your  anti-virus   ", 0, sizes.screen_height * 0.250 );
+  draw_text(        "and firewall  don't block access", 0, sizes.screen_height * 0.300 );
+  draw_text(        " to the Internet for this game. ", 0, sizes.screen_height * 0.350 );
 
-  draw_text(        "            For HOST:            ", 0, sizes.screen_height * 0.475 );
-  draw_text(        "  Make sure your firewall and    ", 0, sizes.screen_height * 0.550 );
-  draw_text(        "  router don't block incoming    ", 0, sizes.screen_height * 0.600 );
-  sprintf( textbuf, "  connections at port   %d", HOST_PORT );
-  draw_text( textbuf,                                    0, sizes.screen_height * 0.650 );
-  draw_text(        "  and the client  is provided    ", 0, sizes.screen_height * 0.700 );
-  draw_text(        "  with your public IP address.   ", 0, sizes.screen_height * 0.750 );
-  draw_text(        "       Or you can use any        ", 0, sizes.screen_height * 0.800 );
-  draw_text(        "Virtual Private Network software ", 0, sizes.screen_height * 0.850 );
-  draw_text(        " (for example, LogMeIn Hamachi)  ", 0, sizes.screen_height * 0.900 );
+  draw_text(        "          Matchmaking:          ", 0, sizes.screen_height * 0.475 );
+  draw_text(        "  Use empty password  field to  ", 0, sizes.screen_height * 0.550 );
+  draw_text(        "  automatically find an opponent", 0, sizes.screen_height * 0.600 );
+  draw_text(        "     and start peer-to-peer     ", 0, sizes.screen_height * 0.650 );
+  draw_text(        "         game  with him         ", 0, sizes.screen_height * 0.700 );
+  draw_text(        "  If you want to play with your ", 0, sizes.screen_height * 0.750 );
+  draw_text(        "     friend you can specify     ", 0, sizes.screen_height * 0.800 );
+  draw_text(        "a password. The session  will be", 0, sizes.screen_height * 0.850 );
+  draw_text(        " established  between first two ", 0, sizes.screen_height * 0.900 );
+  draw_text(        " opponents with same  passwords ", 0, sizes.screen_height * 0.950 );
 }
 
-// CONTROLS
-void menu_settings_controls()
+// MULTIPLAYER HELP PAGE 2
+void menu_mp_help_page2()
 {
-  if ( !game_pause )
-  {
-    SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
-    SDL_RenderClear( gRenderer );
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
 
-    draw_background();
-    draw_barn();
-  }
+  draw_text(        "  Possible matchmaking issues:  ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "  Successful matchmaking isn't  ", 0, sizes.screen_height * 0.250 );
+  draw_text(        "  guaranteed if  your Internet  ", 0, sizes.screen_height * 0.300 );
+  draw_text(        "  provider uses  Symmetric NAT  ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " or unpredictable port mapping. ", 0, sizes.screen_height * 0.400 );
+  draw_text(        " It's very likely that you fall ", 0, sizes.screen_height * 0.450 );
+  draw_text(        "  into these conditions if you  ", 0, sizes.screen_height * 0.500 );
+  draw_text(        "    access Internet through     ", 0, sizes.screen_height * 0.550 );
+  draw_text(        "         mobile network.        ", 0, sizes.screen_height * 0.600 );
+  draw_text(        " P2P connection timeout message ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " means that you tried to connect", 0, sizes.screen_height * 0.700 );
+  draw_text(        " to found opponent  but failed. ", 0, sizes.screen_height * 0.750 );
+  draw_text(        "    If it happens every time -  ", 0, sizes.screen_height * 0.800 );
+  draw_text(        "unfortunately you  won't be able", 0, sizes.screen_height * 0.850 );
+  draw_text(        "   to use matchmaking feature   ", 0, sizes.screen_height * 0.900 );
+}
 
+// MULTIPLAYER HELP PAGE 3
+void menu_mp_help_page3()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
 
-  // Menu box
-  textures.destrect = { 0, sizes.screen_height * 0.3, sizes.screen_width, sizes.screen_height * 0.288 + sizes.screen_height * 0.05775 * 3.0 };
-  SDL_RenderCopy( gRenderer, textures.menu_settings_controls_box, NULL, &textures.destrect );
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Connecting to matchmake server: ", 0, sizes.screen_height * 0.250 );
+  draw_text(        " Game tries to connect to our   ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " matchmaking server.            ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " Seeing this message longer than", 0, sizes.screen_height * 0.400 );
+  draw_text(        " 5-10 seconds means that our    ", 0, sizes.screen_height * 0.450 );
+  draw_text(        " matchmaking server is down for ", 0, sizes.screen_height * 0.500 );
+  draw_text(        " some reason.                   ", 0, sizes.screen_height * 0.550 );
+  draw_text(        " If the issue persists more than", 0, sizes.screen_height * 0.600 );
+  draw_text(        " a day please contact us to     ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " resolve it.                    ", 0, sizes.screen_height * 0.700 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.750 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.800 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.850 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.900 );
+}
 
+// MULTIPLAYER HELP PAGE 4
+void menu_mp_help_page4()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
 
-  // Menu button
-  draw_menu_button();
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Bad matchmake server reply!:    ", 0, sizes.screen_height * 0.250 );
+  draw_text(        " It's almost impossible to get  ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " this error but if you do -     ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " please let us know the exact   ", 0, sizes.screen_height * 0.400 );
+  draw_text(        " time when you got this error   ", 0, sizes.screen_height * 0.450 );
+  draw_text(        " and we will check our logs to  ", 0, sizes.screen_height * 0.500 );
+  draw_text(        " see what caused it.            ", 0, sizes.screen_height * 0.550 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.600 );
+  draw_text(        "Searching for opponent:         ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " You received an echo reply from", 0, sizes.screen_height * 0.700 );
+  draw_text(        " matchmaking server and now     ", 0, sizes.screen_height * 0.750 );
+  draw_text(        " waiting for opponent.          ", 0, sizes.screen_height * 0.800 );
+  draw_text(        " If there are no opponents the  ", 0, sizes.screen_height * 0.850 );
+  draw_text(        " game will not start obviously. ", 0, sizes.screen_height * 0.900 );
+}
 
+// MULTIPLAYER HELP PAGE 5
+void menu_mp_help_page5()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
 
-  // Menu text
-  draw_text( "Controls            ",          sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
-  draw_text( "Accelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( SDL_GetKeyName( THROTTLE_UP ),   sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Decelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( SDL_GetKeyName( THROTTLE_DOWN ), sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Turn Anti-Clockwise ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( SDL_GetKeyName( TURN_LEFT ),     sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Turn Clockwise      ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
-  draw_text( SDL_GetKeyName( TURN_RIGHT ),    sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
-  draw_text( "Fire                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
-  draw_text( SDL_GetKeyName( FIRE ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
-  draw_text( "Eject               ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
-  draw_text( SDL_GetKeyName( JUMP ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
-  draw_text( "Back                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 6.0 );
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Establishing p2p connection:    ", 0, sizes.screen_height * 0.250 );
+  draw_text(        " You found an opponent and now  ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " you're trying to connect to him", 0, sizes.screen_height * 0.350 );
+  draw_text(        "                                ", 0, sizes.screen_height * 0.400 );
+  draw_text(        "Waiting for opponent answer:    ", 0, sizes.screen_height * 0.450 );
+  draw_text(        " You performed all required     ", 0, sizes.screen_height * 0.500 );
+  draw_text(        " actions and wait for opponent  ", 0, sizes.screen_height * 0.550 );
+  draw_text(        " to do the same. If the game    ", 0, sizes.screen_height * 0.600 );
+  draw_text(        " doesn't start in 10 seconds    ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " you will get following error   ", 0, sizes.screen_height * 0.700 );
+  draw_text(        " described in the next page:    ", 0, sizes.screen_height * 0.750 );
+  draw_text(        "Peer-to-peer connection timeout!", 0, sizes.screen_height * 0.800 );
+}
 
-  if ( menu.getDefiningKey() )
-  {
-    draw_text( "     Press the key you wish  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 );
-    draw_text( "  to assign to this function.", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 2.0 );
-    draw_text( "     Press [ESC] to cancel.  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.5 );
-  }
-  else
-  {
-    draw_text( "Press [ENTER] to remap selected ", sizes.screen_width * 0.025, sizes.screen_height * 0.025 );
-    draw_text( "          key binding.          ", sizes.screen_width * 0.025, sizes.screen_height * 0.075 );
-    draw_text( "   Press[DELETE] to reset it    ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.0 );
-    draw_text( "       to default value.        ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 4.0 );
-  }
+// MULTIPLAYER HELP PAGE 6
+void menu_mp_help_page6()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Peer-to-peer connection timeout:", 0, sizes.screen_height * 0.250 );
+  draw_text(        " Something went wrong and       ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " connection wasn't established. ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " If you get this error every    ", 0, sizes.screen_height * 0.400 );
+  draw_text(        " time - unfortunately that means", 0, sizes.screen_height * 0.450 );
+  draw_text(        " matchmaking is not possible    ", 0, sizes.screen_height * 0.500 );
+  draw_text(        " with your current Internet     ", 0, sizes.screen_height * 0.550 );
+  draw_text(        " provider.                      ", 0, sizes.screen_height * 0.600 );
+  draw_text(        " You can still use Direct       ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " connect if you or your friend  ", 0, sizes.screen_height * 0.700 );
+  draw_text(        " can setup port forwarding or   ", 0, sizes.screen_height * 0.750 );
+  draw_text(        " just use Virtual Private       ", 0, sizes.screen_height * 0.800 );
+  draw_text(        " Network software to play with  ", 0, sizes.screen_height * 0.850 );
+  draw_text(        " each other.                    ", 0, sizes.screen_height * 0.900 );
+}
+
+// MULTIPLAYER HELP PAGE 7
+void menu_mp_help_page7()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Connection failed:              ", 0, sizes.screen_height * 0.250 );
+  draw_text(        " In Direct Connect mode you can ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " see this message if your       ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " opponent stopped hosting or he ", 0, sizes.screen_height * 0.400 );
+  draw_text(        " is unreacheable (closed port or", 0, sizes.screen_height * 0.450 );
+  draw_text(        " private IP address probably)   ", 0, sizes.screen_height * 0.500 );
+
+  draw_text(        " In Matchmaking mode this       ", 0, sizes.screen_height * 0.600 );
+  draw_text(        " message appears only if your   ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " opponent aborted the game      ", 0, sizes.screen_height * 0.700 );
+  draw_text(        " before you managed to connect. ", 0, sizes.screen_height * 0.750 );
+}
+
+// MULTIPLAYER HELP PAGE 8
+void menu_mp_help_page8()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  draw_text(        "        Status messages:        ", 0, sizes.screen_height * 0.175 );
+  draw_text(        "Connection timed out:           ", 0, sizes.screen_height * 0.250 );
+  draw_text(        " This message may appear if you ", 0, sizes.screen_height * 0.300 );
+  draw_text(        " didn't receive packets from    ", 0, sizes.screen_height * 0.350 );
+  draw_text(        " your opponent for a long time. ", 0, sizes.screen_height * 0.400 );
+  draw_text(        " This may occur if his game     ", 0, sizes.screen_height * 0.450 );
+  draw_text(        " suddenly crashed or he lost    ", 0, sizes.screen_height * 0.500 );
+  draw_text(        " Internet connection.           ", 0, sizes.screen_height * 0.550 );
+  draw_text(        "Server ceased connection or     ", 0, sizes.screen_height * 0.600 );
+  draw_text(        "Client disconnected:            ", 0, sizes.screen_height * 0.650 );
+  draw_text(        " Obviously your opponent just   ", 0, sizes.screen_height * 0.700 );
+  draw_text(        " exited game session.           ", 0, sizes.screen_height * 0.750 );
+  draw_text(        "All other messages may indicate ", 0, sizes.screen_height * 0.800 );
+  draw_text(        " problems with initializing     ", 0, sizes.screen_height * 0.850 );
+  draw_text(        " network systems.               ", 0, sizes.screen_height * 0.900 );
 }
 
 // HELP
@@ -1574,6 +1877,219 @@ void menu_help()
   draw_text( textbuf,             sizes.screen_width * 0.525, sizes.screen_height * 0.900 );
 }
 
+// RECENT STATS
+void menu_recent_stats()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  const float total_hits        = stats_recent.plane_hits + stats_recent.chute_hits + stats_recent.pilot_hits;
+  const int   misses            = stats_recent.shots - total_hits;
+  const float accuracy          = std::isnan( total_hits / stats_recent.shots ) ? 0.0f : total_hits * 100.0f / stats_recent.shots;
+
+  const float suicides          = stats_recent.crashes + stats_recent.falls;
+  const float selfPreservation  = std::isnan( stats_recent.rescues / ( suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( suicides + stats_recent.rescues );
+
+  const float totalKills        = stats_recent.plane_kills + stats_recent.pilot_hits;
+  const float killsDeaths       = std::isnan( totalKills / ( suicides + stats_recent.deaths ) ) ? 0.0f : totalKills / ( suicides + stats_recent.deaths );
+  const float survivability     = std::isnan( stats_recent.rescues / ( stats_recent.deaths + suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( stats_recent.deaths + suicides + stats_recent.rescues );
+
+  const float avgBulletsForKill  = std::isnan( stats_recent.shots / totalKills ) ? 0.0f : stats_recent.shots / totalKills;
+
+  draw_text(        "      Last dogfight stats:      ", 0, 0 );
+  char textbuf[40];
+  sprintf( textbuf, "  %d shots", stats_recent.shots );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.050 );
+  sprintf( textbuf, "  %d plane hits", stats_recent.plane_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  sprintf( textbuf, "  %d chute hits", stats_recent.chute_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  sprintf( textbuf, "  %d pilot kills", stats_recent.pilot_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  sprintf( textbuf, "  %d misses", misses );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  sprintf( textbuf, "Your accuracy: %.2f%%", accuracy );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  sprintf( textbuf, "Average bullets for kill: %.2f", avgBulletsForKill );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+
+  sprintf( textbuf, "  %d jumps", stats_recent.jumps );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  sprintf( textbuf, "  %d crashes", stats_recent.crashes );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  sprintf( textbuf, "  %d fall deaths", stats_recent.falls );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
+  sprintf( textbuf, "  %d sucessful jumps", stats_recent.rescues );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
+  sprintf( textbuf, "Your self-preservation: %.2f%%", selfPreservation );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.650 );
+
+  sprintf( textbuf, "  %d plane kills", stats_recent.plane_kills );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.750 );
+  sprintf( textbuf, "  %d total kills", totalKills );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.800 );
+  sprintf( textbuf, "  %d total KIA", stats_recent.deaths );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.850 );
+  sprintf( textbuf, "Kills/Deaths: %.2f", killsDeaths );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.900 );
+  sprintf( textbuf, "Survivability: %.2f%%", survivability );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.950 );
+}
+
+// TOTAL STATS PAGE 1
+void menu_total_stats_page1()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  const float total_hits        = stats_total.plane_hits + stats_total.chute_hits + stats_total.pilot_hits;
+  const int   misses            = stats_total.shots - total_hits;
+  const float accuracy          = std::isnan( total_hits / stats_total.shots ) ? 0.0f : total_hits * 100.0f / stats_total.shots;
+
+  const float suicides          = stats_total.crashes + stats_total.falls;
+  const float selfPreservation  = std::isnan( stats_total.rescues / ( suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( suicides + stats_total.rescues );
+  const float totalKills        = stats_total.plane_kills + stats_total.pilot_hits;
+  const float avgBulletsForKill = std::isnan( stats_total.shots / totalKills ) ? 0.0f : stats_total.shots / totalKills;
+
+  draw_text(        "          Total stats:          ", 0, 0 );
+  char textbuf[40];
+  sprintf( textbuf, "  %d shots", stats_total.shots );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.050 );
+  sprintf( textbuf, "  %d plane hits", stats_total.plane_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  sprintf( textbuf, "  %d chute hits", stats_total.chute_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  sprintf( textbuf, "  %d pilot hits", stats_total.pilot_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  sprintf( textbuf, "  %d misses", misses );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  sprintf( textbuf, "Your accuracy: %.2f%%", accuracy );
+  draw_text( textbuf, 0, sizes.screen_height * 0.300 );
+  sprintf( textbuf, "Average bullets for kill: %.2f", avgBulletsForKill );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+
+  sprintf( textbuf, "  %d jumps", stats_total.jumps );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  sprintf( textbuf, "  %d crashes", stats_total.crashes );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  sprintf( textbuf, "  %d fall deaths", stats_total.falls );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
+  sprintf( textbuf, "  %d sucessful jumps", stats_total.rescues );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
+  sprintf( textbuf, "Your self-preservation: %.2f%%", selfPreservation );
+  draw_text( textbuf, 0, sizes.screen_height * 0.650 );
+}
+
+// TOTAL STATS PAGE 2
+void menu_total_stats_page2()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  const float suicides          = stats_total.crashes + stats_total.falls;
+  const int   totalKills        = stats_total.plane_kills + stats_total.pilot_hits;
+  const float killsDeaths       = std::isnan( totalKills / ( suicides + stats_total.deaths ) ) ? 0.0f : totalKills / ( suicides + stats_total.deaths );
+  const float survivability     = std::isnan( stats_total.rescues / ( stats_total.deaths + suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( stats_total.deaths + suicides + stats_total.rescues );
+  const float winLose           = std::isnan( (float) stats_total.wins / stats_total.losses ) ? 0.0f : stats_total.wins * 100.0f / stats_total.losses;
+
+  draw_text(        "          Total stats:          ", 0, 0 );
+  char textbuf[40];
+  sprintf( textbuf, "  %d plane kills", stats_total.plane_kills );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  sprintf( textbuf, "  %d pilot kills", stats_total.pilot_hits );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  sprintf( textbuf, "  %d total kills", totalKills );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  sprintf( textbuf, "  %d total KIA", stats_total.deaths );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  sprintf( textbuf, "Kills/Deaths: %.2f", killsDeaths );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  sprintf( textbuf, "Survivability: %.2f%%", survivability );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+
+  sprintf( textbuf, "  %d wins", stats_total.wins );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  sprintf( textbuf, "  %d losses", stats_total.losses );
+  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  sprintf( textbuf, "Win/Lose: %.2f%%", winLose );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.550 );
+}
+
+// RESET STATS
+void stats_update()
+{
+  if ( game_finished )
+  {
+    stats_total.chute_hits  += stats_recent.chute_hits;
+    stats_total.crashes     += stats_recent.crashes;
+    stats_total.deaths      += stats_recent.deaths;
+    stats_total.falls       += stats_recent.falls;
+    stats_total.jumps       += stats_recent.jumps;
+    stats_total.losses      += stats_recent.losses;
+    stats_total.pilot_hits  += stats_recent.pilot_hits;
+    stats_total.plane_hits  += stats_recent.plane_hits;
+    stats_total.plane_kills += stats_recent.plane_kills;
+    stats_total.rescues     += stats_recent.rescues;
+    stats_total.shots       += stats_recent.shots;
+    stats_total.wins        += stats_recent.wins;
+  }
+  else
+    stats_recent = Statistics();
+}
+
+// CONTROLS
+void menu_settings_controls()
+{
+  if ( !game_pause )
+  {
+    SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+    SDL_RenderClear( gRenderer );
+
+    draw_background();
+    draw_barn();
+  }
+
+
+  // Menu box
+  textures.destrect = { 0, sizes.screen_height * 0.3, sizes.screen_width, sizes.screen_height * 0.288 + sizes.screen_height * 0.05775 * 3.0 };
+  SDL_RenderCopy( gRenderer, textures.menu_settings_controls_box, NULL, &textures.destrect );
+
+
+  // Menu button
+  draw_menu_button();
+
+
+  // Menu text
+  draw_text( "Controls            ",          sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
+  draw_text( "Accelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
+  draw_text( SDL_GetKeyName( THROTTLE_UP ),   sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
+  draw_text( "Decelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( SDL_GetKeyName( THROTTLE_DOWN ), sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( "Turn Anti-Clockwise ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( SDL_GetKeyName( TURN_LEFT ),     sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( "Turn Clockwise      ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( SDL_GetKeyName( TURN_RIGHT ),    sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "Fire                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
+  draw_text( SDL_GetKeyName( FIRE ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
+  draw_text( "Eject               ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
+  draw_text( SDL_GetKeyName( JUMP ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
+  draw_text( "Back                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 6.0 );
+
+  if ( menu.getDefiningKey() )
+  {
+    draw_text( "     Press the key you wish    ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 );
+    draw_text( "  to assign to this function.  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 2.0 );
+    draw_text( "     Press [ESC] to cancel.    ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.5 );
+  }
+  else
+  {
+    draw_text( "Press[RETURN] to remap selected", sizes.screen_width * 0.025, sizes.screen_height * 0.025 );
+    draw_text( "          key binding.         ", sizes.screen_width * 0.025, sizes.screen_height * 0.075 );
+    draw_text( "  Press [DELETE]  to reset it  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.0 );
+    draw_text( "       to default value.       ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 4.0 );
+  }
+}
+
 // PAUSE MENU
 void menu_pause()
 {
@@ -1603,8 +2119,12 @@ void menu_copyright()
   draw_text( "      @ Morpheme Ltd. 2004      ", 0, sizes.screen_height * 0.400 );
   draw_text( "       All Rights Reserved      ", 0, sizes.screen_height * 0.450 );
   draw_text( "       www.morpheme.co.uk       ", 0, sizes.screen_height * 0.500 );
-  draw_text( "         Brought to PC by       ", 0, sizes.screen_height * 0.600 );
-  draw_text( "        gitlab.com/Casqade      ", 0, sizes.screen_height * 0.650 );
+
+  draw_text( "  Brought to PC in 01.04.20 by  ", 0, sizes.screen_height * 0.650 );
+  draw_text( "          two guys  at          ", 0, sizes.screen_height * 0.700 );
+  draw_text( "     github.com/regular-dev     ", 0, sizes.screen_height * 0.750 );
+  draw_text( "         regular-dev.org        ", 0, sizes.screen_height * 0.800 );
+
   draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, sizes.screen_height * 0.900 );
 }
 

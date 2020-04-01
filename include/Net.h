@@ -8,14 +8,12 @@
 #define NET_H
 
 
-#include "variables.h"
-#include "utility.h"
 #include <assert.h>
 #include <vector>
-//#include <stack>
 #include <list>
-//#include <algorithm>
-//#include <functional>
+
+#include "include/variables.h"
+#include "include/utility.h"
 
 
 namespace net
@@ -303,8 +301,6 @@ namespace net
 		{
 		  if ( !running )
       {
-        assert( !running );
-
         char portbuf[5];
         sprintf( portbuf, "%d", port );
         log_message( "NETWORK: Opening connection on port ", portbuf, "...\n" );
@@ -324,19 +320,21 @@ namespace net
 
 		void Stop()
 		{
-			assert( running );
-			log_message( "NETWORK: Ceasing connection\n" );
+		  if ( running )
+      {
+        log_message( "NETWORK: Ceasing connection\n" );
 
-			bool connected = IsConnected();
-			ClearData();
-			socket.Close();
-			running = false;
-			if ( connected )
-				OnDisconnect();
-			OnStop();
-#if PLATFORM == PLATFORM_WINDOWS
-      net::ShutdownSockets();
-#endif
+        bool connected = IsConnected();
+        ClearData();
+        socket.Close();
+        running = false;
+        if ( connected )
+          OnDisconnect();
+        OnStop();
+        #if PLATFORM == PLATFORM_WINDOWS
+          net::ShutdownSockets();
+        #endif
+      }
 		}
 
 		bool IsRunning() const

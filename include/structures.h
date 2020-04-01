@@ -1,7 +1,26 @@
+//    Biplanes Revival
+//    Copyright (C) 2019-2020 Regular-dev community
+//    http://regular-dev.org/
+//    regular.dev.org@gmail.com
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #ifndef PLANE_H
 #define PLANE_H
 
-#include "sdl.h"
+#include "include/sdl.h"
 
 
 enum BUTTON_DIR
@@ -39,22 +58,6 @@ enum CHUTE_STATE
   CHUTE_NONE
 };
 
-enum HIT_STATE
-{
-  HIT_NONE,
-  HIT_PLANE,
-  HIT_CHUTE,
-  HIT_PILOT
-};
-
-enum DEATH_STATE
-{
-  DEATH_NONE,
-  PLANE_DEATH,
-  PILOT_DEATH,
-  PILOT_RESP
-};
-
 
 namespace SPECIFY
 {
@@ -83,8 +86,15 @@ enum class MESSAGE_TYPE
   CLIENT_DISCONNECTED,
 
   SUCCESSFULL_CONNECTION,
+  GAME_WON,
+  GAME_LOST,
 
-  SEARCHING_FOR_OPP,
+  MMAKE_CONNECTING_TO_SERVER,
+  MMAKE_BAD_SERVER_REPLY,
+  MMAKE_SEARCHING_OPP,
+
+  P2P_ESTABLISHING,
+  P2P_WAIT_ANSWER,
   MMAKE_PTP_TIMEOUT
 };
 
@@ -94,16 +104,25 @@ enum class ROOMS
   MENU_SPLASH,
   MENU_MAIN,
   MENU_MP,
-  MENU_MP_HELP,
+  MENU_MP_HELP_PAGE1,
+  MENU_MP_HELP_PAGE2,
+  MENU_MP_HELP_PAGE3,
+  MENU_MP_HELP_PAGE4,
+  MENU_MP_HELP_PAGE5,
+  MENU_MP_HELP_PAGE6,
+  MENU_MP_HELP_PAGE7,
+  MENU_MP_HELP_PAGE8,
   MENU_MP_MMAKE,
   MENU_MP_MMAKE_FIND_GAME,
-  MENU_MP_MMAKE_HELP,
   MENU_MP_DC,
   MENU_MP_DC_HOST,
   MENU_MP_DC_JOIN,
   MENU_MP_DC_HELP,
   MENU_SETTINGS_CONTROLS,
   MENU_HELP,
+  MENU_RECENT_STATS,
+  MENU_TOTAL_STATS_PAGE1,
+  MENU_TOTAL_STATS_PAGE2,
   MENU_PAUSE,
   GAME
 };
@@ -136,7 +155,7 @@ namespace MENU_MP_MMAKE
   {
     FIND_GAME,
     SPECIFY_PASSWORD,
-    HELP,
+    HARDCORE_MODE,
     BACK
   };
 }
@@ -224,6 +243,8 @@ struct Sizes
   unsigned short button_sizex;
   unsigned short button_sizey;
 
+  // SCORE TO WIN
+  unsigned char winScore;
 
   // PLANE
   float ground_y_collision;
@@ -235,6 +256,8 @@ struct Sizes
   float plane_incr_rot;
 
   float plane_dead_cooldown_time;
+  float plane_spawn_protection_time;
+
   float plane_pitch_cooldown_time;
   float plane_fire_cooldown_time;
 
@@ -314,8 +337,8 @@ struct Sizes
   float cloud_speed;
   unsigned short cloud_left_spawn_x;
   unsigned short cloud_right_spawn_x;
-  unsigned short cloud_highest_y;
-  unsigned short cloud_lowest_y;
+  short cloud_highest_y;
+  short cloud_lowest_y;
 
 
   // ZEPPELIN
@@ -339,6 +362,26 @@ struct Controls
   char throttle = 0;
   bool fire = 0;
   bool jump = 0;
+};
+
+
+struct Statistics
+{
+  unsigned int shots;
+  unsigned int plane_hits;
+  unsigned int chute_hits;
+  unsigned int pilot_hits;
+
+  unsigned int jumps;
+  unsigned int crashes;
+  unsigned int falls;
+  unsigned int rescues;
+
+  unsigned int plane_kills;
+  unsigned int deaths;
+
+  unsigned int wins;
+  unsigned int losses;
 };
 
 
@@ -378,9 +421,11 @@ struct Textures
   SDL_Rect anim_chute_rect[3];
   SDL_Texture *anim_pilot_angel;
   SDL_Rect anim_pilot_angel_rect[4];
-  SDL_Texture *anim_pilot_fall;
+  SDL_Texture *anim_pilot_fall_r;
+  SDL_Texture *anim_pilot_fall_b;
   SDL_Rect anim_pilot_fall_rect[2];
-  SDL_Texture *anim_pilot_run;
+  SDL_Texture *anim_pilot_run_r;
+  SDL_Texture *anim_pilot_run_b;
   SDL_Rect anim_pilot_run_rect[3];
 
   SDL_Rect destrect;
@@ -399,6 +444,8 @@ struct Sounds
   Mix_Chunk *fall = NULL;
   Mix_Chunk *chute = NULL;
   Mix_Chunk *dead = NULL;
+  Mix_Chunk *victory = NULL;
+  Mix_Chunk *loss = NULL;
 };
 
 #endif //STRUCTURES_H
