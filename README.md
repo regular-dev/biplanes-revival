@@ -28,16 +28,15 @@ to recreate original feeling of game physics
 and make playable multiplayer, so singleplayer features aren't included.
 
 
+### Linux AppImage and Windows binaries available at our [website](https://regular-dev.org/biplanes-revival)
+
+
 ### How to build on Linux : 
 
 sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
 cmake /path/to/sources
 make
 Assets folder should be placed next to executable
-
-
-### Windows binaries available at our [website](https://regular-dev.org/biplanes-revival)
-
 
 
 ### How to build on Windows (Code::Blocks + MinGW ) : 
