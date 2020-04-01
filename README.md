@@ -12,6 +12,8 @@ Features:
   - Hardcore mode: one-shot kills + more clouds for cover
   - Automated statistics system keeps track of your performance
 
+Gameplay video: https://www.youtube.com/watch?v=mIgMNh6gGXs
+
 Written in C++ from scratch using sprites from original game
 
 Graphics: SDL2
@@ -20,7 +22,6 @@ Netcode based on [Simple Network Library
 from "Networking for Game Programmers" by Glenn Fiedler](http://www.gaffer.org/networking-for-game-programmers)
 
 (author moved to other domain and reworked his site so the link is now broken)
-
 
 The main purpose of this project was 
 to recreate original feeling of game physics 
