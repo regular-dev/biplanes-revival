@@ -1,6 +1,6 @@
 //    Biplanes Revival
 //    Copyright (C) 2019-2020 Regular-dev community
-//    http://regular-dev.org/
+//    https://regular-dev.org/
 //    regular.dev.org@gmail.com
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #define MATCHMAKE_MSG_CID  "client_id"
 #define MATCHMAKE_SRV_IP "217.182.21.102"
 #define MATCHMAKE_SRV_PORT 2000
-#define MATCH_MAKE_TIMEOUT 10
+#define MATCH_MAKE_TIMEOUT 15
 
 
 enum class MatchConnectStatus
@@ -52,6 +52,7 @@ enum class MatchMakerState
   FIND_BEGIN,
   FIND_END,
   MATCH_WAIT,
+  MATCH_NAT_PUNCH_0,
   MATCH_NAT_PUNCH_1,
   MATCH_NAT_PUNCH_2,
   MATCH_NAT_PUNCH_3,

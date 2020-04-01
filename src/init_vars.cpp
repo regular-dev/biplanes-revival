@@ -1,6 +1,6 @@
 //    Biplanes Revival
 //    Copyright (C) 2019-2020 Regular-dev community
-//    http://regular-dev.org/
+//    https://regular-dev.org/
 //    regular.dev.org@gmail.com
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -322,6 +322,7 @@ void sounds_load()
     sounds.dead = loadSound( "assets/sounds/dead.wav" );
     sounds.victory = loadSound( "assets/sounds/victory.wav" );
     sounds.loss = loadSound( "assets/sounds/loss.wav" );
+    sounds.rescue = loadSound( "assets/sounds/rescue.wav" );
 
     log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
 }

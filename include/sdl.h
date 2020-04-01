@@ -1,6 +1,6 @@
 //    Biplanes Revival
 //    Copyright (C) 2019-2020 Regular-dev community
-//    http://regular-dev.org/
+//    https://regular-dev.org/
 //    regular.dev.org@gmail.com
 //
 //    This program is free software: you can redistribute it and/or modify

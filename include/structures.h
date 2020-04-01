@@ -1,6 +1,6 @@
 //    Biplanes Revival
 //    Copyright (C) 2019-2020 Regular-dev community
-//    http://regular-dev.org/
+//    https://regular-dev.org/
 //    regular.dev.org@gmail.com
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -446,6 +446,7 @@ struct Sounds
   Mix_Chunk *dead = NULL;
   Mix_Chunk *victory = NULL;
   Mix_Chunk *loss = NULL;
+  Mix_Chunk *rescue = NULL;
 };
 
 #endif //STRUCTURES_H

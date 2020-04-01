@@ -1,6 +1,6 @@
 //    Biplanes Revival
 //    Copyright (C) 2019-2020 Regular-dev community
-//    http://regular-dev.org/
+//    https://regular-dev.org/
 //    regular.dev.org@gmail.com
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -186,10 +186,23 @@ void MatchMaker::update()
 
       log_message( "NETWORK MMAKE: Executing NAT hole punching...", "\n" );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
+
+      timer->SetNewCounter( 0.100f );
+      timer->Start();
+      _state = MatchMakerState::MATCH_NAT_PUNCH_0;
+
+      break;
+    }
+    case MatchMakerState::MATCH_NAT_PUNCH_0:
+    {
+      if ( !timer->isReady() )
+        break;
+
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       if ( _srv_or_cli )
       {
         // wait for opp nat entry
-        timer->SetNewCounter( 3.0f );
+        timer->SetNewCounter( 5.0f );
         timer->Start();
       }
       _state = MatchMakerState::MATCH_NAT_PUNCH_1;
@@ -206,7 +219,7 @@ void MatchMaker::update()
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
 
-      timer->SetNewCounter( 0.025f );
+      timer->SetNewCounter( 0.200f );
       timer->Start();
 
       _state = MatchMakerState::MATCH_NAT_PUNCH_2;
@@ -218,6 +231,7 @@ void MatchMaker::update()
       if ( !timer->isReady() )
         break;
 
+      matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
 

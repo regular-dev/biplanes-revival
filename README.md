@@ -36,7 +36,7 @@ make
 Assets folder should be placed next to executable
 
 
-### Windows binaries available at our [website](http://regular-dev.org/biplanes-revival)
+### Windows binaries available at our [website](https://regular-dev.org/biplanes-revival)
 
 
 
