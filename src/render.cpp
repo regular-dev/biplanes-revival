@@ -58,7 +58,16 @@ void draw_background()
 
   // Draw background
   textures.destrect = { 0, 0, sizes.screen_width, sizes.screen_height };
-  SDL_RenderCopy( gRenderer, textures.texture_background, NULL, &textures.destrect);
+  SDL_RenderCopy( gRenderer, textures.texture_background, NULL, &textures.destrect );
+
+  if ( show_hitboxes )
+  {
+    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
+    SDL_RenderDrawLine( gRenderer,  0,
+                                    sizes.ground_y_collision,
+                                    sizes.screen_width,
+                                    sizes.ground_y_collision );
+  }
 }
 
 
