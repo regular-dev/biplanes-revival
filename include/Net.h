@@ -11,6 +11,8 @@
 #include <assert.h>
 #include <vector>
 #include <list>
+#include <iomanip>
+#include <sstream>
 
 #include "include/variables.h"
 #include "include/utility.h"
@@ -301,12 +303,10 @@ namespace net
 		{
 		  if ( !running )
       {
-        char portbuf[5];
-        sprintf( portbuf, "%d", port );
-        log_message( "NETWORK: Opening connection on port ", portbuf, "...\n" );
+        log_message( "NETWORK: Opening connection on port ", std::to_string(port), "...\n" );
         if ( !socket.Open( port ) )
         {
-          log_message( "NETWORK: Could not start connection on port ", (const char*) port, "\n" );
+          log_message( "NETWORK: Could not start connection on port ", std::to_string(port), "\n" );
           menu.setMessage( MESSAGE_TYPE::CANT_START_CONNECTION );
           return false;
         }
@@ -355,8 +355,12 @@ namespace net
 
 		void Connect( const Address & address )
 		{
-      char address_buf[22];
-      sprintf( address_buf, "%d.%d.%d.%d:%d", address.GetA(), address.GetB(), address.GetC(), address.GetD(), address.GetPort() );
+      std::string address_buf;
+      address_buf =   address.GetA() + ".";
+      address_buf +=  address.GetB() + ".";
+      address_buf +=  address.GetC() + ".";
+      address_buf +=  address.GetD() + ":";
+      address_buf +=  address.GetPort();
       log_message( "NETWORK: Client is connecting to ", address_buf, "...\n" );
 
 			bool connected = IsConnected();
@@ -452,8 +456,12 @@ namespace net
 			{
 				state = Connected;
 				address = sender;
-				char address_buf[22];
-        sprintf( address_buf, "%d.%d.%d.%d:%d", address.GetA(), address.GetB(), address.GetC(), address.GetD(), address.GetPort() );
+				std::string address_buf;
+        address_buf =   address.GetA() + ".";
+        address_buf +=  address.GetB() + ".";
+        address_buf +=  address.GetC() + ".";
+        address_buf +=  address.GetD() + ":";
+        address_buf +=  address.GetPort();
         log_message( "NETWORK: New client connected from ", address_buf, "\n" );
 				OnConnect();
 			}
@@ -1098,11 +1106,11 @@ namespace net
                     {
                         penalty_time *= 2.0f;
                         if ( penalty_time > 60.0f )
-                            penalty_time = 60.0f;
+                          penalty_time = 60.0f;
 
-                        char penalty_buf[5];
-                        sprintf( penalty_buf, "%.1f", penalty_time );
-                        log_message( "NETWORK: Penalty time increased to ", penalty_buf, " seconds\n" );
+                        std::stringstream penalty_buf;
+                        penalty_buf << std::fixed << std::setprecision(1) << penalty_time;
+                        log_message( "NETWORK: Penalty time increased to ", penalty_buf.str(), " seconds\n" );
                     }
                     good_conditions_time = 0.0f;
                     penalty_reduction_accumulator = 0.0f;
@@ -1116,11 +1124,11 @@ namespace net
                 {
                     penalty_time /= 2.0f;
                     if ( penalty_time < 1.0f )
-                        penalty_time = 1.0f;
+                      penalty_time = 1.0f;
 
-                    char penalty_buf[5];
-                    sprintf( penalty_buf, "%.1f", penalty_time );
-                    log_message( "NETWORK: Penalty time reduced to ", penalty_buf, " seconds\n" );
+                    std::stringstream penalty_buf;
+                    penalty_buf << std::fixed << std::setprecision(1) << penalty_time;
+                    log_message( "NETWORK: Penalty time reduced to ", penalty_buf.str(), " seconds\n" );
                     penalty_reduction_accumulator = 0.0f;
                 }
             }
