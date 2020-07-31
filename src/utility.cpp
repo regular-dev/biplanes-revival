@@ -126,17 +126,26 @@ bool settings_parse( std::ifstream& settings, std::string& jsonErrors )
     try { HOST_PORT = jsonAutoFill.at( "HOST_PORT" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
+    if ( !checkPort( std::to_string(HOST_PORT) ) )
+      HOST_PORT = DEFAULT_HOST_PORT;
+
     try { MMAKE_PASSWORD = jsonAutoFill.at( "MMAKE_PASSWORD" ).get <std::string> (); }
     catch ( std::out_of_range &e ) {};
 
-    if ( MMAKE_PASSWORD.length() > 15 )
-      MMAKE_PASSWORD.resize(15);
+    if ( !checkPass( MMAKE_PASSWORD ) )
+      MMAKE_PASSWORD = "";
 
     try { SERVER_IP = jsonAutoFill.at( "SERVER_IP" ).get <std::string> (); }
     catch ( std::out_of_range &e ) {};
 
+    if ( checkIp( SERVER_IP ).empty() )
+      SERVER_IP = DEFAULT_SERVER_IP;
+
     try { SERVER_PORT = jsonAutoFill.at( "SERVER_PORT" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
+
+    if ( !checkPort( std::to_string(SERVER_PORT) ) )
+      SERVER_PORT = DEFAULT_SERVER_PORT;
   }
   catch ( std::out_of_range &e ) {};
 
@@ -456,64 +465,70 @@ bool Timer::isReady()
 
 std::string checkIp( std::string IpToCheck )
 {
-  if ( IpToCheck.length() > 0 )
-  {
-    std::stringstream s( IpToCheck );
-    int a, b, c, d;
-    char ch;
-    s >> a >> ch >> b >> ch >> c >> ch >> d;
-    if ( a > 255 || a < 0 ||
-         b > 255 || b < 0 ||
-         c > 255 || c < 0 ||
-         d > 255 || d < 0 ||
-         ch != '.' )
-    {
-      return "";
-    }
-    else
-    {
-      IpToCheck = std::to_string( a ) + "." +
-                  std::to_string( b ) + "." +
-                  std::to_string( c ) + "." +
-                  std::to_string( d );
-      return IpToCheck;
-    }
-  }
-  else
+  if (  IpToCheck.length() == 0 ||
+        IpToCheck.length() > 15 )
     return "";
+
+  std::stringstream s( IpToCheck );
+  int a, b, c, d;
+  char ch;
+  s >> a >> ch >> b >> ch >> c >> ch >> d;
+  if ( a > 255 || a < 0 ||
+       b > 255 || b < 0 ||
+       c > 255 || c < 0 ||
+       d > 255 || d < 0 ||
+       ch != '.' )
+    return "";
+
+  return  std::to_string( a ) + "." +
+          std::to_string( b ) + "." +
+          std::to_string( c ) + "." +
+          std::to_string( d );
 }
 
 bool checkPort( std::string PortToCheck )
 {
-  if ( PortToCheck.length() > 0 )
-  {
-    for ( unsigned int i = 0; i < PortToCheck.length(); i++)
-    {
-      if ( !isdigit( PortToCheck[i] ) )
-        return false;
-    }
-
-    if ( stoi ( PortToCheck ) <= 100 )
-      return false;
-    else if ( stoi ( PortToCheck ) > 65535 )
-      return false;
-    else
-      return true;
-  }
-  else
+  if ( PortToCheck.length() == 0 )
     return false;
+
+  for ( char digit : PortToCheck )
+    if ( !isdigit( digit ) )
+      return false;
+
+//  for ( unsigned int i = 0; i < PortToCheck.length(); i++)
+//  {
+//    if ( !isdigit( PortToCheck[i] ) )
+//      return false;
+//  }
+
+  if (  stoi( PortToCheck ) > 1024 &&
+        stoi( PortToCheck ) <= 65535 )
+    return true;
+
+  return false;
 }
 
 bool checkPass( std::string PassToCheck )
 {
-  if ( PassToCheck.length() > 0 )
-  {
-    if ( PassToCheck.find( " " ) != std::string::npos )
+  if ( PassToCheck.length() == 0 )
+    return true;
+
+  if ( PassToCheck.length() > 15 )
+    return false;
+
+  for ( char letter : PassToCheck )
+    if (  letter >= '0' &&
+          letter <= '9' )
+      continue;
+    else if ( letter >= 'A' &&
+              letter <= 'Z' )
+      continue;
+    else if ( letter >= 'a' &&
+              letter <= 'z' )
+      continue;
+    else
       return false;
 
-    return true;
-  }
-  else
-    return false;
+  return true;
 }
 

@@ -1061,7 +1061,8 @@ void Menu::UpdateTyping()
       else if ( event.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
         SDL_SetClipboardText( inputIp.c_str() );
       else if ( event.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-        inputIp = SDL_GetClipboardText();
+        if ( !checkIp( SDL_GetClipboardText() ).empty() )
+          inputIp = SDL_GetClipboardText();
     }
     if ( event.type == SDL_TEXTINPUT )
     {
@@ -1092,7 +1093,8 @@ void Menu::UpdateTyping()
       else if ( event.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
         SDL_SetClipboardText(inputPort.c_str());
       else if ( event.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-        inputPort = SDL_GetClipboardText();
+        if ( checkPort( SDL_GetClipboardText() ) )
+          inputPort = SDL_GetClipboardText();
     }
     else if ( event.type == SDL_TEXTINPUT )
     {
@@ -1120,7 +1122,8 @@ void Menu::UpdateTyping()
       else if ( event.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
         SDL_SetClipboardText(inputPass.c_str());
       else if ( event.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-        inputPass = SDL_GetClipboardText();
+        if ( checkPass( SDL_GetClipboardText() ) )
+          inputPass = SDL_GetClipboardText();
     }
     else if ( event.type == SDL_TEXTINPUT )
     {
@@ -1131,7 +1134,8 @@ void Menu::UpdateTyping()
                 SDL_GetModState() & KMOD_CTRL ) )
       {
         if ( inputPass.length() < 15 )
-          inputPass += event.text.text;
+          if ( checkPass( std::string( event.text.text ) ) )
+            inputPass += event.text.text;
       }
     }
   }
