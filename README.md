@@ -32,12 +32,21 @@ and make playable multiplayer, so singleplayer features aren't included.
 
 
 ### How to build on Linux : 
-
+```bash
 sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
 cmake /path/to/sources
 make
+```
 Assets folder should be placed next to executable
 
+
+### How to build in Mac (tested on M1) :
+```bash
+brew install sdl2 sdl2_image sdl2_mixer
+cd biplanes-revival
+cmake .
+make
+```
 
 ### How to build on Windows (Code::Blocks + MinGW ) : 
 
