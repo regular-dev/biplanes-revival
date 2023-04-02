@@ -23,16 +23,16 @@ from "Networking for Game Programmers" by Glenn Fiedler](http://www.gaffer.org/n
 
 (author moved to other domain and reworked his site so the link is now broken)
 
-The main purpose of this project was 
-to recreate original feeling of game physics 
+The main purpose of this project was
+to recreate original feeling of game physics
 and make playable multiplayer, so singleplayer features aren't included.
 
-Splash screen upscaled by [punchingdig] (https://www.youtube.com/user/punchingdig)
+Splash screen upscaled by [punchingdig](https://www.youtube.com/user/punchingdig)
 
 ### Linux AppImage and Windows binaries available at our [website](https://regular-dev.org/biplanes-revival)
 
 
-### How to build on Linux : 
+### How to build on Linux :
 ```bash
 sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
 cmake /path/to/sources
@@ -49,7 +49,7 @@ cmake .
 make
 ```
 
-### How to build on Windows (Code::Blocks + MinGW ) : 
+### How to build on Windows (Code::Blocks + MinGW ) :
 
 
 **1. Download SDL2 development libraries:**
@@ -61,13 +61,13 @@ make
  - [SDL2_mixer](https://www.libsdl.org/projects/SDL_mixer/)
 
 If you already have SDL2, make sure it's 2.0.10 or newer.
-Older versions have Windows-specific bug which may cause movement lag.
+Older versions have Windows-specific [bug](https://discourse.libsdl.org/t/sdl2-lag-with-sdl-getticks/25538/) which may cause movement lag.
 
 **2. Download and install [CMake](https://cmake.org/download/).**
 
 **3. In CMake:**
 
-    
+
 	a. Specify paths to BiPlanes sources and build folder.
 	b. Click "Configure"
 	c. CMake will show error "Could NOT find SDL2"
@@ -79,13 +79,13 @@ Older versions have Windows-specific bug which may cause movement lag.
 
 **4. Open and compile generated Code::Blocks project in build folder.**
 
-*Instead of compiling with default Code::Blocks MinGW compiler 
-it's recommended to use newer 
+*Instead of compiling with default Code::Blocks MinGW compiler
+it's recommended to use newer
 [MinGW-w64](https://sourceforge.net/projects/mingw-w64/files/).*
 
 
-**5. Copy these dlls from SDL2.../.../bin to game executable folder:**
-    
+**5. Copy these dlls from SDL2 bin directory next to game executable:**
+
     SDL2.dll
     SDL2_image.dll
     libpng16-16.dll
