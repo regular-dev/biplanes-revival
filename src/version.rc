@@ -1,0 +1,26 @@
+#define VER_FILEVERSION       1,0,5
+#define VER_FILEVERSION_STR   "1.0.5"
+
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION VER_FILEVERSION
+PRODUCTVERSION VER_FILEVERSION
+{
+  BLOCK "StringFileInfo"
+   {
+     BLOCK "040904E4"
+     {
+       VALUE "CompanyName", "https://regular-dev.org"
+       VALUE "FileVersion", VER_FILEVERSION_STR
+       VALUE "FileDescription", "Biplanes Revival"
+       VALUE "LegalCopyright", "Copyright (C) 2023 https://regular-dev.org community"
+       VALUE "OriginalFilename", "Biplanes.exe"
+       VALUE "ProductName", "Biplanes Revival"
+       VALUE "ProductVersion", VER_FILEVERSION_STR
+     }
+   }
+  BLOCK "VarFileInfo"
+   {
+     VALUE "Translation", 0x0409, 1252
+   }
+}

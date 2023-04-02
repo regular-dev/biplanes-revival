@@ -92,9 +92,6 @@ it's recommended to use newer
     zlib1.dll
     SDL2_mixer.dll
 
-*If you want to launch game on different PC you also 
-need to provide **libwinpthread-1.dll** from **mingw32/bin***
-
 
 **6. Make sure that 'assets' folder is placed next to executable.**
 
