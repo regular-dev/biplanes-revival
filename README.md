@@ -27,6 +27,7 @@ The main purpose of this project was
 to recreate original feeling of game physics 
 and make playable multiplayer, so singleplayer features aren't included.
 
+Splash screen upscaled by [punchingdig] (https://www.youtube.com/user/punchingdig)
 
 ### Linux AppImage and Windows binaries available at our [website](https://regular-dev.org/biplanes-revival)
 
