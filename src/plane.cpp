@@ -1,69 +1,49 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#include <math.h>
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-#include "include/structures.h"
-#include "include/variables.h"
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/structures.h>
+#include <include/variables.h>
+
+#include <cmath>
 
 
 Plane::Plane( bool construct_type )
+  : type{construct_type}
 {
-  input = new Plane::Input( this );
-  pilot = new Plane::Pilot( this );
+  fire_cooldown = Timer( sizes.plane_fire_cooldown_time );
+  pitch_cooldown = Timer( sizes.plane_pitch_cooldown_time );
+  dead_cooldown = Timer( sizes.plane_dead_cooldown_time );
+  protection = Timer( sizes.plane_spawn_protection_time );
 
-  type = construct_type;
-  score = 0;
-
-  fire_cooldown = new Timer( sizes.plane_fire_cooldown_time );
-  pitch_cooldown = new Timer( sizes.plane_pitch_cooldown_time );
-  dead_cooldown = new Timer( sizes.plane_dead_cooldown_time );
-  protection = new Timer( sizes.plane_spawn_protection_time );
-
-  smk_anim = new Timer( sizes.smk_frame_time );
-  smk_period = new Timer( sizes.smk_anim_period );
-  fire_anim = new Timer( sizes.fire_frame_time );
-  expl_anim = new Timer( sizes.expl_frame_time );
+  smk_anim = Timer( sizes.smk_frame_time );
+  smk_period = Timer( sizes.smk_anim_period );
+  fire_anim = Timer( sizes.fire_frame_time );
+  expl_anim = Timer( sizes.expl_frame_time );
 
   Respawn();
 }
 
-Plane::~Plane()
-{
-  delete fire_cooldown;
-  delete pitch_cooldown;
-  delete dead_cooldown;
-  delete protection;
-  delete smk_anim;
-  delete smk_period;
-  delete fire_anim;
-  delete expl_anim;
-
-  delete input;
-  delete pilot;
-}
-
-
 // INPUT
-Plane::Input::Input( Plane *parent_plane )
+Plane::Input::Input( Plane* parent_plane )
+  : plane{parent_plane}
 {
-  plane = parent_plane;
 }
 
 
@@ -83,8 +63,8 @@ void Plane::Input::Decelerate()
 void Plane::Input::TurnLeft()
 {
   if ( plane->jump )
-    plane->pilot->Move( PLANE_PITCH::PITCH_LEFT );
   else if ( plane->type == (int) srv_or_cli )
+    plane->pilot.Move( PLANE_PITCH::PITCH_LEFT );
     plane->Turn( PLANE_PITCH::PITCH_LEFT );
 }
 
@@ -92,8 +72,8 @@ void Plane::Input::TurnLeft()
 void Plane::Input::TurnRight()
 {
   if ( plane->jump )
-    plane->pilot->Move( PLANE_PITCH::PITCH_RIGHT );
   else if ( plane->type == (int) srv_or_cli )
+    plane->pilot.Move( PLANE_PITCH::PITCH_RIGHT );
     plane->Turn( PLANE_PITCH::PITCH_RIGHT );
 }
 
@@ -101,7 +81,7 @@ void Plane::Input::TurnRight()
 void Plane::Input::TurnIdle()
 {
   if ( plane->jump )
-    plane->pilot->MoveIdle();
+    plane->pilot.MoveIdle();
 }
 
 // Input Shoot
@@ -114,25 +94,25 @@ void Plane::Input::Shoot()
 void Plane::Input::Jump()
 {
   if ( plane->jump )
-    plane->pilot->OpenChute();
+    plane->pilot.OpenChute();
   else
     plane->Jump();
 }
 
 void Plane::InitTimers()
 {
-  fire_cooldown->SetNewCounter( sizes.plane_fire_cooldown_time );
-  pitch_cooldown->SetNewCounter( sizes.plane_pitch_cooldown_time );
+  fire_cooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
+  pitch_cooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
 
-  dead_cooldown->SetNewCounter( sizes.plane_dead_cooldown_time );
-  protection->SetNewCounter( sizes.plane_spawn_protection_time );
+  dead_cooldown.SetNewTimeout( sizes.plane_dead_cooldown_time );
+  protection.SetNewTimeout( sizes.plane_spawn_protection_time );
 
-  smk_anim->SetNewCounter( sizes.smk_frame_time );
-  smk_period->SetNewCounter( sizes.smk_anim_period );
-  fire_anim->SetNewCounter( sizes.fire_frame_time );
-  expl_anim->SetNewCounter( sizes.expl_frame_time );
+  smk_anim.SetNewTimeout( sizes.smk_frame_time );
+  smk_period.SetNewTimeout( sizes.smk_anim_period );
+  fire_anim.SetNewTimeout( sizes.fire_frame_time );
+  expl_anim.SetNewTimeout( sizes.expl_frame_time );
 
-  pilot->InitTimers();
+  pilot.InitTimers();
 }
 
 
@@ -145,20 +125,20 @@ void Plane::Update()
   AbandonedUpdate();
 
   if ( jump )
-    pilot->Update();
+    pilot.Update();
 
   HitboxUpdate();
 
-  pitch_cooldown->Update();
-  fire_cooldown->Update();
+  pitch_cooldown.Update();
+  fire_cooldown.Update();
 
-  dead_cooldown->Update();
-  protection->Update();
+  dead_cooldown.Update();
+  protection.Update();
 
-  smk_anim->Update();
-  smk_period->Update();
-  fire_anim->Update();
-  expl_anim->Update();
+  smk_anim.Update();
+  smk_period.Update();
+  fire_anim.Update();
+  expl_anim.Update();
 }
 
 // ACCELERATE
@@ -222,9 +202,9 @@ void Plane::Turn( unsigned char input_dir )
   if ( dead || onground )
     return;
 
-  if ( pitch_cooldown->isReady() )
+  if ( pitch_cooldown.isReady() )
   {
-    pitch_cooldown->Start();
+    pitch_cooldown.Start();
 
     float turn_dir = input_dir == PLANE_PITCH::PITCH_LEFT ? -1.0f : 1.0f;
     dir += turn_dir * sizes.plane_incr_rot;
@@ -239,7 +219,7 @@ void Plane::Turn( unsigned char input_dir )
 // SHOOT
 void Plane::Shoot()
 {
-  if ( jump || dead || onground || !protection->isReady() )
+  if ( jump || dead || onground || !protection.isReady() )
     return;
 
   if ( fire_cooldown->isReady() || type != (int) srv_or_cli )
@@ -252,7 +232,7 @@ void Plane::Shoot()
       event_push( (unsigned char) EVENTS::SHOOT );
     }
 
-    fire_cooldown->Start();
+    fire_cooldown.Start();
     playSound( sounds.shoot, -1, false );
 
     bullets.SpawnBullet( x, y, dir, type );
@@ -262,14 +242,14 @@ void Plane::Shoot()
 // JUMP
 void Plane::Jump()
 {
-  if ( dead || onground || !protection->isReady() )
+  if ( dead || onground || !protection.isReady() )
     return;
 
   jump = true;
-  pilot->Bail( x, y, type == PLANE_TYPE::RED ? dir + 90 : dir - 90 );
+  pilot.Bail( x, y, type == PLANE_TYPE::RED ? dir + 90 : dir - 90 );
 
   if ( type != (int) srv_or_cli )
-    pilot->ChuteUnlock();
+    pilot.ChuteUnlock();
 }
 
 
@@ -345,13 +325,14 @@ void Plane::CoordinatesUpdate()
 {
   if ( dead )
   {
-    if ( !jump && dead_cooldown->isReady() && type == (int) srv_or_cli )
+    if ( !jump && dead_cooldown.isReady() && type == (int) srv_or_cli )
     {
       Respawn();
       ResetSpawnProtection();
 
       event_push( (unsigned char) EVENTS::PLANE_RESP );
     }
+
     return;
   }
   else if ( onground && !takeoff )
@@ -427,9 +408,9 @@ void Plane::AbandonedUpdate()
   if ( speed > sizes.plane_max_speed_def / 2 )
     speed -= sizes.plane_incr_spd * 0.2 * deltaTime;
 
-  if ( pitch_cooldown->isReady() )
+  if ( pitch_cooldown.isReady() )
   {
-    pitch_cooldown->Start();
+    pitch_cooldown.Start();
     if ( type == PLANE_TYPE::RED )
       dir += dir < 180.0f ? sizes.plane_incr_rot : -sizes.plane_incr_rot;
     else
@@ -449,7 +430,7 @@ void Plane::AnimationsUpdate()
 
     if ( type == PLANE_TYPE::BLUE )
     {
-      if ( protection->isReady() )
+      if ( protection.isReady() )
         SDL_SetTextureAlphaMod( textures.texture_biplane_b, 255 );
       else
         SDL_SetTextureAlphaMod( textures.texture_biplane_b, 127 );
@@ -464,7 +445,7 @@ void Plane::AnimationsUpdate()
     }
     else
     {
-      if ( protection->isReady() )
+      if ( protection.isReady() )
         SDL_SetTextureAlphaMod( textures.texture_biplane_r, 255 );
       else
         SDL_SetTextureAlphaMod( textures.texture_biplane_r, 127 );
@@ -493,7 +474,7 @@ void Plane::AnimationsUpdate()
   }
 
   if ( jump )
-    pilot->AnimationsUpdate();
+    pilot.AnimationsUpdate();
 
   if ( !dead )
   {
@@ -518,17 +499,17 @@ void Plane::AnimationsReset()
   smk_destrect[3] = {};
   smk_destrect[4] = {};
 
-  smk_anim->Stop();
-  smk_period->Stop();
+  smk_anim.Stop();
+  smk_period.Stop();
   smk_rect = 4;
 
-  fire_anim->Stop();
+  fire_anim.Stop();
   fire_frame = 0;
 
-  expl_anim->Stop();
+  expl_anim.Stop();
   expl_frame = 0;
 
-  pilot->AnimationsReset();
+  pilot.AnimationsReset();
 }
 
 // UPDATE SMOKE
@@ -537,9 +518,9 @@ void Plane::SmokeUpdate()
   if ( hp > 1 )
     return;
 
-  if ( smk_anim->isReady() )
+  if ( smk_anim.isReady() )
   {
-    smk_anim->Start();
+    smk_anim.Start();
     for ( unsigned int i = 0; i < 5; i++ )
     {
       smk_frame[i]++;
@@ -547,9 +528,9 @@ void Plane::SmokeUpdate()
         smk_frame[i] = 5;
     }
 
-    if ( smk_period->isReady() )
+    if ( smk_period.isReady() )
     {
-      smk_period->Start();
+      smk_period.Start();
 
       smk_frame[0] = -3;
       smk_frame[1] = -2;
@@ -585,9 +566,9 @@ void Plane::FireUpdate()
   if ( hp > 0 )
     return;
 
-  if ( fire_anim->isReady() )
+  if ( fire_anim.isReady() )
   {
-    fire_anim->Start();
+    fire_anim.Start();
     fire_frame++;
     if ( fire_frame > 2 )
       fire_frame = 0;
@@ -633,9 +614,9 @@ void Plane::ExplosionUpdate()
                     &textures.anim_expl_rect[expl_frame],
                     &textures.destrect );
 
-    if ( expl_anim->isReady() )
+    if ( expl_anim.isReady() )
     {
-      expl_anim->Start();
+      expl_anim.Start();
       expl_frame++;
     }
   }
@@ -731,7 +712,7 @@ void Plane::Explode()
   playSound( sounds.expl, -1, false );
   speed = 0.0f;
   dead = true;
-  dead_cooldown->Start();
+  dead_cooldown.Start();
 }
 
 // CRASH
@@ -756,17 +737,16 @@ void Plane::Crash()
 void Plane::Respawn()
 {
   dead = false;
-  dead_cooldown->Stop();
   hp = 2;
   onground = true;
   takeoff = false;
   speed = 0.0f;
   max_speed_var = sizes.plane_max_speed_def;
 
-  fire = false;
-  fire_cooldown->Stop();
-  pitch_cooldown->Stop();
-  protection->Stop();
+  dead_cooldown.Stop();
+  fire_cooldown.Stop();
+  pitch_cooldown.Stop();
+  protection.Stop();
 
   x = type == PLANE_TYPE::RED ? sizes.plane_red_landx : sizes.plane_blue_landx;
   y = sizes.plane_landy;
@@ -774,7 +754,7 @@ void Plane::Respawn()
 
   jump = false;
 
-  pilot->Respawn();
+  pilot.Respawn();
 
   hitbox.x = x - sizes.plane_sizex / 3;
   hitbox.y = y - sizes.plane_sizey / 3;
@@ -789,16 +769,16 @@ void Plane::ResetSpawnProtection()
   if ( type == PLANE_TYPE::RED )
   {
     if ( !plane_blue.onground && !plane_blue.dead )
-      protection->Start();
+      protection.Start();
     else
-      protection->Stop();
+      protection.Stop();
   }
   else
   {
     if ( !plane_red.onground && !plane_red.dead )
-      protection->Start();
+      protection.Start();
     else
-      protection->Stop();
+      protection.Stop();
   }
 }
 
@@ -852,7 +832,7 @@ bool Plane::isHit( float check_x, float check_y )
     return false;
 }
 
-unsigned char Plane::getType()
+bool Plane::getType()
 {
   return type;
 }
@@ -873,48 +853,23 @@ float Plane::getY()
 }
 
 
-Plane::Pilot::Pilot( Plane *parent_plane )
+Plane::Pilot::Pilot(  Plane* parentPlane )
+  : plane{parentPlane}
 {
-  plane = parent_plane;
-  run = false;
-  chute = false;
-  dead = false;
-
-  x = 0.0f;
-  y = 0.0f;
-  dir = 0;
-
-  speed = 0.0f;
-  vspeed = 0.0f;
-  gravity = 0.0f;
-
-  fall_frame = 0;
-  fall_anim = new Timer( sizes.pilot_fall_frame_time );
+  fall_anim = Timer( sizes.pilot_fall_frame_time );
 
   chute_state = CHUTE_STATE::CHUTE_NONE;
-  chute_anim = new Timer( sizes.chute_frame_time );
+  chute_anim = Timer( sizes.chute_frame_time );
 
-  run_frame = 0;
-  run_anim = new Timer( sizes.pilot_run_frame_time );
+  run_anim = Timer( sizes.pilot_run_frame_time );
 
-  angel_frame = 0;
-  angel_loop = 0;
-  angel_anim = new Timer( sizes.angel_frame_time );
+  angel_anim = Timer( sizes.angel_frame_time );
 
   pilot_hitbox.x = x - sizes.pilot_sizex / 2;
   pilot_hitbox.y = y - sizes.pilot_sizey / 2;
   pilot_hitbox.w = sizes.pilot_sizex;
   pilot_hitbox.h = sizes.pilot_sizey;
 }
-
-Plane::Pilot::~Pilot()
-{
-  delete fall_anim;
-  delete chute_anim;
-  delete run_anim;
-  delete angel_anim;
-}
-
 
 // PILOT UPDATE
 void Plane::Pilot::Update()
@@ -923,20 +878,21 @@ void Plane::Pilot::Update()
   RunUpdate();
   HitboxUpdate();
   ChuteHitboxUpdate();
+  DeathUpdate();
 
-  fall_anim->Update();
-  chute_anim->Update();
-  run_anim->Update();
-  angel_anim->Update();
+  fall_anim.Update();
+  chute_anim.Update();
+  run_anim.Update();
+  angel_anim.Update();
 }
 
 
 void Plane::Pilot::InitTimers()
 {
-  fall_anim->SetNewCounter( sizes.pilot_fall_frame_time );
-  chute_anim->SetNewCounter( sizes.chute_frame_time );
-  run_anim->SetNewCounter( sizes.pilot_run_frame_time );
-  angel_anim->SetNewCounter( sizes.angel_frame_time );
+  fall_anim.SetNewTimeout( sizes.pilot_fall_frame_time );
+  chute_anim.SetNewTimeout( sizes.chute_frame_time );
+  run_anim.SetNewTimeout( sizes.pilot_run_frame_time );
+  angel_anim.SetNewTimeout( sizes.angel_frame_time );
 }
 
 // PILOT MOVE
@@ -953,9 +909,9 @@ void Plane::Pilot::Move( unsigned char input_dir )
     dir = move_dir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
     x += move_dir * sizes.pilot_run_speed * deltaTime;
 
-    if ( run_anim->isReady() )
+    if ( run_anim.isReady() )
     {
-      run_anim->Start();
+      run_anim.Start();
 
       run_frame++;
       if ( run_frame > 2 )
@@ -969,14 +925,14 @@ void Plane::Pilot::MoveIdle()
 {
   if ( run )
   {
-    run_anim->Stop();
+    run_anim.Stop();
     run_frame = 0;
+
+    return;
   }
-  else
-  {
-    if ( chute_state < CHUTE_STATE::CHUTE_DESTROYED )
-      chute_state = CHUTE_STATE::CHUTE_IDLE;
-  }
+
+  if ( chute_state < CHUTE_STATE::CHUTE_DESTROYED )
+    chute_state = CHUTE_STATE::CHUTE_IDLE;
 }
 
 // PILOT EJECT
@@ -1031,7 +987,8 @@ void Plane::Pilot::FallUpdate()
   if ( dead || run )
     return;
 
-  x += speed * sin( dir * PI / 180.0f ) * deltaTime;
+  if ( speed > 0.0f )
+    x += speed * sin( dir * PI / 180.0f ) * deltaTime;
 
   if ( chute )
   {
@@ -1132,9 +1089,9 @@ void Plane::Pilot::DeathUpdate()
   if ( !dead )
     return;
 
-  if ( angel_anim->isReady() )
+  if ( angel_anim.isReady() )
   {
-    angel_anim->Start();
+    angel_anim.Start();
 
     if ( angel_frame == 3 )
     {
@@ -1194,16 +1151,16 @@ void Plane::Pilot::AnimationsUpdate()
 // RESET ANIMATIONS
 void Plane::Pilot::AnimationsReset()
 {
-  fall_anim->Stop();
+  fall_anim.Stop();
   fall_frame = 0;
 
-  chute_anim->Stop();
+  chute_anim.Stop();
   chute_state = CHUTE_STATE::CHUTE_NONE;
 
-  run_anim->Stop();
+  run_anim.Stop();
   run_frame = 0;
 
-  angel_anim->Stop();
+  angel_anim.Stop();
   angel_frame = 0;
   angel_loop = 0;
 }
@@ -1211,9 +1168,9 @@ void Plane::Pilot::AnimationsReset()
 // UPDATE PILOT FALL ANIMATION
 void Plane::Pilot::FallAnimUpdate()
 {
-  if ( fall_anim->isReady() )
+  if ( fall_anim.isReady() )
   {
-    fall_anim->Start();
+    fall_anim.Start();
     fall_frame = !fall_frame;
   }
 
@@ -1246,9 +1203,9 @@ void Plane::Pilot::ChuteAnimUpdate()
                     textures.anim_chute,
                     &textures.anim_chute_rect[chute_state],
                     &textures.destrect );
-    if ( chute_anim->isReady() )
+    if ( chute_anim.isReady() )
     {
-      chute_anim->Start();
+      chute_anim.Start();
       fall_frame = !fall_frame;
     }
 
@@ -1316,7 +1273,6 @@ void Plane::Pilot::RunAnimUpdate()
 // UPDATE PILOT DEATH ANIMATION
 void Plane::Pilot::DeathAnimUpdate()
 {
-  DeathUpdate();
   textures.destrect.x = x - sizes.angel_sizex / 2;
   textures.destrect.y = y - sizes.angel_sizey / 2;
   textures.destrect.w = sizes.angel_sizex;
@@ -1410,7 +1366,9 @@ void Plane::Pilot::Death()
   chute = false;
   dead = true;
 
+  dir = 0;
   speed = 0.0f;
+  vspeed = 0.0f;
   gravity = 0.0f;
   chute_state = CHUTE_STATE::CHUTE_NONE;
 }
@@ -1465,6 +1423,7 @@ void Plane::Pilot::FallSurvive()
   chute = false;
 
   speed = 0.0f;
+  vspeed = 0.0f;
   gravity = 0.0f;
   chute_state = CHUTE_STATE::CHUTE_IDLE;
 }
@@ -1485,6 +1444,7 @@ void Plane::Pilot::Respawn()
   chute = false;
   dead = false;
 
+  dir = 0;
   gravity = 0.0f;
   speed = 0.0f;
   vspeed = 0.0f;
@@ -1493,7 +1453,7 @@ void Plane::Pilot::Respawn()
 }
 
 
-bool Plane::Pilot::isDead()
+bool Plane::Pilot::isDead() const
 {
   return dead;
 }
@@ -1520,10 +1480,26 @@ Plane_Data Plane::getData()
   data_buf.x = x;
   data_buf.y = y;
   data_buf.dir = dir;
-  data_buf.pilot_x = pilot->getX();
-  data_buf.pilot_y = pilot->getY();
+  data_buf.pilot_x = pilot.getX();
+  data_buf.pilot_y = pilot.getY();
 
   return data_buf;
+}
+
+bool Plane::isDead() const
+{
+  return ( pilot.isDead() || ( !jump && dead ) );
+}
+
+bool Plane::canShoot() const
+{
+  return !onground && protection.isReady();
+}
+
+bool Plane::canJump() const
+{
+  return  ( !jump && !onground && protection.isReady() ) ||
+          ( jump && !pilot.run && !pilot.chute && pilot.chute_state != CHUTE_STATE::CHUTE_DESTROYED );
 }
 
 void Plane::setCoords( Plane_Data data )

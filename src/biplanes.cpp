@@ -1,31 +1,33 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <lib/Net.h>
+#include <lib/picojson.h>
+
+#include <include/init_vars.h>
+#include <include/controls.h>
+#include <include/render.h>
+#include <include/matchmake.hpp>
 
 #include <fstream>
 #include <sstream>
-
-#include "include/init_vars.h"
-#include "include/Net.h"
-#include "include/controls.h"
-#include "include/render.h"
-#include "include/matchmake.hpp"
-#include "include/picojson.h"
 
 
 bool consoleOutput  = false;
@@ -132,6 +134,7 @@ int main( int argc, char *args[] )
   if ( SDL_init() )
   {
     log_message( "\n\nSDL Startup: SDL startup failed!\n" );
+
     return 1;
   }
   connection = new net::ReliableConnection( ProtocolId, TimeOut );
@@ -139,6 +142,7 @@ int main( int argc, char *args[] )
   textures_load();
   sounds_load();
   init_vars();
+
   log_message( "\nLOG: Reached main menu loop!\n\n" );
 
   Timer fpsTimer( 1.0f / FRAMERATE );
@@ -177,6 +181,7 @@ int main( int argc, char *args[] )
     stats_write();
 
   SDL_close();
+
   return 0;
 }
 
@@ -205,7 +210,7 @@ void game_reset()
     cloud.Respawn();
 }
 
-bool game_init()
+bool game_init_mp()
 {
   SDL_SetWindowResizable( gWindow, SDL_FALSE );
 
@@ -226,6 +231,7 @@ bool game_init()
   {
     log_message( "NETWORK: Failed to initialize sockets!\n" );
     menu.setMessage( MESSAGE_TYPE::SOCKET_INIT_FAILED );
+
     return 1;
   }
 
@@ -251,12 +257,35 @@ bool game_init()
   game_finished = false;
   flowControl = new net::FlowControl();
   game_reset();
+  stats_recent = Statistics();
 
-  log_message( "\nLOG: Game initialized successfully!\n\n" );
+  log_message( "\nLOG: Multiplayer game initialized successfully!\n\n" );
+
   return 0;
 }
 
-void game_loop()
+bool game_init_sp()
+{
+  SDL_SetWindowResizable( gWindow, SDL_FALSE );
+
+  aiController.setActive( true );
+
+  srv_or_cli = SRV_CLI::SERVER;
+
+  opponent_connected = true;
+  connection_changed = false;
+  game_finished = false;
+  game_reset();
+  stats_recent = Statistics();
+
+  log_message( "\nLOG: Singleplayer game initialized successfully!\n\n" );
+
+  menu.setMessage( MESSAGE_TYPE::SUCCESSFULL_CONNECTION );
+
+  return 0;
+}
+
+void game_loop_mp()
 {
   connection->Update();
 
@@ -264,6 +293,7 @@ void game_loop()
   {
     connection->Stop();
     menu.ReturnToMainMenu();
+
     return;
   }
 
@@ -329,19 +359,18 @@ void game_loop()
   if ( !game_pause )
     collect_local_input();
 
-
   if ( opponent_connected )
   {
     collect_opponent_input();
-    if ( srv_or_cli == SRV_CLI::CLIENT )
+    if ( srv_or_cli == SRV_CLI::CLIENT )  // red plane controls
     {
-      process_local_controls( plane_red, controls_local );
       process_local_controls( plane_blue, controls_opponent );
+      process_local_controls( plane_red,  controls_local );
     }
-    else
+    else  // blue plane controls
     {
       process_local_controls( plane_blue, controls_local );
-      process_local_controls( plane_red, controls_opponent );
+      process_local_controls( plane_red,  controls_opponent );
     }
     controls_opponent.fire = false;
 
@@ -350,12 +379,12 @@ void game_loop()
   }
   else
   {
-    if ( srv_or_cli == SRV_CLI::CLIENT )
+    if ( srv_or_cli == SRV_CLI::CLIENT )  // red plane controls
     {
       process_local_controls( plane_red, controls_local );
       plane_red.Update();
     }
-    else
+    else  // blue plane controls
     {
       process_local_controls( plane_blue, controls_local );
       plane_blue.Update();
@@ -514,14 +543,14 @@ void transform_opponent_data()
   if ( srv_or_cli == SRV_CLI::CLIENT )
   {
     plane_blue.setDir( data.dir );
-    plane_blue.pilot->setX( data.pilot_x );
-    plane_blue.pilot->setY( data.pilot_y );
+    plane_blue.pilot.setX( data.pilot_x );
+    plane_blue.pilot.setY( data.pilot_y );
   }
   else
   {
     plane_red.setDir( data.dir );
-    plane_red.pilot->setX( data.pilot_x );
-    plane_red.pilot->setY( data.pilot_y );
+    plane_red.pilot.setX( data.pilot_x );
+    plane_red.pilot.setY( data.pilot_y );
   }
 
   if ( !std::equal( std::begin( opponent_data.events ),
@@ -559,9 +588,9 @@ void transform_opponent_data()
         case (unsigned int) EVENTS::EJECT:
         {
           if ( srv_or_cli == SRV_CLI::SERVER )
-            plane_red.input->Jump();
+            plane_red.input.Jump();
           else
-            plane_blue.input->Jump();
+            plane_blue.input.Jump();
 
           continue;
         }
@@ -577,18 +606,18 @@ void transform_opponent_data()
         case (unsigned int) EVENTS::HIT_CHUTE:
         {
           if ( srv_or_cli == SRV_CLI::SERVER )
-            plane_red.pilot->ChuteHit();
+            plane_red.pilot.ChuteHit();
           else
-            plane_blue.pilot->ChuteHit();
+            plane_blue.pilot.ChuteHit();
 
           continue;
         }
         case (unsigned int) EVENTS::HIT_PILOT:
         {
           if ( srv_or_cli == SRV_CLI::SERVER )
-            plane_red.pilot->Kill( (int) srv_or_cli );
+            plane_red.pilot.Kill( (int) srv_or_cli );
           else
-            plane_blue.pilot->Kill( (int) srv_or_cli );
+            plane_blue.pilot.Kill( (int) srv_or_cli );
 
           continue;
         }
@@ -605,12 +634,12 @@ void transform_opponent_data()
         {
           if ( srv_or_cli == SRV_CLI::SERVER )
           {
-            plane_red.pilot->Death();
+            plane_red.pilot.Death();
             plane_red.ScoreChange( -1 );
           }
           else
           {
-            plane_blue.pilot->Death();
+            plane_blue.pilot.Death();
             plane_blue.ScoreChange( -1 );
           }
 
@@ -634,9 +663,9 @@ void transform_opponent_data()
         case (unsigned int) EVENTS::PILOT_LAND:
         {
           if ( srv_or_cli == SRV_CLI::SERVER )
-            plane_red.pilot->FallSurvive();
+            plane_red.pilot.FallSurvive();
           else
-            plane_blue.pilot->FallSurvive();
+            plane_blue.pilot.FallSurvive();
 
           continue;
         }

@@ -10,11 +10,12 @@ PRODUCTVERSION VER_FILEVERSION
    {
      BLOCK "040904E4"
      {
-       VALUE "CompanyName", "https://regular-dev.org"
+       VALUE "CompanyName", "https://regular-dev.org developer team"
+       VALUE "Comments", "Written by casqade & xion"
        VALUE "FileVersion", VER_FILEVERSION_STR
-       VALUE "FileDescription", "Biplanes Revival"
-       VALUE "LegalCopyright", "Copyright (C) 2023 https://regular-dev.org community"
-       VALUE "OriginalFilename", "Biplanes.exe"
+       VALUE "FileDescription", "Biplanes Revival: An old cellphone game recreated for PC"
+       VALUE "LegalCopyright", "Copyright (C) 2023 https://regular-dev.org (GPLv3)"
+       VALUE "OriginalFilename", "BiplanesRevival.exe"
        VALUE "ProductName", "Biplanes Revival"
        VALUE "ProductVersion", VER_FILEVERSION_STR
      }

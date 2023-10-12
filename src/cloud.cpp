@@ -1,39 +1,31 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/variables.h>
 
 
-#include "include/variables.h"
-
-
-Cloud::Cloud()
-{
-  x = 0.0f;
-  y = 0.0f;
-  dir = false;
-  id = 0;
-  opaque = false;
-}
-
-
-Cloud::Cloud( bool new_dir, unsigned char new_id )
+Cloud::Cloud( bool new_dir, uint8_t new_id )
 {
   dir = new_dir;
   id = new_id;
+
   Respawn();
 }
 
@@ -97,12 +89,12 @@ void Cloud::UpdateCollisionBox()
   collision_box.h = sizes.cloud_sizey;
 }
 
-bool Cloud::isHit( float check_x, float check_y )
+bool Cloud::isHit( float hit_x, float hit_y )
 {
-  return (  check_x > collision_box.x &&
-            check_x < collision_box.x + collision_box.w &&
-            check_y > collision_box.y &&
-            check_y < collision_box.y + collision_box.h );
+  return (  hit_x > collision_box.x &&
+            hit_x < collision_box.x + collision_box.w &&
+            hit_y > collision_box.y &&
+            hit_y < collision_box.y + collision_box.h );
 }
 
 void Cloud::Draw()

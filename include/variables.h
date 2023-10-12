@@ -1,25 +1,24 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#ifndef VARIABLES_H
-#define VARIABLES_H
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#pragma once
 
 // platform detection
 
@@ -39,17 +38,17 @@
 #endif
 
 #if PLATFORM == PLATFORM_WINDOWS
-	#include <winsock2.h>
+    #include <winsock2.h>
 
 #elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <fcntl.h>
-	#include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <fcntl.h>
+    #include <unistd.h>
   #include <arpa/inet.h>
   #include <netdb.h>
 #else
-	#error unknown platform!
+    #error unknown platform!
 
 #endif
 
@@ -86,13 +85,13 @@ extern bool sound_initialized;
 extern bool game_finished;
 
 
-#include "include/server.h"
+#include <include/server.h>
 extern Packet opponent_data;
 extern Packet local_data;
 extern bool opponent_connected;
 
 
-#include "include/sdl.h"
+#include <include/sdl.h>
 extern SDL_Event event;
 extern const SDL_Keycode DEFAULT_THROTTLE_UP;
 extern const SDL_Keycode DEFAULT_THROTTLE_DOWN;
@@ -140,7 +139,7 @@ extern net::ReliableConnection *connection;
 extern const int ProtocolId;
 extern const float TimeOut;
 
-#include "include/structures.h"
+#include <include/structures.h>
 extern Sizes sizes;
 extern Textures textures;
 extern Sounds sounds;
@@ -148,11 +147,11 @@ extern Controls controls_local, controls_opponent;
 extern Statistics stats_recent, stats_total;
 
 
-#include "include/plane.h"
-#include "include/bullet.h"
-#include "include/cloud.h"
-#include "include/zeppelin.h"
-#include "include/menu.h"
+#include <include/plane.h>
+#include <include/bullet.h>
+#include <include/cloud.h>
+#include <include/zeppelin.h>
+#include <include/menu.h>
 
 extern class Plane plane_blue;
 extern class Plane plane_red;
@@ -161,5 +160,3 @@ extern std::vector <Cloud> clouds;
 extern class Zeppelin zeppelin;
 extern class Menu menu;
 
-
-#endif // VARIABLES_H

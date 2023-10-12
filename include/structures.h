@@ -1,26 +1,26 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-202 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#ifndef PLANE_H
-#define PLANE_H
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-#include "include/sdl.h"
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include <include/sdl.h>
 
 
 enum BUTTON_DIR
@@ -69,6 +69,16 @@ namespace SPECIFY
   };
 }
 
+namespace DIFFICULTY
+{
+  enum DIFFICULTY
+  {
+    EASY,
+    MEDIUM,
+    HARD,
+    EVOLVE
+  };
+}
 
 enum class MESSAGE_TYPE
 {
@@ -103,6 +113,8 @@ enum class ROOMS
   MENU_COPYRIGHT,
   MENU_SPLASH,
   MENU_MAIN,
+  MENU_SP,
+  MENU_SP_SETUP,
   MENU_MP,
   MENU_MP_HELP_PAGE1,
   MENU_MP_HELP_PAGE2,
@@ -131,10 +143,33 @@ namespace MENU_MAIN
 {
   enum MENU_MAIN
   {
+    SINGLEPLAYER,
     MULTIPLAYER,
     SETTINGS,
     HELP,
     EXIT
+  };
+}
+
+namespace MENU_SP
+{
+  enum MENU_SP
+  {
+    SETUP_GAME,
+    AI_SIDE,
+    AI_DIFFICULTY,
+    BACK
+  };
+}
+
+namespace MENU_SP_SETUP
+{
+  enum MENU_SP_SETUP
+  {
+    START,
+    GAME_LENGTH,
+    HARDCORE_MODE,
+    BACK
   };
 }
 
@@ -448,5 +483,3 @@ struct Sounds
   Mix_Chunk *loss = NULL;
   Mix_Chunk *rescue = NULL;
 };
-
-#endif //STRUCTURES_H

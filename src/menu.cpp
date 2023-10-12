@@ -1,63 +1,66 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/menu.h>
+#include <include/render.h>
+#include <include/init_vars.h>
+#include <include/matchmake.hpp>
+#include <include/variables.h>
 
 #include <cmath>
-
-#include "include/menu.h"
-#include "include/render.h"
-#include "include/init_vars.h"
-#include "include/matchmake.hpp"
-#include "include/variables.h"
 
 
 Menu::Menu()
 {
-  buttons[ROOMS::MENU_COPYRIGHT] = 0;
-  buttons[ROOMS::MENU_SPLASH] = 0;
-  buttons[ROOMS::MENU_MAIN] = MENU_MAIN::EXIT;
-  buttons[ROOMS::MENU_SETTINGS_CONTROLS] = MENU_SETTINGS_CONTROLS::BACK;
-  buttons[ROOMS::MENU_HELP] = 0;
+  buttons =
+  {
+  {ROOMS::MENU_COPYRIGHT, 0},
+  {ROOMS::MENU_SPLASH, 0},
+  {ROOMS::MENU_MAIN, MENU_MAIN::EXIT},
+  {ROOMS::MENU_SETTINGS_CONTROLS, MENU_SETTINGS_CONTROLS::BACK},
+  {ROOMS::MENU_HELP, 0},
 
-  buttons[ROOMS::MENU_MP] = MENU_MP::BACK;
-  buttons[ROOMS::MENU_MP_HELP_PAGE1] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE2] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE3] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE4] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE5] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE6] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE7] = 0;
-  buttons[ROOMS::MENU_MP_HELP_PAGE8] = 0;
+  {ROOMS::MENU_SP, MENU_SP::BACK},
+  {ROOMS::MENU_SP_SETUP, MENU_SP_SETUP::BACK},
 
-  buttons[ROOMS::MENU_MP_MMAKE] = MENU_MP_MMAKE::BACK;
-  buttons[ROOMS::MENU_MP_MMAKE_FIND_GAME] = MENU_MP_MMAKE::BACK;
+  {ROOMS::MENU_MP, MENU_MP::BACK},
+  {ROOMS::MENU_MP_HELP_PAGE1, 0},
+  {ROOMS::MENU_MP_HELP_PAGE2, 0},
+  {ROOMS::MENU_MP_HELP_PAGE3, 0},
+  {ROOMS::MENU_MP_HELP_PAGE4, 0},
+  {ROOMS::MENU_MP_HELP_PAGE5, 0},
+  {ROOMS::MENU_MP_HELP_PAGE6, 0},
+  {ROOMS::MENU_MP_HELP_PAGE7, 0},
+  {ROOMS::MENU_MP_HELP_PAGE8, 0},
 
-  buttons[ROOMS::MENU_MP_DC] = MENU_MP_DC::BACK;
-  buttons[ROOMS::MENU_MP_DC_HOST] = MENU_MP_DC_HOST::BACK;
-  buttons[ROOMS::MENU_MP_DC_JOIN] = MENU_MP_DC_JOIN::BACK;
-  buttons[ROOMS::MENU_MP_DC_HELP] = 0;
+  {ROOMS::MENU_MP_MMAKE, MENU_MP_MMAKE::BACK},
+  {ROOMS::MENU_MP_MMAKE_FIND_GAME, MENU_MP_MMAKE::BACK},
+//  {ROOMS::MENU_MP_MMAKE_FIND_GAME, MENU_MP_MMAKE_FIND_GAME::BACK},
 
-  buttons[ROOMS::MENU_PAUSE] = MENU_PAUSE::DISCONNECT;
+  {ROOMS::MENU_MP_DC, MENU_MP_DC::BACK},
+  {ROOMS::MENU_MP_DC_HOST, MENU_MP_DC_HOST::BACK},
+  {ROOMS::MENU_MP_DC_JOIN, MENU_MP_DC_JOIN::BACK},
+  {ROOMS::MENU_MP_DC_HELP, 0},
 
-  current_room = ROOMS::MENU_COPYRIGHT;
-  button_selected = 0;
-  button_pressed = true;
-  connected_message_timer = new Timer( 3.0f );
+  {ROOMS::MENU_PAUSE, MENU_PAUSE::DISCONNECT},
+  };
 
   inputIp = SERVER_IP;
   inputPortHost = std::to_string( HOST_PORT );
@@ -107,6 +110,16 @@ void Menu::DrawMenu()
   case ROOMS::MENU_MAIN:
   {
     menu_main();
+    break;
+  }
+  case ROOMS::MENU_SP:
+  {
+    menu_sp();
+    break;
+  }
+  case ROOMS::MENU_SP_SETUP:
+  {
+    menu_sp_setup();
     break;
   }
   case ROOMS::MENU_MP:
@@ -172,20 +185,17 @@ void Menu::DrawMenu()
         net::Address opp = MatchMaker::Inst().opponentAddress();
         srv_or_cli = SRV_CLI::CLIENT;
         SERVER_IP =
-            std::to_string( opp.GetA() ) +
-            std::string( "." ) +
-            std::to_string( opp.GetB() ) +
-            std::string( "." ) +
-            std::to_string( opp.GetC() ) +
-            std::string( "." ) +
-            std::to_string( opp.GetD() );
+            opp.GetA() + "." +
+            opp.GetB() + "." +
+            opp.GetC() + "." +
+            opp.GetD();
 
         SERVER_PORT = opp.GetPort();
       }
       else
         srv_or_cli = SRV_CLI::SERVER;
 
-      if ( game_init() )
+      if ( game_init_mp() )
       {
         log_message( "\nLOG: Failed to initialize game!\n\n" );
         connection->Stop();
@@ -261,7 +271,7 @@ void Menu::DrawMenu()
   }
   case ROOMS::GAME:
   {
-    game_loop();
+      game_loop_mp();
     break;
   }
   default:
@@ -332,9 +342,8 @@ void Menu::DrawMenu()
       }
     }
     else
-    {
       setMessage( MESSAGE_TYPE::NONE );
-    }
+
     break;
   }
   case MESSAGE_TYPE::GAME_WON:
@@ -509,6 +518,11 @@ void Menu::Select()
     {
       switch ( button_selected )
       {
+        case MENU_MAIN::SINGLEPLAYER:
+        {
+          ChangeRoom( ROOMS::MENU_SP );
+          break;
+        }
         case MENU_MAIN::MULTIPLAYER:
         {
           ChangeRoom( ROOMS::MENU_MP );
@@ -532,6 +546,73 @@ void Menu::Select()
     }
     case ROOMS::MENU_HELP:
     {
+      break;
+    }
+    case ROOMS::MENU_SP:
+    {
+      switch ( button_selected )
+      {
+        case MENU_SP::SETUP_GAME:
+        {
+          //  if ai difficulty is evolve:
+          //  switch to room MENU_SP_SETUP_NN
+          ChangeRoom( ROOMS::MENU_SP_SETUP );
+          break;
+        }
+        case MENU_SP::AI_SIDE:
+        {
+          break;
+        }
+        case MENU_SP::AI_DIFFICULTY:
+        {
+          break;
+        }
+        case MENU_SP::BACK:
+        {
+          GoBack();
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    }
+    case ROOMS::MENU_SP_SETUP:
+    {
+      switch ( button_selected )
+      {
+        case MENU_SP_SETUP::START:
+        {
+          if ( game_init_sp() )
+          {
+            log_message( "\nLOG: Failed to initialize SP game!\n\n" );
+
+            ReturnToMainMenu();
+          }
+          else
+            ChangeRoom( ROOMS::GAME );
+
+          break;
+        }
+        case MENU_SP_SETUP::GAME_LENGTH:
+        {
+          // specify game length [ 0(inf) - 99 ]
+          break;
+        }
+        case MENU_SP_SETUP::HARDCORE_MODE:
+        {
+          HARDCORE_MODE = !HARDCORE_MODE; // todo: change to HARDCORE_MODE_SP
+          settings_write();
+          break;
+        }
+        case MENU_SP_SETUP::BACK:
+        {
+          GoBack();
+          break;
+        }
+        default:
+          break;
+      }
       break;
     }
     case ROOMS::MENU_MP:
@@ -675,7 +756,7 @@ void Menu::Select()
         case MENU_MP_DC_HOST::HOST_START:
         {
           srv_or_cli = SRV_CLI::SERVER;
-          if ( game_init() )
+          if ( game_init_mp() )
           {
             log_message( "\nLOG: Failed to initialize game!\n\n" );
             connection->Stop();
@@ -711,7 +792,7 @@ void Menu::Select()
           srv_or_cli = SRV_CLI::CLIENT;
           HARDCORE_MODE = true;
 
-          if ( game_init() )
+          if ( game_init_mp() )
           {
             log_message( "\nLOG: Failed to initialize game!\n\n" );
             connection->Stop();
@@ -849,6 +930,16 @@ void Menu::GoBack()
     {
   //    Exit confirmation?
 //      game_exit = true; // exit with ESCAPE key
+      break;
+    }
+    case ROOMS::MENU_SP:
+    {
+      ChangeRoom( ROOMS::MENU_MAIN );
+      break;
+    }
+    case ROOMS::MENU_SP_SETUP:
+    {
+      ChangeRoom( ROOMS::MENU_SP );
       break;
     }
     case ROOMS::MENU_MP:
@@ -1261,6 +1352,7 @@ void Menu::ReturnToMainMenu()
 
   game_finished = false;
   game_pause = false;
+//  opponent_connected = false;
 
   SDL_SetWindowResizable( gWindow, SDL_TRUE );
   ChangeRoom( ROOMS::MENU_MAIN );
@@ -1329,14 +1421,98 @@ void menu_main()
 
   // Menu text
   draw_text( "BLUETOOTH BIPLANES", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
-  draw_text( "Two Player Game   ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Controls          ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Quit              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "One Player Game   ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
+  draw_text( "Two Player Game   ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( "Controls          ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "Quit              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
 
   draw_text( "Navigate menu with arrow keys   ", sizes.screen_width * 0.005, sizes.screen_height * 0.65 );
   draw_text( "Press[RETURN] to enter submenu  ", sizes.screen_width * 0.005, sizes.screen_height * 0.70 );
   draw_text( "  Press [F1] to see your stats  ", sizes.screen_width * 0.005, sizes.screen_height * 0.75 );
+}
+
+// SINGLEPLAYER CHOOSE OPPONENT
+void menu_sp()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  draw_background();
+  draw_barn();
+
+
+  // Menu box
+  textures.destrect = { 0, sizes.screen_height * 0.3, sizes.screen_width, sizes.screen_height * 0.288 };
+  SDL_RenderCopy( gRenderer, textures.menu_box, NULL, &textures.destrect );
+
+
+  // Menu button
+  draw_menu_button();
+
+  std::string aiDifficulty = "";
+
+  switch ( aiController.getDifficulty() )
+  {
+    case DIFFICULTY::EASY:
+    {
+      aiDifficulty = "First time, huh?";
+      break;
+    }
+    case DIFFICULTY::MEDIUM:
+    {
+      aiDifficulty = "Rookie";
+      break;
+    }
+    case DIFFICULTY::HARD:
+    {
+      aiDifficulty = "Developer";
+      break;
+    }
+    case DIFFICULTY::EVOLVE:
+    {
+      aiDifficulty = "Evolve";
+      break;
+    }
+  }
+
+  // Menu text
+  draw_text( "CHOOSE OPPONENT   ",        sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
+  draw_text( "Setup Game        ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
+  draw_text( "AI side:          ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( "AI difficulty:    ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( aiDifficulty.c_str(),        sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( "Back              ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+}
+
+// SINGLEPLAYER SETUP GAME
+void menu_sp_setup()
+{
+  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  SDL_RenderClear( gRenderer );
+
+  draw_background();
+  draw_barn();
+
+  std::string hardcore = HARDCORE_MODE == true ? "On" : "Off";
+
+  // Menu box
+  textures.destrect = { 0, sizes.screen_height * 0.3, sizes.screen_width, sizes.screen_height * 0.288 };
+  SDL_RenderCopy( gRenderer, textures.menu_box, NULL, &textures.destrect );
+
+
+  // Menu button
+  draw_menu_button();
+
+
+  // Menu text
+  draw_text( "SETUP GAME        ",        sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
+  draw_text( "Start Game        ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
+  draw_text( "Game length:      ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( menu.getInputPass().c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
+  draw_text( "Hardcore mode:    ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( hardcore.c_str(),            sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
+  draw_text( "Back              ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
 }
 
 // MULTIPLAYER SELECT
@@ -1359,7 +1535,7 @@ void menu_mp()
 
 
   // Menu text
-  draw_text( "Two Player Game   ", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
+  draw_text( "TWO PLAYER GAME   ", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
   draw_text( "Matchmaking       ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Direct Connect    ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
@@ -1387,7 +1563,7 @@ void menu_mp_mmake()
 
 
   // Menu text
-  draw_text( "Matchmaking       ",        sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
+  draw_text( "MATCHMAKING       ",        sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
   draw_text( "Find Game         ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Password:         ",        sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( menu.getInputPass().c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
@@ -1427,11 +1603,6 @@ void menu_mp_mmake()
   }
 }
 
-// MULTIPLAYER MMAKE FIND GAME
-void menu_mp_mmake_find_game()
-{
-}
-
 // MULTIPLAYER DC
 void menu_mp_dc()
 {
@@ -1452,7 +1623,7 @@ void menu_mp_dc()
 
 
   // Menu text
-  draw_text( "Direct Connect    ", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
+  draw_text( "DIRECT CONNECT    ", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
   draw_text( "Start Network Game", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Join Network Game ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
@@ -1481,7 +1652,7 @@ void menu_mp_dc_host()
 
 
   // Menu text
-  draw_text( "Host Two Player Game  ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
+  draw_text( "HOST TWO PLAYER GAME  ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
   draw_text( "Start Two Player Game ",          sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Host Port:            ",          sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( menu.getInputPortHost().c_str(),   sizes.screen_width * 0.825, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
@@ -1540,7 +1711,7 @@ void menu_mp_dc_join()
 
 
   // Menu text
-  draw_text( "Join Two Player Game",            sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
+  draw_text( "JOIN TWO PLAYER GAME",            sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
   draw_text( "Connect             ",            sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
   draw_text( "Server IP:          ",            sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
   draw_text( menu.getInputIp().c_str(),         sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
@@ -1892,13 +2063,19 @@ void menu_recent_stats()
   const float accuracy          = std::isnan( total_hits / stats_recent.shots ) ? 0.0f : total_hits * 100.0f / stats_recent.shots;
 
   const float suicides          = stats_recent.crashes + stats_recent.falls;
-  const float selfPreservation  = std::isnan( stats_recent.rescues / ( suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( suicides + stats_recent.rescues );
+        float selfPreservation  = std::isnan( stats_recent.rescues / ( suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( suicides + stats_recent.rescues );
 
   const float totalKills        = stats_recent.plane_kills + stats_recent.pilot_hits;
   const float killsDeaths       = std::isnan( totalKills / ( suicides + stats_recent.deaths ) ) ? 0.0f : totalKills / ( suicides + stats_recent.deaths );
-  const float survivability     = std::isnan( stats_recent.rescues / ( stats_recent.deaths + suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( stats_recent.deaths + suicides + stats_recent.rescues );
+        float survivability     = std::isnan( stats_recent.rescues / ( stats_recent.deaths + suicides + stats_recent.rescues ) ) ? 0.0f : stats_recent.rescues * 100.0f / ( stats_recent.deaths + suicides + stats_recent.rescues );
 
   const float avgBulletsForKill  = std::isnan( stats_recent.shots / totalKills ) ? 0.0f : stats_recent.shots / totalKills;
+
+  if ( ( totalKills > 0 || stats_recent.deaths > 0 ) && suicides + stats_recent.rescues == 0 )
+    selfPreservation = 100.0f;
+
+  if ( totalKills > 0 && stats_recent.rescues + stats_recent.deaths + suicides == 0 )
+    survivability = 100.0f;
 
   draw_text(        "      Last dogfight stats:      ", 0, 0 );
   char textbuf[40];
@@ -1908,13 +2085,13 @@ void menu_recent_stats()
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
   sprintf( textbuf, "  %d chute hits", stats_recent.chute_hits );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
-  sprintf( textbuf, "  %d pilot kills", stats_recent.pilot_hits );
+  sprintf( textbuf, "  %d pilot hits", stats_recent.pilot_hits );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
   sprintf( textbuf, "  %d misses", misses );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
   sprintf( textbuf, "Your accuracy: %.2f%%", accuracy );
   draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
-  sprintf( textbuf, "Average bullets for kill: %.2f", avgBulletsForKill );
+  sprintf( textbuf, "Average shots per kill: %.2f", avgBulletsForKill );
   draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
 
   sprintf( textbuf, "  %d jumps", stats_recent.jumps );
@@ -1923,7 +2100,7 @@ void menu_recent_stats()
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
   sprintf( textbuf, "  %d fall deaths", stats_recent.falls );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
-  sprintf( textbuf, "  %d sucessful jumps", stats_recent.rescues );
+  sprintf( textbuf, "  %d successful jumps", stats_recent.rescues );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
   sprintf( textbuf, "Your self-preservation: %.2f%%", selfPreservation );
   draw_text( textbuf, 0,                          sizes.screen_height * 0.650 );
@@ -1951,9 +2128,12 @@ void menu_total_stats_page1()
   const float accuracy          = std::isnan( total_hits / stats_total.shots ) ? 0.0f : total_hits * 100.0f / stats_total.shots;
 
   const float suicides          = stats_total.crashes + stats_total.falls;
-  const float selfPreservation  = std::isnan( stats_total.rescues / ( suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( suicides + stats_total.rescues );
+        float selfPreservation  = std::isnan( stats_total.rescues / ( suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( suicides + stats_total.rescues );
   const float totalKills        = stats_total.plane_kills + stats_total.pilot_hits;
-  const float avgBulletsForKill = std::isnan( stats_total.shots / totalKills ) ? 0.0f : stats_total.shots / totalKills;
+  const float avgBulletsPerKill = std::isnan( stats_total.shots / totalKills ) ? 0.0f : stats_total.shots / totalKills;
+
+  if ( ( totalKills > 0 || stats_total.deaths > 0 ) && suicides + stats_total.rescues == 0 )
+    selfPreservation = 100.0f;
 
   draw_text(        "          Total stats:          ", 0, 0 );
   char textbuf[40];
@@ -1968,8 +2148,8 @@ void menu_total_stats_page1()
   sprintf( textbuf, "  %d misses", misses );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
   sprintf( textbuf, "Your accuracy: %.2f%%", accuracy );
-  draw_text( textbuf, 0, sizes.screen_height * 0.300 );
-  sprintf( textbuf, "Average bullets for kill: %.2f", avgBulletsForKill );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  sprintf( textbuf, "Average shots per kill: %.2f", avgBulletsPerKill );
   draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
 
   sprintf( textbuf, "  %d jumps", stats_total.jumps );
@@ -1978,10 +2158,10 @@ void menu_total_stats_page1()
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
   sprintf( textbuf, "  %d fall deaths", stats_total.falls );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
-  sprintf( textbuf, "  %d sucessful jumps", stats_total.rescues );
+  sprintf( textbuf, "  %d successful jumps", stats_total.rescues );
   draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
   sprintf( textbuf, "Your self-preservation: %.2f%%", selfPreservation );
-  draw_text( textbuf, 0, sizes.screen_height * 0.650 );
+  draw_text( textbuf, 0,                          sizes.screen_height * 0.650 );
 }
 
 // TOTAL STATS PAGE 2
@@ -1993,8 +2173,11 @@ void menu_total_stats_page2()
   const float suicides          = stats_total.crashes + stats_total.falls;
   const int   totalKills        = stats_total.plane_kills + stats_total.pilot_hits;
   const float killsDeaths       = std::isnan( totalKills / ( suicides + stats_total.deaths ) ) ? 0.0f : totalKills / ( suicides + stats_total.deaths );
-  const float survivability     = std::isnan( stats_total.rescues / ( stats_total.deaths + suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( stats_total.deaths + suicides + stats_total.rescues );
+        float survivability     = std::isnan( stats_total.rescues / ( stats_total.deaths + suicides + stats_total.rescues ) ) ? 0.0f : stats_total.rescues * 100.0f / ( stats_total.deaths + suicides + stats_total.rescues );
   const float winLose           = std::isnan( (float) stats_total.wins / stats_total.losses ) ? 0.0f : stats_total.wins * 100.0f / stats_total.losses;
+
+  if ( stats_total.wins > 0 && stats_total.rescues + stats_total.deaths + suicides == 0 )
+    survivability = 100.0f;
 
   draw_text(        "          Total stats:          ", 0, 0 );
   char textbuf[40];
@@ -2124,8 +2307,8 @@ void menu_copyright()
   draw_text( "       All Rights Reserved      ", 0, sizes.screen_height * 0.450 );
   draw_text( "       www.morpheme.co.uk       ", 0, sizes.screen_height * 0.500 );
 
-  draw_text( "  Brought to PC in 01.04.20 by  ", 0, sizes.screen_height * 0.650 );
-  draw_text( "          two guys  at          ", 0, sizes.screen_height * 0.700 );
+  draw_text( "  Brought to PC on 01.04.20 by  ", 0, sizes.screen_height * 0.650 );
+  draw_text( "       casqade & xion  at       ", 0, sizes.screen_height * 0.700 );
   draw_text( "     github.com/regular-dev     ", 0, sizes.screen_height * 0.750 );
   draw_text( "         regular-dev.org        ", 0, sizes.screen_height * 0.800 );
 

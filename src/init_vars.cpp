@@ -1,25 +1,26 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#include "include/init_vars.h"
-#include "include/variables.h"
-#include "include/utility.h"
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/init_vars.h>
+#include <include/variables.h>
+#include <include/utility.h>
 
 
 // Set packet values to defaults
@@ -45,7 +46,7 @@ void init_vars()
   sizes.text_sizex = sizes.screen_width / 32;
   sizes.text_sizey = sizes.screen_height / 26;
 
-  sizes.button_sizex = sizes.screen_width - sizes.screen_width * 0.016f;
+  sizes.button_sizex = sizes.screen_width * 0.984f;
   sizes.button_sizey = sizes.screen_height * 0.0577f;
 
   sizes.winScore = 10;
@@ -170,8 +171,6 @@ void init_vars()
   sizes.zeppelin_score_sizey = sizes.screen_height * 0.0288f;
 }
 
-
-// Load textures
 void textures_load()
 {
   log_message( "RESOURCES: Loading textures..." );
@@ -306,23 +305,24 @@ void textures_load()
   log_message( "\nRESOURCES: Finished loading textures!\n\n" );
 }
 
-
-// Load sounds
 void sounds_load()
 {
-    log_message( "RESOURCES: Loading sounds..." );
+  if ( !sound_initialized )
+    return;
 
-    sounds.shoot = loadSound( "assets/sounds/shoot.wav" );
-    sounds.hit = loadSound( "assets/sounds/hit.wav" );
-    sounds.hitChute = loadSound( "assets/sounds/hit_chute.wav" );
-    sounds.hitMiss = loadSound( "assets/sounds/hit_miss.wav" );
-    sounds.expl = loadSound( "assets/sounds/expl.wav" );
-    sounds.fall = loadSound( "assets/sounds/fall.wav" );
-    sounds.chute = loadSound( "assets/sounds/chute.wav" );
-    sounds.dead = loadSound( "assets/sounds/dead.wav" );
-    sounds.victory = loadSound( "assets/sounds/victory.wav" );
-    sounds.loss = loadSound( "assets/sounds/loss.wav" );
-    sounds.rescue = loadSound( "assets/sounds/rescue.wav" );
+  log_message( "RESOURCES: Loading sounds..." );
 
-    log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
+  sounds.shoot = loadSound( "assets/sounds/shoot.ogg" );
+  sounds.hit = loadSound( "assets/sounds/hit.ogg" );
+  sounds.hitChute = loadSound( "assets/sounds/hit_chute.ogg" );
+  sounds.hitMiss = loadSound( "assets/sounds/hit_miss.ogg" );
+  sounds.expl = loadSound( "assets/sounds/expl.ogg" );
+  sounds.fall = loadSound( "assets/sounds/fall.ogg" );
+  sounds.chute = loadSound( "assets/sounds/chute.ogg" );
+  sounds.dead = loadSound( "assets/sounds/dead.ogg" );
+  sounds.victory = loadSound( "assets/sounds/victory.ogg" );
+  sounds.loss = loadSound( "assets/sounds/loss.ogg" );
+  sounds.rescue = loadSound( "assets/sounds/rescue.ogg" );
+
+  log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
 }

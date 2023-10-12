@@ -1,25 +1,26 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#include <math.h>
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-#include "include/variables.h"
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/variables.h>
+
+#include <cmath>
 
 
 void BulletSpawner::SpawnBullet( float plane_x, float plane_y, float plane_dir, bool plane_type )
@@ -50,10 +51,60 @@ void BulletSpawner::Draw()
 {
   for ( Bullet &bullet : instances )
     bullet.Draw();
+
+  if ( show_hitboxes )
+  {
+    Plane* plane = nullptr;
+
+      plane = (int) (srv_or_cli) ? &plane_red : &plane_blue;
+
+    if ( !plane )
+      return;
+
+    Bullet bullet = GetClosestBullet( plane->getX(), plane->getY(), plane->getType() );
+
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawLine( gRenderer, plane->getX(), plane->getY(), bullet.x, bullet.y );
+  }
+}
+
+Bullet BulletSpawner::GetClosestBullet( const float planeX, const float planeY, const bool planeType )
+{
+  std::pair <uint32_t, float> minDistance;
+  bool minDistanceHasValue = false;
+
+  for ( uint32_t index = 0; index < instances.size(); ++index )
+  {
+    if ( !instances[index].alive || instances[index].fired_by == planeType )
+      continue;
+
+    float distance = sqrt( pow( instances[index].x - planeX, 2 ) + pow( instances[index].y - planeY, 2 ) );
+
+    if ( !minDistanceHasValue )
+    {
+      minDistance = { index, distance };
+      minDistanceHasValue = true;
+
+      continue;
+    }
+
+    if ( distance < minDistance.second )
+      minDistance = { index, distance };
+  }
+
+  if ( !minDistanceHasValue )
+    return Bullet( 0.0f, 0.0f, 0.0f, planeType );
+
+  return instances[minDistance.first];
 }
 
 
-Bullet::Bullet( float plane_x, float plane_y, float plane_dir, bool plane_type )
+Bullet::Bullet(
+  float plane_x,
+  float plane_y,
+  float plane_dir,
+  bool plane_type )
+  : hit_anim(0.0f)
 {
   alive = true;
   x = plane_x;
@@ -61,7 +112,7 @@ Bullet::Bullet( float plane_x, float plane_y, float plane_dir, bool plane_type )
   dir = plane_dir;
   fired_by = plane_type;
   hit_frame = 0;
-  hit_anim = new Timer( sizes.bullet_hit_frame_time );
+  hit_anim = Timer( sizes.bullet_hit_frame_time );
   hit_destrect = {};
 }
 
@@ -69,7 +120,7 @@ void Bullet::Update()
 {
   UpdateCoordinates();
   HitAnimUpdate();
-  hit_anim->Update();
+  hit_anim.Update();
 }
 
 void Bullet::UpdateCoordinates()
@@ -103,18 +154,18 @@ void Bullet::UpdateCoordinates()
         plane_blue.Hit( fired_by );
       }
       // HIT CHUTE
-      if ( plane_blue.pilot->ChuteisHit( x, y ) )
+      if ( plane_blue.pilot.ChuteisHit( x, y ) )
       {
         Destroy();
-        plane_blue.pilot->ChuteHit();
+        plane_blue.pilot.ChuteHit();
 
         event_push( (unsigned char) EVENTS::HIT_CHUTE );
       }
       // HIT PILOT
-      if ( plane_blue.pilot->isHit( x, y ) )
+      if ( plane_blue.pilot.isHit( x, y ) )
       {
         Destroy();
-        plane_blue.pilot->Kill( fired_by );
+        plane_blue.pilot.Kill( fired_by );
 
         event_push( (unsigned char) EVENTS::HIT_PILOT );
       }
@@ -128,18 +179,18 @@ void Bullet::UpdateCoordinates()
         plane_red.Hit( fired_by );
       }
       // HIT CHUTE
-      if ( plane_red.pilot->ChuteisHit( x, y ) )
+      if ( plane_red.pilot.ChuteisHit( x, y ) )
       {
         Destroy();
-        plane_red.pilot->ChuteHit();
+        plane_red.pilot.ChuteHit();
 
         event_push( (unsigned char) EVENTS::HIT_CHUTE );
       }
       // HIT PILOT
-      if ( plane_red.pilot->isHit( x, y ) )
+      if ( plane_red.pilot.isHit( x, y ) )
       {
         Destroy();
-        plane_red.pilot->Kill( fired_by );
+        plane_red.pilot.Kill( fired_by );
 
         event_push( (unsigned char) EVENTS::HIT_PILOT );
       }
@@ -189,9 +240,9 @@ void Bullet::HitAnimUpdate()
 
   if ( hit_frame > 0 && hit_frame < 6 )
   {
-    if ( hit_anim->isReady() )
+    if ( hit_anim.isReady() )
     {
-      hit_anim->Start();
+      hit_anim.Start();
       hit_frame++;
     }
   }

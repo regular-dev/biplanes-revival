@@ -39,3 +39,4 @@ obj/
 *.depend
 *.ini
 *.log
+*.logs

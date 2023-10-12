@@ -1,29 +1,29 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/render.h>
+#include <include/variables.h>
+
+#include <string>
 
 
-#include <string.h>
-
-#include "include/render.h"
-#include "include/variables.h"
-
-
-// Render text
 void draw_text( const char text[], int x, int y )
 {
   for ( unsigned int i = 0; i < strlen(text); i++ )
@@ -36,8 +36,6 @@ void draw_text( const char text[], int x, int y )
   }
 }
 
-
-// Render menu button
 void draw_menu_button()
 {
   SDL_Rect srcrect = { sizes.button_x, 0, 127, 12 };
@@ -48,8 +46,6 @@ void draw_menu_button()
   SDL_RenderCopy( gRenderer, textures.menu_moving_button, &srcrect, &textures.destrect );
 }
 
-
-// Draw background
 void draw_background()
 {
   // Clear buffer
@@ -70,8 +66,6 @@ void draw_background()
   }
 }
 
-
-// Draw barn
 void draw_barn()
 {
   textures.destrect.x = int(sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5);
@@ -106,9 +100,6 @@ void draw_barn()
   }
 }
 
-
-
-// Draw score
 void draw_score()
 {
   char text [5];
@@ -116,8 +107,6 @@ void draw_score()
   draw_text ( text, sizes.screen_width * 0.45, sizes.screen_height * 0.5 );
 }
 
-
-// Update screen
 void display_update()
 {
   SDL_RenderPresent( gRenderer );

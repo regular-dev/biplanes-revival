@@ -1,24 +1,25 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#include "include/matchmake.hpp"
-#include "include/picojson.h"
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#include <include/matchmake.hpp>
+#include <lib/picojson.h>
 
 #include <sstream>
 #include <chrono>
@@ -78,7 +79,7 @@ void MatchMaker::update()
       m_mm_stream_sock.Send( _mmakeServAddr, str_msg_mm_socket.c_str(), str_msg_mm_socket.size() );
       log_message( "NETWORK MMAKE: Sent status to matchmake server from mm_socket", "\n" );
 
-      timer->SetNewCounter( 0.6f );
+      timer->SetNewTimeout( 0.6f );
       timer->Start();
 
       _state = MatchMakerState::FIND_END;
@@ -94,7 +95,7 @@ void MatchMaker::update()
       log_message( "NETWORK MMAKE: Sent status to matchmake server from game socket", "\n" );
       log_message( "NETWORK MMAKE: Waiting for matchmake server reply...", "\n" );
 
-      timer->SetNewCounter( 5.0f );
+      timer->SetNewTimeout( 5.0f );
       timer->Start();
 
       _state = MatchMakerState::MATCH_WAIT;
@@ -137,14 +138,14 @@ void MatchMaker::update()
       std::string opp_port = "";
       std::string instanceSrvCli = "";
 
-      const picojson::value::object& obj = json_recvd.get<picojson::object>();
-      for ( picojson::value::object::const_iterator i = obj.begin();
-            i != obj.end();
-            ++i )
+      const picojson::value::object& reply = json_recvd.get<picojson::object>();
+      for ( picojson::value::object::const_iterator param = reply.begin();
+            param != reply.end();
+            ++param )
       {
-        if ( i->first == "type" )
+        if ( param->first == "type" )
         {
-          int msgType = i->second.get <double> ();
+          int msgType = param->second.get <double> ();
           if ( msgType == (int) MatchConnectStatus::MMECHO )
           {
             log_message( "NETWORK MMAKE: Matchmake server echo", "\n", "\n" );
@@ -158,22 +159,30 @@ void MatchMaker::update()
             foundOpponent = true;
           }
         }
-        if ( i->first == "ip" )
-          opp_ip = i->second.to_str();
+        if ( param->first == "ip" )
+          opp_ip = param->second.to_str();
 
-        if ( i->first == "port" )
-          opp_port = i->second.to_str();
+        if ( param->first == "port" )
+          opp_port = param->second.to_str();
 
-        if ( i->first == "cs" )
+        if ( param->first == "cs" )
         {
-          if ( i->second.to_str() == "server" )
+          if ( param->second.to_str() == "server" )
             _srv_or_cli = false;
-          else
+          else if ( param->second.to_str() == "client" )
             _srv_or_cli = true;
+          else
+          {
+            log_message( "NETWORK MMAKE: Malformed matchmake server reply!", "\n" );
+            log_message( "NETWORK MMAKE: Aborting matchmaking session", "\n" );
 
-          instanceSrvCli = i->second.to_str();
+            break;
+          }
+
+          instanceSrvCli = param->second.to_str();
         }
       }
+
       if ( !foundOpponent )
         break;
 
@@ -187,7 +196,7 @@ void MatchMaker::update()
       log_message( "NETWORK MMAKE: Executing NAT hole punching...", "\n" );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
 
-      timer->SetNewCounter( 0.100f );
+      timer->SetNewTimeout( 0.100f );
       timer->Start();
       _state = MatchMakerState::MATCH_NAT_PUNCH_0;
 
@@ -201,8 +210,8 @@ void MatchMaker::update()
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       if ( _srv_or_cli )
       {
-        // wait for opp nat entry
-        timer->SetNewCounter( 5.0f );
+        // wait for opponent's NAT entry
+        timer->SetNewTimeout( 5.0f );
         timer->Start();
       }
       _state = MatchMakerState::MATCH_NAT_PUNCH_1;
@@ -214,12 +223,12 @@ void MatchMaker::update()
       if ( !timer->isReady() )
         break;
 
-      // send several: first packet could be dropped by nat
+//      send several: first packet could be dropped by NAT
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
       matchSendStatus( MatchConnectStatus::P2PACCEPT, _opponentAddress );
 
-      timer->SetNewCounter( 0.200f );
+      timer->SetNewTimeout( 0.200f );
       timer->Start();
 
       _state = MatchMakerState::MATCH_NAT_PUNCH_2;
@@ -239,7 +248,7 @@ void MatchMaker::update()
       log_message( "NETWORK MMAKE: Awaiting opponent reply...", "\n" );
       menu.setMessage( MESSAGE_TYPE::P2P_WAIT_ANSWER );
 
-      timer->SetNewCounter( MATCH_MAKE_TIMEOUT );
+      timer->SetNewTimeout( MATCH_MAKE_TIMEOUT );
       timer->Start();
 
       _state = MatchMakerState::MATCH_NAT_PUNCH_3;
@@ -303,7 +312,7 @@ void MatchMaker::matchSendStatus( MatchConnectStatus mcs, net::Address addr_send
 }
 
 
-net::Address toAddress( std::string inputAddr, std::string inputPort )
+net::Address toAddress( const std::string& inputAddr, const std::string& inputPort )
 {
   std::stringstream s( inputAddr );
   int a, b, c, d;

@@ -1,33 +1,34 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#if PLATFORM == PLATFORM_UNIX
+  #include <time.h>
+#endif
+
+#include <include/variables.h>
+#include <include/utility.h>
+#include <lib/picojson.h>
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
-#if PLATFORM == PLATFORM_UNIX
-	#include <time.h>
-#endif
-
-#include "include/variables.h"
-#include "include/utility.h"
-#include "include/picojson.h"
 
 
 double getCurrentTime()
@@ -41,7 +42,7 @@ double getCurrentTime()
 }
 
 
-void countDelta()
+double countDelta()
 {
 #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
   EndingTime = getCurrentTime() / 1000000.0;
@@ -54,6 +55,8 @@ void countDelta()
   deltaTime = static_cast <double> ( EndingTime.QuadPart - StartingTime.QuadPart ) / Frequency.QuadPart;
   QueryPerformanceCounter( &StartingTime );
 #endif
+
+  return deltaTime;
 }
 
 
@@ -246,8 +249,7 @@ void logVerReadSettings()
   }
 }
 
-// LOG MESSAGES
-void log_message( std::string message, std::string buffer1, std::string buffer2, std::string buffer3 )
+void log_message( const std::string& message, const std::string& buffer1, const std::string& buffer2, const std::string& buffer3 )
 {
   if ( consoleOutput )
     std::cout << message << buffer1 << buffer2 << buffer3;
@@ -412,10 +414,10 @@ bool stats_read()
 }
 
 
-Timer::Timer( float set_cooldown )
+Timer::Timer( const float newTimeout )
 {
   counter = 0.0f;
-  cooldown = set_cooldown;
+  timeout = newTimeout;
   counting = false;
 }
 
@@ -444,20 +446,20 @@ void Timer::Stop()
 
 void Timer::Reset()
 {
-  counter = cooldown;
+    counter = timeout;
 }
 
-void Timer::SetNewCounter( float new_counter )
+void Timer::SetNewTimeout( float newTimeout )
 {
-  cooldown = new_counter;
+    timeout = newTimeout;
 }
 
-float Timer::remainderTime()
+float Timer::remainderTime() const
 {
   return counter;
 }
 
-bool Timer::isReady()
+bool Timer::isReady() const
 {
   return counter <= 0.0f;
 }

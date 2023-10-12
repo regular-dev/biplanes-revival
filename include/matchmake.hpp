@@ -1,28 +1,28 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#ifndef H_MATCHMAKE
-#define H_MATCHMAKE
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include <lib/Net.h>
 
 #include <string>
-
-#include "include/Net.h"
 
 
 #define MATCHMAKE_SOCKET_PORT 50005
@@ -60,7 +60,7 @@ enum class MatchMakerState
   MATCH_TIMEOUT
 };
 
-net::Address toAddress(std::string inputAddr, std::string inputPort);
+net::Address toAddress( const std::string& inputAddr, const std::string& inputPort);
 
 class MatchMaker
 {
@@ -81,7 +81,7 @@ private:
   bool _srv_or_cli;
 
 public:
-  static MatchMaker &Inst()
+  static MatchMaker& Inst()
   {
     static MatchMaker inst;
     return inst;
@@ -90,8 +90,6 @@ public:
   inline std::string password() const { return passwd; }
   inline void setPassword( const std::string& s ) { passwd = s; }
 
-  // false for server && true for client
-  net::Address matchWaitForOpponent( bool& client_or_srv );
   void matchInitForOpponent();
   void matchSendStatus( MatchConnectStatus mcs, net::Address addr_send );
 
@@ -102,5 +100,3 @@ public:
   bool srv_or_cli();
   net::Address opponentAddress();
 };
-
-#endif

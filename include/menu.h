@@ -1,51 +1,51 @@
-//    Biplanes Revival
-//    Copyright (C) 2019-2020 Regular-dev community
-//    https://regular-dev.org/
-//    regular.dev.org@gmail.com
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+/*
+  Biplanes Revival
+  Copyright (C) 2019-2023 Regular-dev community
+  https://regular-dev.org
+  regular.dev.org@gmail.com
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-#ifndef MENU_H
-#define MENU_H
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include <include/structures.h>
+#include <include/utility.h>
 
 #include <map>
-
-#include "include/structures.h"
-#include "include/utility.h"
 
 
 class Menu
 {
 private:
-  ROOMS current_room;
-  std::map <ROOMS, unsigned char> buttons;
-  unsigned char button_selected;
-  bool button_pressed;
+  ROOMS current_room {ROOMS::MENU_COPYRIGHT};
+  std::map <ROOMS, unsigned char> buttons {};
+  uint8_t button_selected {};
+  bool button_pressed {true};
 
-  bool specifying_var[3];
-  bool typing;
-  unsigned char define_key;
-  bool defining_key;
+  bool specifying_var[3] {};
+  bool typing {};
+  uint8_t define_key {};
+  bool defining_key {};
 
-  std::string inputIp;
-  std::string inputPortHost;
-  std::string inputPortClient;
-  std::string inputPass;
+  std::string inputIp {};
+  std::string inputPortHost {};
+  std::string inputPortClient {};
+  std::string inputPass {};
 
-  MESSAGE_TYPE message;
-  Timer *connected_message_timer;
+  MESSAGE_TYPE message {};
+  Timer* connected_message_timer {new Timer(3.0f)};
 
 public:
   Menu();
@@ -79,7 +79,7 @@ public:
 };
 
 
-void game_loop();
+void game_loop_mp();
 void game_close();
 void menu_main();
 void menu_settings_controls();
@@ -89,10 +89,12 @@ void menu_total_stats_page1();
 void menu_total_stats_page2();
 void stats_update();
 
+void menu_sp();
+void menu_sp_setup();
+
 void menu_mp();
 
 void menu_mp_mmake();
-void menu_mp_mmake_find_game();
 
 void menu_mp_dc();
 void menu_mp_dc_host();
@@ -114,5 +116,3 @@ void menu_splash();
 
 void window_resize();
 void sendDisconnectMessage();
-
-#endif // MENU_H
