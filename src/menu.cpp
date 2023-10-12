@@ -91,7 +91,7 @@ void Menu::ResizeWindow()
 void Menu::DrawMenu()
 {
   if ( game_pause )
-    game_loop();
+    game_loop_mp();
   else
     connected_message_timer->Update();
 
@@ -1451,30 +1451,6 @@ void menu_sp()
   draw_menu_button();
 
   std::string aiDifficulty = "";
-
-  switch ( aiController.getDifficulty() )
-  {
-    case DIFFICULTY::EASY:
-    {
-      aiDifficulty = "First time, huh?";
-      break;
-    }
-    case DIFFICULTY::MEDIUM:
-    {
-      aiDifficulty = "Rookie";
-      break;
-    }
-    case DIFFICULTY::HARD:
-    {
-      aiDifficulty = "Developer";
-      break;
-    }
-    case DIFFICULTY::EVOLVE:
-    {
-      aiDifficulty = "Evolve";
-      break;
-    }
-  }
 
   // Menu text
   draw_text( "CHOOSE OPPONENT   ",        sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );

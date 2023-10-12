@@ -268,8 +268,6 @@ bool game_init_sp()
 {
   SDL_SetWindowResizable( gWindow, SDL_FALSE );
 
-  aiController.setActive( true );
-
   srv_or_cli = SRV_CLI::SERVER;
 
   opponent_connected = true;

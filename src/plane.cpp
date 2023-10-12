@@ -63,8 +63,8 @@ void Plane::Input::Decelerate()
 void Plane::Input::TurnLeft()
 {
   if ( plane->jump )
-  else if ( plane->type == (int) srv_or_cli )
     plane->pilot.Move( PLANE_PITCH::PITCH_LEFT );
+  else if ( plane->type == (int) srv_or_cli )
     plane->Turn( PLANE_PITCH::PITCH_LEFT );
 }
 
@@ -72,8 +72,8 @@ void Plane::Input::TurnLeft()
 void Plane::Input::TurnRight()
 {
   if ( plane->jump )
-  else if ( plane->type == (int) srv_or_cli )
     plane->pilot.Move( PLANE_PITCH::PITCH_RIGHT );
+  else if ( plane->type == (int) srv_or_cli )
     plane->Turn( PLANE_PITCH::PITCH_RIGHT );
 }
 
@@ -222,7 +222,7 @@ void Plane::Shoot()
   if ( jump || dead || onground || !protection.isReady() )
     return;
 
-  if ( fire_cooldown->isReady() || type != (int) srv_or_cli )
+  if ( fire_cooldown.isReady() || type != (int) srv_or_cli )
   {
     if ( type == (int) srv_or_cli )
     {
@@ -671,7 +671,7 @@ void Plane::Hit( bool hit_by )
 
   if ( type == (int) srv_or_cli )
   {
-    if ( protection->isReady() )
+    if ( protection.isReady() )
       event_push( (unsigned char) EVENTS::HIT_PLANE );
     else
       return;
@@ -1511,9 +1511,4 @@ void Plane::setCoords( Plane_Data data )
 void Plane::setDir( float new_dir )
 {
   dir = new_dir;
-}
-
-bool Plane::isDead()
-{
-  return ( pilot->isDead() || ( !jump && dead ) );
 }

@@ -26,6 +26,7 @@ void init_vars();
 
 void game_reset();
 bool game_init_mp();
+bool game_init_sp();
 
 void textures_load();
 void sounds_load();
