@@ -21,8 +21,7 @@
 #pragma once
 
 
-void draw_text( const char text[], int x, int y );
-void draw_menu_button();
+void draw_text( const char text[], const int x, const int y );
 void draw_background();
 void draw_barn();
 void draw_score();

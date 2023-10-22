@@ -20,19 +20,24 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
+
+class Timer
+{
+private:
+  float mTimeout {};
+  float mCounter {};
+  bool mIsCounting {};
 
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+public:
+  Timer( const float timeout );
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+  void Update();
+  void Start();
+  void Stop();
+  void Reset();
+  void SetNewTimeout( const float );
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+  float remainderTime() const;
+  bool isReady() const;
+};

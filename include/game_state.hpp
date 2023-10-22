@@ -20,19 +20,57 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
+#include <include/enums.hpp>
+#include <include/stats.hpp>
+
+#include <map>
 
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+struct GameState
+{
+private:
+  using DIFFICULTY = DIFFICULTY::DIFFICULTY;
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+public:
+
+  struct
+  {
+    Statistics total {};
+
+    std::map <PLANE_TYPE, Statistics> recent {};
+
+  } stats {};
+
+
+  struct
+  {
+    bool toConsole {};
+    bool toFile {true};
+    bool stats {true};
+
+  } output {};
+
+
+  struct
+  {
+    bool collisions {};
+    bool aiInputs {};
+
+  } debug {};
+
+
+  bool isPaused {};
+  bool isExiting {};
+  bool isRoundFinished {};
+  bool isHardcoreEnabled {};
+
+  GAME_MODE gameMode {};
+  DIFFICULTY botDifficulty {DIFFICULTY::MEDIUM};
+  uint8_t winScore {10};
+
+
+  GameState() = default;
+};
+
+GameState& gameState();

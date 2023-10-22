@@ -20,51 +20,77 @@
 
 #pragma once
 
-#include <include/plane.h>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+#include <include/timer.hpp>
 
 #include <vector>
 
 
-class Bullet;
-class Plane;
-
-class BulletSpawner
-{
-  std::vector <Bullet> instances;
-
-public:
-  void SpawnBullet( float planeX, float planeY, float planeDir, bool planeType );
-  void Clear();
-  void UpdateBullets();
-  void Draw();
-
-  Bullet GetClosestBullet( const float planeX, const float planeY, const bool planeType );
-};
-
 class Bullet
 {
-  bool alive;
-  float x;
-  float y;
-  float dir;
-  bool fired_by;
-  char hit_frame;
-  Timer hit_anim;
-  SDL_Rect hit_destrect;
+  float mX {};
+  float mY {};
+  float mDir {};
+
+  bool mIsMoving {true};
+  PLANE_TYPE mFiredBy {};
+
+  int8_t mHitFrame {};
+  Timer mHitAnim {0.0f};
+
 
 public:
-  Bullet( const float planeX, const float planeY, const float planeDir, const bool planeType );
+  Bullet(
+    const float planeX,
+    const float planeY,
+    const float planeDir,
+    const PLANE_TYPE );
 
-  bool isDead();
 
   void Update();
   void UpdateCoordinates();
   void AnimUpdate();
   void HitAnimUpdate();
-  void HitGround();
+  void HitSurface();
   void Draw();
   void Destroy();
 
-  friend Bullet BulletSpawner::GetClosestBullet( const float, const float, const bool );
-  friend void BulletSpawner::Draw();
+
+  bool isMoving() const;
+  bool isDead() const;
+
+
+  float x() const;
+  float y() const;
+  float dir() const;
+  PLANE_TYPE firedBy() const;
 };
+
+
+class BulletSpawner
+{
+  std::vector <Bullet> mInstances {};
+
+
+public:
+  BulletSpawner() = default;
+
+
+  void SpawnBullet(
+    const float planeX,
+    const float planeY,
+    const float planeDir,
+    const PLANE_TYPE );
+
+  void Clear();
+  void UpdateBullets();
+  void Draw();
+
+  Bullet GetClosestBullet(
+    const float planeX,
+    const float planeY,
+    const PLANE_TYPE ) const;
+};
+
+extern class BulletSpawner bullets;

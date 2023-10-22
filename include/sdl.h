@@ -33,10 +33,20 @@ extern int DISPLAY_INDEX;
 
 extern SDL_Window* gWindow;
 extern SDL_Renderer* gRenderer;
+extern SDL_Event windowEvent;
+
 
 bool SDL_init();
 void SDL_close();
-void show_warning( const char*, const char* );
+
+void show_warning(
+  const char*,
+  const char* );
+
 SDL_Texture* loadTexture( const std::string& );
 Mix_Chunk* loadSound( const std::string& );
-void playSound( Mix_Chunk *sound, unsigned char channel, bool repeating );
+
+void playSound(
+  Mix_Chunk* sound,
+  const uint8_t channel,
+  const bool repeating );

@@ -20,19 +20,50 @@
 
 #pragma once
 
-#include <string>
 #include <cstdint>
 
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+struct Statistics
+{
+  uint32_t shots {};
+  uint32_t plane_hits {};
+  uint32_t chute_hits {};
+  uint32_t pilot_hits {};
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+  uint32_t jumps {};
+  uint32_t crashes {};
+  uint32_t falls {};
+  uint32_t rescues {};
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+  uint32_t plane_kills {};
+  uint32_t deaths {};
+
+  uint32_t wins {};
+  uint32_t losses {};
+
+
+//  These are calculated
+  uint32_t totalHits {};
+  uint32_t misses {};
+  float accuracy {};
+
+  uint32_t suicides {};
+  float selfPreservation {};
+
+  uint32_t totalKills {};
+  float kdRatio {};
+  float survivability {};
+
+  float avgBulletsPerKill {};
+
+
+  Statistics() = default;
+};
+
+
+void calcDerivedStats( Statistics& );
+
+void updateRecentStats();
+void resetRecentStats();
+
+void updateTotalStats();

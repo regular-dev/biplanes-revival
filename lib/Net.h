@@ -8,14 +8,32 @@
 #define NET_H
 
 
-#include <assert.h>
-#include <vector>
-#include <list>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
 #include <iomanip>
 #include <sstream>
+#include <list>
+#include <vector>
 
-#include "include/variables.h"
-#include "include/utility.h"
+#include <include/platform.hpp>
+#include <include/utility.h>
+
+#if PLATFORM == PLATFORM_WINDOWS
+    #include <winsock2.h>
+
+#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+//  TODO: test includes
+//    #include <sys/socket.h>
+//    #include <netinet/in.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+  #include <arpa/inet.h>
+//  #include <netdb.h>
+#else
+    #error unknown platform!
+
+#endif
 
 
 namespace net
@@ -304,7 +322,6 @@ namespace net
         if ( !socket.Open( port ) )
         {
           log_message( "NETWORK: Could not start connection on port ", std::to_string(port), "\n" );
-          menu.setMessage( MESSAGE_TYPE::CANT_START_CONNECTION );
           return false;
         }
         running = true;
@@ -394,7 +411,7 @@ namespace net
       return mode;
     }
 
-    virtual void Update( )
+    virtual void Update( const double deltaTime )
     {
       assert( running );
       timeoutAccumulator += deltaTime;
@@ -403,7 +420,7 @@ namespace net
         if ( state == Connecting )
         {
           log_message( "NETWORK: Connection failed!\n" );
-          menu.setMessage( MESSAGE_TYPE::CONNECTION_FAILED );
+//          menu.setMessage( MESSAGE_TYPE::CONNECTION_FAILED );
           ClearData();
           state = ConnectFail;
           OnDisconnect();
@@ -411,7 +428,7 @@ namespace net
         else if ( state == Connected )
         {
           log_message( "NETWORK: Connection timed out!\n" );
-          menu.setMessage( MESSAGE_TYPE::CONNECTION_TIMED_OUT );
+//          menu.setMessage( MESSAGE_TYPE::CONNECTION_TIMED_OUT );
           ClearData();
           if ( state == Connecting )
             state = ConnectFail;
@@ -458,7 +475,7 @@ namespace net
         address_buf +=  address.GetB() + ".";
         address_buf +=  address.GetC() + ".";
         address_buf +=  address.GetD() + ":";
-        address_buf +=  address.GetPort();
+        address_buf +=  std::to_string(address.GetPort());
         log_message( "NETWORK: New client connected from ", address_buf, "\n" );
         OnConnect();
       }
@@ -592,7 +609,7 @@ namespace net
 
   // reliability system to support reliable connection
   //  + manages sent, received, pending ack and acked packet queues
-  //  + separated out from reliable connection because it is quite complex and i want to unit test it!
+  //  + separated out from reliable connection because it is quite complex
 
   class ReliabilitySystem
   {
@@ -669,15 +686,12 @@ namespace net
       process_ack( ack, ack_bits, pendingAckQueue, ackedQueue, acks, acked_packets, rtt, max_sequence );
     }
 
-    void Update( )
+    void Update( const double deltaTime )
     {
       acks.clear();
       AdvanceQueueTime( deltaTime );
       UpdateQueues();
       UpdateStats();
-      #ifdef NET_UNIT_TEST
-      Validate();
-      #endif
     }
 
     void Validate()
@@ -925,9 +939,6 @@ namespace net
       : Connection( protocolId, timeout ), reliabilitySystem( max_sequence )
     {
       ClearData();
-      #ifdef NET_UNIT_TEST
-      packet_loss_mask = 0;
-      #endif
     }
 
     ~ReliableConnection()
@@ -940,13 +951,6 @@ namespace net
 
     bool SendPacket( const unsigned char data[], int size )
     {
-      #ifdef NET_UNIT_TEST
-      if ( reliabilitySystem.GetLocalSequence() & packet_loss_mask )
-      {
-        reliabilitySystem.PacketSent( size );
-        return true;
-      }
-      #endif
       const int header = 12;
       unsigned char packet[header+size];
       unsigned int seq = reliabilitySystem.GetLocalSequence();
@@ -960,21 +964,9 @@ namespace net
       return true;
     }
 
-    bool SendDisconnectMessage()
-    {
-      local_data.disconnect = true;
-      unsigned char packet_local[PacketSize];
-      memcpy( packet_local, &local_data, sizeof( packet_local ) );
-      local_data.disconnect = false;
-
-      return SendPacket( packet_local, sizeof( packet_local ) );
-    }
-
     int ReceivePacket( unsigned char data[], int size )
     {
       const int header = 12;
-      if ( size <= header )
-        return false;
       unsigned char packet[header+size];
       int received_bytes = Connection::ReceivePacket( packet, size + header );
       if ( received_bytes == 0 )
@@ -991,10 +983,10 @@ namespace net
       return received_bytes - header;
     }
 
-    void Update( )
+    void Update( const double deltaTime )
     {
-      Connection::Update( );
-      reliabilitySystem.Update( );
+      Connection::Update(deltaTime);
+      reliabilitySystem.Update(deltaTime);
     }
 
     int GetHeaderSize() const
@@ -1007,14 +999,6 @@ namespace net
       return reliabilitySystem;
     }
 
-    // unit test controls
-
-    #ifdef NET_UNIT_TEST
-    void SetPacketLossMask( unsigned int mask )
-    {
-      packet_loss_mask = mask;
-    }
-    #endif
 
   protected:
 
@@ -1063,10 +1047,6 @@ namespace net
       reliabilitySystem.Reset();
     }
 
-    #ifdef NET_UNIT_TEST
-    unsigned int packet_loss_mask;			// mask sequence number, if non-zero, drop packet - for unit test only
-    #endif
-
     ReliabilitySystem reliabilitySystem;	// reliability system: manages sequence numbers and acks, tracks network stats etc.
   };
 
@@ -1089,7 +1069,7 @@ namespace net
             penalty_reduction_accumulator = 0.0f;
         }
 
-        void Update( float rtt )
+        void Update( const float rtt, const double deltaTime )
         {
             const float RTT_Threshold = 250.0f;
 

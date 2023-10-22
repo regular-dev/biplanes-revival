@@ -18,21 +18,66 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <string>
-#include <cstdint>
+#include <include/timer.hpp>
+#include <include/time.hpp>
 
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+Timer::Timer(
+  const float timeout )
+{
+  mCounter = 0.0f;
+  mTimeout = timeout;
+  mIsCounting = false;
+}
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+void
+Timer::Update()
+{
+  if ( mIsCounting == false )
+    return;
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+
+  if ( mCounter > 0.0f )
+    mCounter -= deltaTime;
+  else
+    Stop();
+}
+
+void
+Timer::Start()
+{
+  mIsCounting = true;
+  Reset();
+}
+
+void
+Timer::Stop()
+{
+  mIsCounting = false;
+  mCounter = 0.0f;
+}
+
+void
+Timer::Reset()
+{
+  mCounter = mTimeout;
+}
+
+void
+Timer::SetNewTimeout(
+  const float timeout )
+{
+  mTimeout = timeout;
+}
+
+float
+Timer::remainderTime() const
+{
+  return mCounter;
+}
+
+bool
+Timer::isReady() const
+{
+  return mCounter <= 0.0f;
+}

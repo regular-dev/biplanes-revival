@@ -20,19 +20,13 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
 
+void game_reset();
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+bool game_init_sp();
+bool game_init_mp();
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+void game_loop_sp();
+void game_loop_mp();
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+void game_draw();

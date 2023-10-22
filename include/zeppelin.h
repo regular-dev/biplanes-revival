@@ -23,9 +23,10 @@
 
 class Zeppelin
 {
-  float x;
-  float y;
-  bool ascent;
+  float mX {};
+  float mY {};
+  bool mIsAscending {};
+
 
 public:
   Zeppelin();
@@ -38,3 +39,4 @@ public:
   void Respawn();
 };
 
+extern class Zeppelin zeppelin;

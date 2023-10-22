@@ -19,20 +19,24 @@
 */
 
 #include <include/sdl.h>
+#include <include/sizes.hpp>
+#include <include/sounds.hpp>
 #include <include/utility.h>
-#include <include/variables.h>
 
 
-int SCREEN_HEIGHT;
-int SCREEN_WIDTH;
-int DISPLAY_INDEX = 0;
+int32_t SCREEN_HEIGHT {};
+int32_t SCREEN_WIDTH {};
+int32_t DISPLAY_INDEX {};
+
+SDL_Window* gWindow {};
+SDL_Renderer* gRenderer {};
+SDL_Event windowEvent {};
+
+static bool soundInitialized {};
 
 
-SDL_Window* gWindow = NULL;
-SDL_Renderer* gRenderer = NULL;
-
-
-bool SDL_init()
+bool
+SDL_init()
 {
 //  Setup SDL
   log_message( "SDL Startup: Initializing SDL..." );
@@ -44,17 +48,18 @@ bool SDL_init()
 
     return 1;
   }
+
   log_message( "Done!\n" );
 
 
 //  Set texture filtering to linear
-  if ( !SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "0" ) )
-    log_message( "\nWarning: Linear texture filtering failed to enable!\n" );
+  if ( SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "0" ) == false )
+    log_message( "\nWarning: Failed to enable linear texture filtering!\n" );
 
 
 //  Disable Always-on-Top
-  if ( !SDL_SetHint( SDL_HINT_ALLOW_TOPMOST, "0" ) )
-    log_message( "Warning: Always-on-Top not disabled!\n" );
+//  if ( SDL_SetHint( SDL_HINT_ALLOW_TOPMOST, "0" ) == false )
+//    log_message( "Warning: Failed to disable Always-On-Top hint!\n" );
 
 //  Get screen resolution
   SDL_DisplayMode dm;
@@ -68,14 +73,16 @@ bool SDL_init()
 
 //  Create window
   log_message( "SDL Startup: Creating SDL window..." );
-  gWindow = SDL_CreateWindow( "Bluetooth Biplanes", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, sizes.screen_width, sizes.screen_height, SDL_WINDOW_RESIZABLE );
-  if ( gWindow == NULL )
+  gWindow = SDL_CreateWindow( "Biplanes Revival v" BIPLANES_VERSION, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, sizes.screen_width, sizes.screen_height, SDL_WINDOW_RESIZABLE );
+
+  if ( gWindow == nullptr )
   {
     log_message( "\nSDL Startup: Window could not be created! SDL Error: ", SDL_GetError() );
     show_warning( "SDL: Window could not be created!", SDL_GetError() );
 
     return 1;
   }
+
   log_message( "Done!\n" );
 
   SDL_SetWindowPosition( gWindow, SCREEN_WIDTH * 0.5f - sizes.screen_width * 0.5f, SCREEN_HEIGHT * 0.1 );
@@ -86,11 +93,13 @@ bool SDL_init()
 //  Create renderer for window
   log_message( "SDL Startup: Creating SDL renderer for window..." );
   gRenderer = SDL_CreateRenderer( gWindow, DISPLAY_INDEX, SDL_RENDERER_ACCELERATED );
-  if ( gRenderer == NULL )
+
+  if ( gRenderer == nullptr )
   {
     log_message( "\nSDL Startup: Failed to create renderer in accelerated mode! SDL Error: ", SDL_GetError(), "\n\nCreating SDL renderer in software mode..." );
     gRenderer = SDL_CreateRenderer( gWindow, 0, SDL_RENDERER_SOFTWARE );
-    if ( gRenderer == NULL )
+
+    if ( gRenderer == nullptr )
     {
       log_message( "\nSDL Startup: Renderer in software mode could not be created! SDL Error: ", SDL_GetError() );
       show_warning( "SDL: Failed to create renderer in software mode!", SDL_GetError() );
@@ -98,6 +107,7 @@ bool SDL_init()
       return 1;
     }
   }
+
   log_message( "Done!\n" );
 
 
@@ -106,32 +116,39 @@ bool SDL_init()
 
 
 //  Initialize PNG loading
+
   log_message( "SDL Startup: Initializing texture loading..." );
   int imgFlags = IMG_INIT_PNG;
-  if ( !( IMG_Init( imgFlags ) & imgFlags ) )
+
+  if ( ( IMG_Init(imgFlags) & imgFlags ) == false )
   {
     log_message( "\nSDL Startup: SDL_image could not initialize! SDL_image Error: ", IMG_GetError() );
     show_warning( "SDL_image: Can't initialize!", IMG_GetError() );
 
     return 1;
   }
+
   log_message( "Done!\n" );
 
 
 //  Initialize SDL_Mixer
   log_message( "SDL Startup: Initializing audio..." );
+
   if ( SDL_InitSubSystem( SDL_INIT_AUDIO ) != 0 )
   {
     log_message( "\nSDL Startup: SDL audio subsystem failed to initialize! SDL Error: ", SDL_GetError() );
     show_warning( "SDL: Failed to initialize audio subsystem!", SDL_GetError() );
   }
+
   else if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) != 0 )
     log_message( "\nSDL Startup: SDL_Mixer failed to initialize! SDL_Mixer Error: %s", Mix_GetError() );
+
   else
   {
-    Mix_ReserveChannels( 2 );
-    sound_initialized = true;
+    Mix_ReserveChannels(2);
+    soundInitialized = true;
   }
+
   log_message( "Done!\n" );
 
 
@@ -141,14 +158,18 @@ bool SDL_init()
 }
 
 
-void show_warning( const char* title, const char* message )
+void
+show_warning(
+  const char* title,
+  const char* message )
 {
-  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message , NULL ) < 0 )
+  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message, nullptr ) < 0 )
     log_message( "SDL Error: Unable to show warning window : ", SDL_GetError() );
 }
 
 
-void SDL_close()
+void
+SDL_close()
 {
 //  Destroy window
   log_message( "EXIT: Destroying SDL renderer..." );
@@ -156,11 +177,11 @@ void SDL_close()
   log_message( "Done!\n" );
 
   log_message( "EXIT: Destroying SDL window..." );
-  SDL_DestroyWindow( gWindow );
+  SDL_DestroyWindow(gWindow);
   log_message( "Done!\n" );
 
-  gWindow = NULL;
-  gRenderer = NULL;
+  gWindow = {};
+  gRenderer = {};
 
 
 //  Quit SDL subsystems
@@ -182,15 +203,18 @@ void SDL_close()
 }
 
 
-SDL_Texture* loadTexture( const std::string& path )
+SDL_Texture*
+loadTexture(
+  const std::string& path )
 {
 //  The final texture
-  SDL_Texture* loadedTexture = NULL;
+  SDL_Texture* loadedTexture {};
 
 
 //  Load image at specified path
   SDL_Surface* textureSurface = IMG_Load( path.c_str() );
-  if ( textureSurface == NULL )
+
+  if ( textureSurface == nullptr )
   {
     log_message( "\n\nResources: Unable to load image ( ", path.c_str(), " )\nSDL_image Error: ", IMG_GetError() );
     show_warning( "Unable to load texture!", path.c_str() );
@@ -199,7 +223,8 @@ SDL_Texture* loadTexture( const std::string& path )
   {
 //    Create texture from surface pixels
     loadedTexture = SDL_CreateTextureFromSurface( gRenderer, textureSurface );
-    if ( loadedTexture == NULL )
+
+    if ( loadedTexture == nullptr )
     {
       log_message( "\n\nSDL Error: Unable to create texture from file: (", path.c_str(), ")\nSDL_image Error: ", SDL_GetError() );
       show_warning( "Unable to create texture from file!", path.c_str() );
@@ -212,27 +237,41 @@ SDL_Texture* loadTexture( const std::string& path )
   return loadedTexture;
 }
 
-Mix_Chunk* loadSound( const std::string& path )
+Mix_Chunk*
+loadSound(
+  const std::string& path )
 {
+  if ( soundInitialized == false )
+    return {};
+
   Mix_Chunk* soundBuf = Mix_LoadWAV( path.c_str() );
-  if ( soundBuf == NULL )
+
+  if ( soundBuf == nullptr )
   {
     log_message( "\n\nResources: Unable to load sound from file: ( ", path.c_str(), " )\nSDL_mixer Error: ", Mix_GetError() );
     show_warning( "Unable to load sound!", path.c_str() );
   }
+
   return soundBuf;
 }
 
-void playSound( Mix_Chunk* sound, unsigned char channel, bool repeating )
+void
+playSound(
+  Mix_Chunk* sound,
+  const uint8_t channel,
+  const bool repeating )
 {
-  if ( !sound_initialized || !sound )
+  if ( soundInitialized == false || sound == nullptr )
     return;
 
-  if ( repeating )
+
+  if ( repeating == true )
   {
-    if ( !Mix_Playing( channel ) )
-      Mix_PlayChannel( channel, sound, 0 );
+    if ( Mix_Playing(channel) == false )
+      Mix_PlayChannel(channel, sound, 0);
+
+    return;
   }
-  else
-    Mix_PlayChannel( -1, sound, 0 );
+
+  Mix_PlayChannel(-1, sound, 0);
 }

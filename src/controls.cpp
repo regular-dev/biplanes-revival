@@ -19,73 +19,106 @@
 */
 
 #include <include/controls.h>
-#include <include/variables.h>
+#include <include/plane.h>
+#include <include/network_data.hpp>
+
+#include <SDL_keyboard.h>
 
 
-// Process input
-void collect_local_input()
+const SDL_Keycode DEFAULT_THROTTLE_UP   = SDLK_UP;
+const SDL_Keycode DEFAULT_THROTTLE_DOWN = SDLK_DOWN;
+const SDL_Keycode DEFAULT_TURN_LEFT     = SDLK_LEFT;
+const SDL_Keycode DEFAULT_TURN_RIGHT    = SDLK_RIGHT;
+const SDL_Keycode DEFAULT_FIRE          = SDLK_SPACE;
+const SDL_Keycode DEFAULT_JUMP          = SDLK_LCTRL;
+
+SDL_Keycode THROTTLE_UP   = SDLK_UP;
+SDL_Keycode THROTTLE_DOWN = SDLK_DOWN;
+SDL_Keycode TURN_LEFT     = SDLK_LEFT;
+SDL_Keycode TURN_RIGHT    = SDLK_RIGHT;
+SDL_Keycode FIRE          = SDLK_SPACE;
+SDL_Keycode JUMP          = SDLK_LCTRL;
+
+
+void
+readLocalInput()
 {
-  const Uint8 *keyboard_state = SDL_GetKeyboardState( NULL );
+  const Uint8* keyboard_state = SDL_GetKeyboardState({});
 
-  if ( keyboard_state[ SDL_GetScancodeFromKey( THROTTLE_UP ) ] && !keyboard_state[ SDL_GetScancodeFromKey( THROTTLE_DOWN ) ] )
+  if (  keyboard_state[SDL_GetScancodeFromKey(THROTTLE_UP)] == 1 &&
+        keyboard_state[SDL_GetScancodeFromKey(THROTTLE_DOWN)] == 0 )
     controls_local.throttle = PLANE_THROTTLE::THROTTLE_INCREASE;
-  else if ( keyboard_state[ SDL_GetScancodeFromKey( THROTTLE_DOWN ) ] && !keyboard_state[ SDL_GetScancodeFromKey( THROTTLE_UP ) ] )
+
+  else if ( keyboard_state[SDL_GetScancodeFromKey(THROTTLE_DOWN)] == 1 &&
+            keyboard_state[SDL_GetScancodeFromKey(THROTTLE_UP)] == 0 )
     controls_local.throttle = PLANE_THROTTLE::THROTTLE_DECREASE;
+
   else
     controls_local.throttle = PLANE_THROTTLE::THROTTLE_IDLE;
 
 
-  if ( keyboard_state[ SDL_GetScancodeFromKey( TURN_LEFT ) ] && !keyboard_state[ SDL_GetScancodeFromKey( TURN_RIGHT ) ] )
+  if (  keyboard_state[SDL_GetScancodeFromKey(TURN_LEFT)] == 1 &&
+        keyboard_state[SDL_GetScancodeFromKey(TURN_RIGHT)] == 0 )
     controls_local.pitch = PLANE_PITCH::PITCH_LEFT;
-  else if ( keyboard_state[ SDL_GetScancodeFromKey( TURN_RIGHT ) ] && !keyboard_state[ SDL_GetScancodeFromKey( TURN_LEFT ) ] )
+
+  else if ( keyboard_state[SDL_GetScancodeFromKey(TURN_RIGHT)] == 1 &&
+            keyboard_state[SDL_GetScancodeFromKey(TURN_LEFT)] == 0 )
     controls_local.pitch = PLANE_PITCH::PITCH_RIGHT;
+
   else
     controls_local.pitch = PLANE_PITCH::PITCH_IDLE;
 
 
-  // SHOOT
-  if ( keyboard_state[ SDL_GetScancodeFromKey( FIRE ) ] )
+//  SHOOT
+  if ( keyboard_state[SDL_GetScancodeFromKey(FIRE)] == 1 )
     controls_local.fire = true;
   else
     controls_local.fire = false;
 
 
-  // EJECT
-  if ( keyboard_state[ SDL_GetScancodeFromKey( JUMP ) ] )
+//  EJECT
+  if ( keyboard_state[SDL_GetScancodeFromKey(JUMP)] == 1 )
     controls_local.jump = true;
   else
     controls_local.jump = false;
 }
 
 
-void collect_opponent_input()
+void
+readOpponentInput()
 {
-  controls_opponent.throttle = opponent_data.throttle;
-  controls_opponent.pitch    = opponent_data.pitch;
+  controls_opponent.throttle = opponentData.throttle;
+  controls_opponent.pitch    = opponentData.pitch;
 }
 
 
-// Process local input
-void process_local_controls( Plane &planebuf, Controls &controls )
+void
+processLocalControls(
+  Plane& plane,
+  const Controls& controls )
 {
   if ( controls.throttle == PLANE_THROTTLE::THROTTLE_INCREASE )
-    planebuf.input.Accelerate();
+    plane.input.Accelerate();
+
   else if ( controls.throttle == PLANE_THROTTLE::THROTTLE_DECREASE )
-    planebuf.input.Decelerate();
+    plane.input.Decelerate();
 
 
   if ( controls.pitch == PLANE_PITCH::PITCH_LEFT )
-    planebuf.input.TurnLeft();
+    plane.input.TurnLeft();
+
   else if ( controls.pitch == PLANE_PITCH::PITCH_RIGHT )
-    planebuf.input.TurnRight();
-  else
-    planebuf.input.TurnIdle();
+    plane.input.TurnRight();
 
-  if ( controls.fire )
-    planebuf.input.Shoot();
-
-  if ( controls.jump )
-    planebuf.input.Jump();
   else
-    planebuf.pilot.ChuteUnlock();
+    plane.input.TurnIdle();
+
+
+  if ( controls.fire == true )
+    plane.input.Shoot();
+
+  if ( controls.jump == true )
+    plane.input.Jump();
+  else
+    plane.pilot.ChuteUnlock();
 }

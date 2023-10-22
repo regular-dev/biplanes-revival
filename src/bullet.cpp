@@ -18,72 +18,326 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/variables.h>
+#include <include/bullet.h>
+#include <include/sdl.h>
+#include <include/time.hpp>
+#include <include/game_state.hpp>
+#include <include/network.hpp>
+#include <include/plane.h>
+#include <include/sizes.hpp>
+#include <include/sounds.hpp>
+#include <include/textures.hpp>
 
-#include <cmath>
 
-
-void BulletSpawner::SpawnBullet( float plane_x, float plane_y, float plane_dir, bool plane_type )
+Bullet::Bullet(
+  const float planeX,
+  const float planeY,
+  const float planeDir,
+  const PLANE_TYPE planeType )
+  : mX{planeX}
+  , mY{planeY}
+  , mDir{planeDir}
+  , mFiredBy{planeType}
+  , mHitAnim{sizes.bullet_hit_frame_time}
 {
-  instances.push_back( Bullet( plane_x, plane_y, plane_dir, plane_type ) );
 }
 
-void BulletSpawner::UpdateBullets()
+void
+Bullet::Update()
 {
-  for ( unsigned int i = 0; i < instances.size(); i++ )
+  UpdateCoordinates();
+  HitAnimUpdate();
+  mHitAnim.Update();
+}
+
+void
+Bullet::UpdateCoordinates()
+{
+  if ( mIsMoving == false )
+    return;
+
+
+  mX += sizes.bullet_speed * sin( mDir * M_PI / 180.0f ) * deltaTime;
+  mY -= sizes.bullet_speed * cos( mDir * M_PI / 180.0f ) * deltaTime;
+
+
+  const bool collidesWithScreenBorder
   {
-    if ( instances[i].isDead() )
-    {
-      instances[i].Destroy();
-      instances.erase( instances.begin() + i );
-    }
-    else
-      instances[i].Update();
+    mX > sizes.screen_width ||
+    mX < 0.0f ||
+    mY < 0.0f - sizes.bullet_sizey / 2.0f
+  };
+
+  if ( collidesWithScreenBorder == true )
+    return Destroy();
+
+
+  const bool collidesWithSurface
+  {
+    ( mX > sizes.barn_x_bullet_collision &&
+      mX < sizes.barn_x_bullet_collision + sizes.barn_sizex * 0.95f &&
+      mY > sizes.barn_y_bullet_collision ) ||
+      mY > sizes.bullet_ground_collision
+  };
+
+  if ( collidesWithSurface == true )
+    return HitSurface();
+
+  const auto& game = gameState();
+
+  if (  game.gameMode == GAME_MODE::HUMAN_VS_HUMAN &&
+        planes.at(mFiredBy).isLocal() == true )
+    return;
+
+
+  Plane* planeShooter = &planes.at(PLANE_TYPE::BLUE);
+  Plane* planeTarget = &planes.at(PLANE_TYPE::RED);
+
+  if ( mFiredBy == PLANE_TYPE::RED )
+    std::swap(planeShooter, planeTarget);
+
+
+//  HIT PLANE
+  if ( planeTarget->isHit(mX, mY) == true )
+  {
+    Destroy();
+    planeTarget->Hit(*planeShooter);
+
+    return;
+  }
+
+//  HIT CHUTE
+  if ( planeTarget->pilot.ChuteIsHit(mX, mY) == true )
+  {
+    Destroy();
+    planeTarget->pilot.ChuteHit(*planeShooter);
+
+    eventPush(EVENTS::HIT_CHUTE);
+    return;
+  }
+
+//  HIT PILOT
+  if ( planeTarget->pilot.isHit(mX, mY) == true )
+  {
+    Destroy();
+    planeTarget->pilot.Kill(*planeShooter);
+
+    eventPush(EVENTS::HIT_PILOT);
+    return;
   }
 }
 
-void BulletSpawner::Clear()
+void
+Bullet::Draw()
 {
-  instances.clear();
+  if ( mIsMoving == true )
+  {
+    const SDL_Rect bulletRect
+    {
+      mX - sizes.bullet_sizex / 2.0f,
+      mY - sizes.bullet_sizey / 2.0f,
+      sizes.bullet_sizex,
+      sizes.bullet_sizey,
+    };
+
+    SDL_RenderCopy(
+      gRenderer,
+      textures.texture_bullet,
+      nullptr,
+      &bulletRect );
+
+    return;
+  }
+
+  if ( mHitFrame <= 0 || mHitFrame >= 6 )
+    return;
+
+  const SDL_Rect textureRect
+  {
+    mX - sizes.hit_sizex / 2.0f,
+    mY - sizes.hit_sizey / 2.0f,
+    sizes.hit_sizex,
+    sizes.hit_sizey,
+  };
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.anim_hit,
+    &textures.anim_hit_rect[mHitFrame - 1],
+    &textureRect );
 }
 
-void BulletSpawner::Draw()
+void
+Bullet::HitAnimUpdate()
 {
-  for ( Bullet &bullet : instances )
+  if (  mIsMoving == true ||
+        mHitFrame <= 0 ||
+        mHitFrame >= 6 ||
+        mHitAnim.isReady() == false )
+    return;
+
+  mHitAnim.Start();
+  ++mHitFrame;
+}
+
+void
+Bullet::HitSurface()
+{
+  playSound(sounds.hitMiss, -1, false);
+  mIsMoving = false;
+  mHitFrame = 1;
+}
+
+void
+Bullet::Destroy()
+{
+  mIsMoving = false;
+  mHitFrame = 6;
+}
+
+
+bool
+Bullet::isMoving() const
+{
+  return mIsMoving;
+}
+
+bool
+Bullet::isDead() const
+{
+  return mIsMoving == false && mHitFrame == 6;
+}
+
+float
+Bullet::x() const
+{
+  return mX;
+}
+
+float
+Bullet::y() const
+{
+  return mY;
+}
+
+float
+Bullet::dir() const
+{
+  return mDir;
+}
+
+PLANE_TYPE
+Bullet::firedBy() const
+{
+  return mFiredBy;
+}
+
+
+void
+BulletSpawner::SpawnBullet(
+  const float planeX,
+  const float planeY,
+  const float planeDir,
+  const PLANE_TYPE planeType )
+{
+  mInstances.push_back(
+  {
+    planeX, planeY,
+    planeDir,
+    planeType,
+  });
+}
+
+void
+BulletSpawner::UpdateBullets()
+{
+  size_t i {};
+
+  while ( i < mInstances.size() )
+  {
+    mInstances[i].Update();
+
+    if ( mInstances[i].isDead() == true )
+    {
+      mInstances.erase(mInstances.begin() + i);
+      continue;
+    }
+
+    ++i;
+  }
+}
+
+void
+BulletSpawner::Clear()
+{
+  mInstances.clear();
+}
+
+void
+BulletSpawner::Draw()
+{
+  for ( auto& bullet : mInstances )
     bullet.Draw();
 
-  if ( show_hitboxes )
+
+  if ( gameState().debug.aiInputs == true )
   {
-    Plane* plane = nullptr;
+    const auto& planeRed = planes.at(PLANE_TYPE::RED);
+    const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
 
-      plane = (int) (srv_or_cli) ? &plane_red : &plane_blue;
-
-    if ( !plane )
-      return;
-
-    Bullet bullet = GetClosestBullet( plane->getX(), plane->getY(), plane->getType() );
+    Bullet bullet = GetClosestBullet(
+      planeRed.x(),
+      planeRed.y(),
+      planeRed.type() );
 
     SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawLine( gRenderer, plane->getX(), plane->getY(), bullet.x, bullet.y );
+    SDL_RenderDrawLine(
+      gRenderer,
+      planeRed.x(),
+      planeRed.y(),
+      bullet.x(),
+      bullet.y() );
+
+
+    bullet = GetClosestBullet(
+      planeBlue.x(),
+      planeBlue.y(),
+      planeBlue.type() );
+
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawLine(
+      gRenderer,
+      planeBlue.x(),
+      planeBlue.y(),
+      bullet.x(),
+      bullet.y() );
   }
 }
 
-Bullet BulletSpawner::GetClosestBullet( const float planeX, const float planeY, const bool planeType )
+Bullet
+BulletSpawner::GetClosestBullet(
+  const float planeX,
+  const float planeY,
+  const PLANE_TYPE planeType ) const
 {
-  std::pair <uint32_t, float> minDistance;
-  bool minDistanceHasValue = false;
+  std::pair <uint32_t, float> minDistance {};
+  bool minDistanceInitialized = false;
 
-  for ( uint32_t index = 0; index < instances.size(); ++index )
+
+  for ( size_t index = 0; index < mInstances.size(); ++index )
   {
-    if ( !instances[index].alive || instances[index].fired_by == planeType )
+    if (  mInstances[index].isMoving() == false ||
+          mInstances[index].firedBy() == planeType )
       continue;
 
-    float distance = sqrt( pow( instances[index].x - planeX, 2 ) + pow( instances[index].y - planeY, 2 ) );
+    const float distance = sqrt(
+      pow( mInstances[index].x() - planeX, 2 ) +
+      pow( mInstances[index].y() - planeY, 2 ) );
 
-    if ( !minDistanceHasValue )
+    if ( minDistanceInitialized == false )
     {
       minDistance = { index, distance };
-      minDistanceHasValue = true;
+      minDistanceInitialized = true;
 
       continue;
     }
@@ -92,171 +346,8 @@ Bullet BulletSpawner::GetClosestBullet( const float planeX, const float planeY, 
       minDistance = { index, distance };
   }
 
-  if ( !minDistanceHasValue )
-    return Bullet( 0.0f, 0.0f, 0.0f, planeType );
+  if ( minDistanceInitialized == false )
+    return {0.0f, 0.0f, 0.0f, planeType};
 
-  return instances[minDistance.first];
-}
-
-
-Bullet::Bullet(
-  float plane_x,
-  float plane_y,
-  float plane_dir,
-  bool plane_type )
-  : hit_anim(0.0f)
-{
-  alive = true;
-  x = plane_x;
-  y = plane_y;
-  dir = plane_dir;
-  fired_by = plane_type;
-  hit_frame = 0;
-  hit_anim = Timer( sizes.bullet_hit_frame_time );
-  hit_destrect = {};
-}
-
-void Bullet::Update()
-{
-  UpdateCoordinates();
-  HitAnimUpdate();
-  hit_anim.Update();
-}
-
-void Bullet::UpdateCoordinates()
-{
-  if ( !alive )
-    return;
-
-  x += sizes.bullet_speed * sin( dir * PI / 180.0f ) * deltaTime;
-  y -= sizes.bullet_speed * cos( dir * PI / 180.0f ) * deltaTime;
-
-  if (  x > sizes.screen_width ||
-        x < 0.0f ||
-        y < 0.0f - sizes.bullet_sizey / 2 )
-    Destroy();
-  else if ( ( x > sizes.barn_x_bullet_collision &&
-              x < sizes.barn_x_bullet_collision + sizes.barn_sizex * 0.95f &&
-              y > sizes.barn_y_bullet_collision ) ||
-              y > sizes.bullet_ground_collision )
-    HitGround();
-  else if ( opponent_connected )
-  {
-    if ( fired_by == (int) srv_or_cli )
-      return;
-
-    if ( srv_or_cli == SRV_CLI::SERVER )
-    {
-      // HIT PLANE
-      if ( plane_blue.isHit( x, y ) )
-      {
-        Destroy();
-        plane_blue.Hit( fired_by );
-      }
-      // HIT CHUTE
-      if ( plane_blue.pilot.ChuteisHit( x, y ) )
-      {
-        Destroy();
-        plane_blue.pilot.ChuteHit();
-
-        event_push( (unsigned char) EVENTS::HIT_CHUTE );
-      }
-      // HIT PILOT
-      if ( plane_blue.pilot.isHit( x, y ) )
-      {
-        Destroy();
-        plane_blue.pilot.Kill( fired_by );
-
-        event_push( (unsigned char) EVENTS::HIT_PILOT );
-      }
-    }
-    else
-    {
-      // HIT PLANE
-      if ( plane_red.isHit( x, y ) )
-      {
-        Destroy();
-        plane_red.Hit( fired_by );
-      }
-      // HIT CHUTE
-      if ( plane_red.pilot.ChuteisHit( x, y ) )
-      {
-        Destroy();
-        plane_red.pilot.ChuteHit();
-
-        event_push( (unsigned char) EVENTS::HIT_CHUTE );
-      }
-      // HIT PILOT
-      if ( plane_red.pilot.isHit( x, y ) )
-      {
-        Destroy();
-        plane_red.pilot.Kill( fired_by );
-
-        event_push( (unsigned char) EVENTS::HIT_PILOT );
-      }
-    }
-  }
-}
-
-
-bool Bullet::isDead()
-{
-  return ( !alive && hit_frame == 6 );
-}
-
-void Bullet::Draw()
-{
-  if ( hit_frame > 0 && hit_frame < 6 )
-  {
-    hit_destrect.x = x - sizes.hit_sizex / 2;
-    hit_destrect.y = y - sizes.hit_sizey / 2;
-    hit_destrect.w = sizes.hit_sizex;
-    hit_destrect.h = sizes.hit_sizey;
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_hit,
-                    &textures.anim_hit_rect[ hit_frame - 1 ],
-                    &hit_destrect );
-  }
-  else
-  {
-    if ( !alive )
-      return;
-
-    textures.destrect.x = x - sizes.bullet_sizex / 2;
-    textures.destrect.y = y - sizes.bullet_sizey / 2;
-    textures.destrect.w = sizes.bullet_sizex;
-    textures.destrect.h = sizes.bullet_sizey;
-    SDL_RenderCopy( gRenderer,
-                    textures.texture_bullet,
-                    NULL,
-                    &textures.destrect );
-  }
-}
-
-void Bullet::HitAnimUpdate()
-{
-  if ( alive )
-    return;
-
-  if ( hit_frame > 0 && hit_frame < 6 )
-  {
-    if ( hit_anim.isReady() )
-    {
-      hit_anim.Start();
-      hit_frame++;
-    }
-  }
-}
-
-void Bullet::HitGround()
-{
-  playSound( sounds.hitMiss, -1, false );
-  alive = false;
-  hit_frame = 1;
-}
-
-void Bullet::Destroy()
-{
-  alive = false;
-  hit_frame = 6;
+  return mInstances[minDistance.first];
 }

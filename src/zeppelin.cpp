@@ -18,7 +18,12 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/variables.h>
+#include <include/zeppelin.h>
+#include <include/sdl.h>
+#include <include/time.hpp>
+#include <include/plane.h>
+#include <include/sizes.hpp>
+#include <include/textures.hpp>
 
 
 Zeppelin::Zeppelin()
@@ -26,80 +31,111 @@ Zeppelin::Zeppelin()
   Respawn();
 }
 
-void Zeppelin::Update()
+void
+Zeppelin::Update()
 {
   UpdateCoordinates();
   Draw();
   DrawScore();
 }
 
-void Zeppelin::UpdateCoordinates()
+void
+Zeppelin::UpdateCoordinates()
 {
-  x += sizes.zeppelin_speed * deltaTime;
-  if ( x > sizes.screen_width + sizes.zeppelin_sizex / 2 )
+  mX += sizes.zeppelin_speed * deltaTime;
+
+  if ( mX <= sizes.screen_width + sizes.zeppelin_sizex / 2.0f )
+    return;
+
+
+  mX = -sizes.zeppelin_sizex / 2.0f;
+
+  if ( mIsAscending == true )
   {
-    x = - sizes.zeppelin_sizex / 2;
-    if ( ascent )
-    {
-      y -= sizes.zeppelin_sizey / 2;
-      if ( y < sizes.zeppelin_highest_y )
-        ascent = false;
-    }
-    else
-    {
-      y += sizes.zeppelin_sizey / 2;
-      if ( y > sizes.zeppelin_lowest_y )
-        ascent = true;
-    }
+    mY -= sizes.zeppelin_sizey / 2.0f;
+
+    if ( mY < sizes.zeppelin_highest_y )
+      mIsAscending = false;
+
+    return;
   }
+
+  mY += sizes.zeppelin_sizey / 2.0f;
+
+  if ( mY > sizes.zeppelin_lowest_y )
+    mIsAscending = true;
 }
 
-void Zeppelin::Draw()
+void
+Zeppelin::Draw()
 {
-  textures.destrect.x = x - sizes.zeppelin_sizex / 2;
-  textures.destrect.y = y - sizes.zeppelin_sizey / 2;
-  textures.destrect.w = sizes.zeppelin_sizex;
-  textures.destrect.h = sizes.zeppelin_sizey;
-  SDL_RenderCopy( gRenderer,
-                  textures.texture_zeppelin,
-                  NULL,
-                  &textures.destrect );
+  const SDL_Rect zeppelinRect
+  {
+    mX - sizes.zeppelin_sizex / 2.0f,
+    mY - sizes.zeppelin_sizey / 2.0f,
+    sizes.zeppelin_sizex,
+    sizes.zeppelin_sizey,
+  };
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.texture_zeppelin,
+    nullptr,
+    &zeppelinRect );
 }
 
-void Zeppelin::DrawScore()
+void
+Zeppelin::DrawScore()
 {
-  textures.destrect.x = x - sizes.zeppelin_score_sizex * 2.1f;
-  textures.destrect.y = y - sizes.zeppelin_score_sizey * 0.95f;
-  textures.destrect.w = sizes.zeppelin_score_sizex;
-  textures.destrect.h = sizes.zeppelin_score_sizey;
+  const auto& planeRed = planes.at(PLANE_TYPE::RED);
+  const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
 
-  // Blue score
-  SDL_RenderCopy( gRenderer,
-                  textures.font_zeppelin_score,
-                  &textures.zeppelin_score_rect[ plane_blue.getScore() / 10 ],
-                  &textures.destrect );
+  SDL_Rect scoreRect
+  {
+    mX - sizes.zeppelin_score_sizex * 2.1f,
+    mY - sizes.zeppelin_score_sizey * 0.95f,
+    sizes.zeppelin_score_sizex,
+    sizes.zeppelin_score_sizey,
+  };
 
-  textures.destrect.x = x - sizes.zeppelin_score_sizex * 1.1f;
-  SDL_RenderCopy( gRenderer,
-                  textures.font_zeppelin_score,
-                  &textures.zeppelin_score_rect[ plane_blue.getScore() % 10 ],
-                  &textures.destrect );
-  // Red score
-  textures.destrect.x = x + sizes.zeppelin_score_sizex * 1.75f;
-  SDL_RenderCopy( gRenderer,
-                  textures.font_zeppelin_score,
-                  &textures.zeppelin_score_rect[ 10 + plane_red.getScore() % 10 ],
-                  &textures.destrect );
 
-  textures.destrect.x = x + sizes.zeppelin_score_sizex * 0.75f;
-  SDL_RenderCopy( gRenderer,
-                  textures.font_zeppelin_score,
-                  &textures.zeppelin_score_rect[ 10 + plane_red.getScore() / 10 ],
-                  &textures.destrect );
+//  Blue score
+  SDL_RenderCopy(
+    gRenderer,
+    textures.font_zeppelin_score,
+    &textures.zeppelin_score_rect[planeBlue.score() / 10],
+    &scoreRect );
+
+  scoreRect.x = mX - sizes.zeppelin_score_sizex * 1.1f;
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.font_zeppelin_score,
+    &textures.zeppelin_score_rect[planeBlue.score() % 10],
+    &scoreRect );
+
+
+//  Red score
+  scoreRect.x = mX + sizes.zeppelin_score_sizex * 1.75f;
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.font_zeppelin_score,
+    &textures.zeppelin_score_rect[10 + planeRed.score() % 10],
+    &scoreRect );
+
+  scoreRect.x = mX + sizes.zeppelin_score_sizex * 0.75f;
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.font_zeppelin_score,
+    &textures.zeppelin_score_rect[10 + planeRed.score() / 10],
+    &scoreRect );
 }
 
-void Zeppelin::Respawn()
+void
+Zeppelin::Respawn()
 {
-  x = sizes.zeppelin_spawn_x;
-  y = sizes.zeppelin_lowest_y - sizes.zeppelin_highest_y + sizes.zeppelin_sizey;
+  mX = sizes.zeppelin_spawn_x;
+  mY = sizes.zeppelin_lowest_y - sizes.zeppelin_highest_y + sizes.zeppelin_sizey;
 }

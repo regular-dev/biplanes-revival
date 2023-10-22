@@ -20,19 +20,38 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
 
+namespace net
+{
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+struct PacketData;
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+class Address;
+class Socket;
+class Connection;
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+class PacketQueue;
+class ReliabilitySystem;
+class ReliableConnection;
+class FlowControl;
+
+}
+
+class Timer;
+
+struct Controls;
+struct Sizes;
+struct Sounds;
+struct Statistics;
+struct Textures;
+
+struct PlaneData;
+struct Packet;
+class MatchMaker;
+
+class Bullet;
+class BulletSpawner;
+class Cloud;
+class Menu;
+class Plane;
+class Zeppelin;

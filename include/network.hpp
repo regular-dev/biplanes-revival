@@ -20,54 +20,20 @@
 
 #pragma once
 
-#include <deque>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+
+#include <string>
 
 
-extern std::deque <unsigned char> eventsLocal;
-extern bool eventNewIterationLoc;
-extern unsigned char eventCounterLoc;
-extern unsigned char eventCounterOpp;
+void eventPush( const EVENTS );
+void eventsPack();
+void eventsReset();
+void eventsFinishIteration();
 
-void prepare_local_data();
-void transform_opponent_data();
-void prepare_plane_coords();
-
-void event_push( unsigned char );
-void events_pack();
-void events_reset();
-
-
-enum class EVENTS : unsigned char
-{
-  NONE        = 'n',
-  NO_HARDCORE = 'h',
-
-  SHOOT       = 's',
-  EJECT       = 'e',
-
-  HIT_PLANE   = 'P',
-  HIT_CHUTE   = 'c',
-  HIT_PILOT   = 'p',
-  PLANE_DEATH = 'D',
-  PILOT_DEATH = 'd',
-  PLANE_RESP  = 'R',
-  PILOT_LAND  = 'l'
-};
-
-
-struct Packet
-{
-  char pitch;
-  char throttle;
-  bool disconnect;
-
-  float x;
-  float y;
-  float dir;
-  float pilot_x;
-  float pilot_y;
-
-  unsigned char events[32];
-};
+void packLocalData();
+void packPlaneCoords();
+void processOpponentData();
 
 void erasePacket( Packet& );
+void sendDisconnectMessage();

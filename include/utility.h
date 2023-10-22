@@ -24,41 +24,19 @@
 #include <string>
 
 
-double getCurrentTime();
-double countDelta();
+void settingsWrite();
+bool settingsParse( std::ifstream&, std::string& );
+void logVersionAndReadSettings();
 
+void log_message(
+  const std::string& message, const std::string& buffer1 = {},
+  const std::string& buffer2 = {}, const std::string& buffer3 = {} );
 
-void settings_write();
-bool settings_parse( std::ifstream&, std::string& );
-void logVerReadSettings();
-
-void log_message( const std::string& message, const std::string& buffer1 = {},
-                  const std::string& buffer2 = {}, const std::string& buffer3 = {} );
-
-void logSDL2Ver();
+void logSDL2Version();
 bool stats_write();
-bool stats_read();
+bool statsRead();
 
-std::string checkIp( std::string );
-bool checkPort( std::string );
-bool checkPass( std::string );
-
-class Timer
-{
-private:
-  float timeout {};
-  float counter {};
-  bool counting {};
-
-public:
-  Timer( const float newTimeout );
-
-  void Update();
-  void Start();
-  void Stop();
-  void Reset();
-  void SetNewTimeout( const float );
-
-  float remainderTime() const;
-  bool isReady() const;
-};
+std::string checkIp( const std::string& );
+bool checkPort( const std::string& );
+bool checkPass( const std::string& );
+bool checkScoreToWin( const std::string& );

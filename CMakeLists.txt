@@ -22,11 +22,24 @@ find_package(SDL2_mixer REQUIRED)
 target_sources(${TARGET} PRIVATE
   src/biplanes.cpp
 
+  include/fwd.hpp
+  include/enums.hpp
+  include/platform.hpp
+
+  include/game_state.hpp
+  include/network_data.hpp
+  include/network_state.hpp
+  include/sizes.hpp
+  include/stats.hpp
+  include/sounds.hpp
+  include/textures.hpp
+  include/variables.h
+
+  lib/Net.h
+
   src/icon.rc
   src/version.rc
 
-  include/structures.h
-  include/variables.h
 
   src/bullet.cpp
   include/bullet.h
@@ -44,9 +57,20 @@ target_sources(${TARGET} PRIVATE
   include/matchmake.hpp
 
   src/menu.cpp
+  src/menu_input.cpp
+  src/menu_navigation.cpp
+  src/menu_sp.cpp
+  src/menu_mp.cpp
+  src/menu_help.cpp
+  src/menu_stats.cpp
   include/menu.h
 
+  src/network.cpp
+  include/network.hpp
+
   src/plane.cpp
+  src/plane_input.cpp
+  src/plane_pilot.cpp
   include/plane.h
 
   src/render.cpp
@@ -55,6 +79,12 @@ target_sources(${TARGET} PRIVATE
   src/sdl.cpp
   include/sdl.h
 
+  src/time.cpp
+  include/time.hpp
+
+  src/timer.cpp
+  include/timer.hpp
+
   src/utility.cpp
   include/utility.h
 
@@ -62,6 +92,10 @@ target_sources(${TARGET} PRIVATE
   include/zeppelin.h
 )
 
+target_compile_definitions(${TARGET} PRIVATE
+  BIPLANES_EXE_NAME="${TARGET}"
+  BIPLANES_VERSION="${${TARGET}_VERSION}"
+)
 
 include(GNUInstallDirs)
 
@@ -69,12 +103,20 @@ target_include_directories(${TARGET} PRIVATE
   ${SDL2_INCLUDE_DIR}
 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-#  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/${CMAKE_INSTALL_INCLUDEDIR}>
-#  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/lib>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_options(${TARGET} PRIVATE -w -O3 -s -Wno-narrowing)
+target_compile_options(${TARGET} PUBLIC
+  -Wno-narrowing
+)
+
+if (NOT ${BUILD_SHARED_LIBS})
+  target_link_libraries(${TARGET} PRIVATE
+    -static
+    -static-libgcc
+    -static-libstdc++
+  )
+endif()
 
 target_link_libraries(${TARGET} PRIVATE
   SDL2::Main
@@ -82,28 +124,25 @@ target_link_libraries(${TARGET} PRIVATE
   SDL2::Mixer
 )
 
-if(WIN32)
+if (WIN32)
   set_target_properties(${TARGET}
     PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    WIN32_EXECUTABLE FALSE
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
   )
 
-  if(NOT ${BUILD_SHARED_LIBS})
-    target_link_libraries(${TARGET}
-      -static
-      -static-libgcc
-      -static-libstdc++
-    )
-  endif()
-
-  target_link_libraries(${TARGET} wsock32 ws2_32)
-  file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/bin)
-
-elseif(APPLE)
-  install(TARGETS ${TARGET} DESTINATION bin)
-  file(COPY assets DESTINATION bin)
-
-else()
-  install(TARGETS ${TARGET} DESTINATION bin)
-  file(COPY assets DESTINATION bin)
+  target_link_libraries(${TARGET} PUBLIC
+    ws2_32
+    -static-libgcc
+    -static-libstdc++
+    -mconsole
+  )
 endif()
+
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+
+install(TARGETS ${TARGET}
+  EXPORT ${TARGET} DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

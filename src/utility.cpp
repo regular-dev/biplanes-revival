@@ -18,137 +18,125 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#if PLATFORM == PLATFORM_UNIX
-  #include <time.h>
-#endif
-
-#include <include/variables.h>
 #include <include/utility.h>
+#include <include/sdl.h>
+#include <include/game_state.hpp>
+#include <include/controls.h>
+#include <include/stats.hpp>
+#include <include/variables.h>
+
 #include <lib/picojson.h>
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
+#define CONFIG_FILENAME BIPLANES_EXE_NAME ".ini"
+#define STATS_FILENAME BIPLANES_EXE_NAME ".stats"
+#define LOG_FILENAME BIPLANES_EXE_NAME ".log"
 
-double getCurrentTime()
+
+void
+settingsWrite()
 {
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-  // POSIX implementation
-  timespec time;
-  clock_gettime( CLOCK_MONOTONIC, &time );
-  return static_cast<uint64_t>( time.tv_sec ) * 1000000 + time.tv_nsec / 1000;
-#endif
-}
+  const auto& game = gameState();
 
+  std::ofstream settings {CONFIG_FILENAME, std::ios::out};
 
-double countDelta()
-{
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-  EndingTime = getCurrentTime() / 1000000.0;
-  deltaTime = ( EndingTime - StartingTime );
-  StartingTime = getCurrentTime() / 1000000.0;
-
-#elif PLATFORM == PLATFORM_WINDOWS
-  QueryPerformanceFrequency( &Frequency );
-  QueryPerformanceCounter( &EndingTime );
-  deltaTime = static_cast <double> ( EndingTime.QuadPart - StartingTime.QuadPart ) / Frequency.QuadPart;
-  QueryPerformanceCounter( &StartingTime );
-#endif
-
-  return deltaTime;
-}
-
-
-// WRITE CHANGES TO BIPLANES.INI
-void settings_write()
-{
-  std::ofstream settings( "biplanes.ini", std::ios::out );
-  if ( settings.is_open() )
+  if ( settings.is_open() == false )
   {
-    picojson::object jsonAutoFill;
-    jsonAutoFill["HARDCORE_MODE"]   = picojson::value( HARDCORE_MODE );
-    jsonAutoFill["HOST_PORT"]       = picojson::value( (double) HOST_PORT );
-    jsonAutoFill["MMAKE_PASSWORD"]  = picojson::value( MMAKE_PASSWORD );
-    jsonAutoFill["SERVER_IP"]       = picojson::value( SERVER_IP );
-    jsonAutoFill["SERVER_PORT"]     = picojson::value( (double) SERVER_PORT );
-
-    picojson::object jsonControls;
-    jsonControls["FIRE"]            = picojson::value( (double) FIRE );
-    jsonControls["JUMP"]            = picojson::value( (double) JUMP );
-    jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) THROTTLE_DOWN );
-    jsonControls["THROTTLE_UP"]     = picojson::value( (double) THROTTLE_UP );
-    jsonControls["TURN_LEFT"]       = picojson::value( (double) TURN_LEFT );
-    jsonControls["TURN_RIGHT"]      = picojson::value( (double) TURN_RIGHT );
-
-    picojson::object jsonUtility;
-    jsonUtility["CmdOutput"]        = picojson::value( consoleOutput );
-    jsonUtility["LogOutput"]        = picojson::value( logFileOutput );
-    jsonUtility["StatsOutput"]      = picojson::value( statsOutput );
-    jsonUtility["ShowHitboxes"]     = picojson::value( show_hitboxes );
-
-    picojson::object jsonSettings;
-    jsonSettings["AutoFill"]        = picojson::value( jsonAutoFill );
-    jsonSettings["Controls"]        = picojson::value( jsonControls );
-    jsonSettings["Utility"]         = picojson::value( jsonUtility );
-
-    std::string jsonOutput = picojson::value( jsonSettings ).serialize( true );
-    settings << jsonOutput;
-    settings.close();
-  }
-  else
-  {
-    log_message( "LOG: Can't write to biplanes.ini! " );
+    log_message( "LOG: Can't write to " CONFIG_FILENAME "!" );
     log_message( "User key bindings will not be saved!\n\n" );
-    show_warning( "Warning!", "Can't write to biplanes.ini!\nCustom key bindings will not be saved!" );
+    show_warning( "Warning!", "Can't write to " CONFIG_FILENAME "!\nCustom key bindings will not be saved!" );
+
+    return;
   }
+
+  picojson::object jsonAutoFill;
+  jsonAutoFill["HARDCORE_MODE"]   = picojson::value( game.isHardcoreEnabled );
+  jsonAutoFill["LOCAL_PORT"]       = picojson::value( (double) LOCAL_PORT );
+  jsonAutoFill["REMOTE_PORT"]     = picojson::value( (double) REMOTE_PORT );
+  jsonAutoFill["SERVER_IP"]       = picojson::value( SERVER_IP );
+  jsonAutoFill["MMAKE_PASSWORD"]  = picojson::value( MMAKE_PASSWORD );
+
+  picojson::object jsonControls;
+  jsonControls["FIRE"]            = picojson::value( (double) FIRE );
+  jsonControls["JUMP"]            = picojson::value( (double) JUMP );
+  jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) THROTTLE_DOWN );
+  jsonControls["THROTTLE_UP"]     = picojson::value( (double) THROTTLE_UP );
+  jsonControls["TURN_LEFT"]       = picojson::value( (double) TURN_LEFT );
+  jsonControls["TURN_RIGHT"]      = picojson::value( (double) TURN_RIGHT );
+
+  picojson::object jsonUtility;
+  jsonUtility["LogToConsole"]     = picojson::value( game.output.toConsole );
+  jsonUtility["LogToFile"]        = picojson::value( game.output.toFile);
+  jsonUtility["StatsOutput"]      = picojson::value( game.output.stats );
+  jsonUtility["ShowCollisions"]   = picojson::value( game.debug.collisions );
+
+  picojson::object jsonSettings;
+  jsonSettings["AutoFill"]        = picojson::value( jsonAutoFill );
+  jsonSettings["Controls"]        = picojson::value( jsonControls );
+  jsonSettings["Utility"]         = picojson::value( jsonUtility );
+
+  std::string jsonOutput = picojson::value( jsonSettings ).serialize( true );
+  settings << jsonOutput;
+  settings.close();
 }
 
-// PARSE JSON SETTINGS FROM BIPLANES.INI
-bool settings_parse( std::ifstream& settings, std::string& jsonErrors )
+bool
+settingsParse(
+  std::ifstream& settings,
+  std::string& jsonErrors )
 {
-  std::string jsonInput(  ( std::istreambuf_iterator <char> ( settings )  ),
-                          ( std::istreambuf_iterator <char> ()      ) );
+  const std::string jsonInput
+  {
+    std::istreambuf_iterator <char> {settings},
+    std::istreambuf_iterator <char> {},
+  };
 
   picojson::value jsonParsed;
   jsonErrors = picojson::parse( jsonParsed, jsonInput );
-  if ( !jsonErrors.empty() )
+
+  if ( jsonErrors.empty() == false )
     return false;
 
-  if ( !jsonParsed.is <picojson::object> () )
+  if ( jsonParsed.is <picojson::object> () == false )
     return false;
+
+  auto& game = gameState();
 
   picojson::value::object& jsonValue = jsonParsed.get <picojson::object> ();
+
   try
   {
     picojson::value::object& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
-    try { HARDCORE_MODE = jsonAutoFill.at( "HARDCORE_MODE" ).get <bool> (); }
+    try { game.isHardcoreEnabled = jsonAutoFill.at( "HARDCORE_MODE" ).get <bool> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { HOST_PORT = jsonAutoFill.at( "HOST_PORT" ).get <double> (); }
+    try { LOCAL_PORT = jsonAutoFill.at( "LOCAL_PORT" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    if ( !checkPort( std::to_string(HOST_PORT) ) )
-      HOST_PORT = DEFAULT_HOST_PORT;
+    if ( checkPort( std::to_string(LOCAL_PORT) ) == false )
+      LOCAL_PORT = DEFAULT_LOCAL_PORT;
 
-    try { MMAKE_PASSWORD = jsonAutoFill.at( "MMAKE_PASSWORD" ).get <std::string> (); }
+    try { REMOTE_PORT = jsonAutoFill.at( "REMOTE_PORT" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    if ( !checkPass( MMAKE_PASSWORD ) )
-      MMAKE_PASSWORD = "";
+    if ( checkPort( std::to_string(REMOTE_PORT) ) == false )
+      REMOTE_PORT = DEFAULT_REMOTE_PORT;
 
     try { SERVER_IP = jsonAutoFill.at( "SERVER_IP" ).get <std::string> (); }
     catch ( std::out_of_range &e ) {};
 
-    if ( checkIp( SERVER_IP ).empty() )
+    if ( checkIp(SERVER_IP).empty() == true )
       SERVER_IP = DEFAULT_SERVER_IP;
 
-    try { SERVER_PORT = jsonAutoFill.at( "SERVER_PORT" ).get <double> (); }
+    try { MMAKE_PASSWORD = jsonAutoFill.at( "MMAKE_PASSWORD" ).get <std::string> (); }
     catch ( std::out_of_range &e ) {};
 
-    if ( !checkPort( std::to_string(SERVER_PORT) ) )
-      SERVER_PORT = DEFAULT_SERVER_PORT;
+    if ( checkPass(MMAKE_PASSWORD) == false )
+      MMAKE_PASSWORD = "";
   }
   catch ( std::out_of_range &e ) {};
 
@@ -180,16 +168,16 @@ bool settings_parse( std::ifstream& settings, std::string& jsonErrors )
   {
     picojson::value::object& jsonUtility  = jsonValue["Utility"].get <picojson::object> ();
 
-    try { consoleOutput = jsonUtility.at( "CmdOutput" ).get <bool> (); }
+    try { game.output.toConsole = jsonUtility.at( "LogToConsole" ).get <bool> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { logFileOutput = jsonUtility.at( "LogOutput" ).get <bool> (); }
+    try { game.output.toFile = jsonUtility.at( "LogToFile" ).get <bool> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { statsOutput   = jsonUtility.at( "StatsOutput" ).get <bool> (); }
+    try { game.output.stats = jsonUtility.at( "StatsOutput" ).get <bool> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { show_hitboxes = jsonUtility.at( "ShowHitboxes" ).get <bool> (); }
+    try { game.debug.collisions = jsonUtility.at( "ShowCollisions" ).get <bool> (); }
     catch ( std::out_of_range &e ) {};
   }
   catch ( std::out_of_range &e ) {};
@@ -197,81 +185,89 @@ bool settings_parse( std::ifstream& settings, std::string& jsonErrors )
   return true;
 }
 
-// READ SETTINGS AND PRINT GAME VERSION
-void logVerReadSettings()
+void
+logVersionAndReadSettings()
 {
+  const auto& game = gameState();
+
   bool settingsReadSuccess = true;
   std::string jsonErrors;
 
-  std::ifstream settings( "biplanes.ini" );
-  if ( settings.is_open() )
-    settingsReadSuccess = settings_parse( settings, jsonErrors );
+  std::ifstream settings {CONFIG_FILENAME};
 
-  if ( logFileOutput )
+  if ( settings.is_open() == true )
+    settingsReadSuccess = settingsParse( settings, jsonErrors );
+
+  if ( game.output.toFile == true )
   {
-    std::ofstream log( "biplanes.log", std::ios::trunc );
-    log.close();
+    std::ofstream logFile { LOG_FILENAME, std::ios::trunc };
+    logFile.close();
   }
 
-  log_message( "Bluetooth Biplanes Revival version 0.9", "\n" );
-  logSDL2Ver();
+  log_message( "Biplanes Revival version " BIPLANES_VERSION "\n" );
+  logSDL2Version();
 
-  if ( !settings.is_open() )
+  if ( settings.is_open() == false )
   {
-    log_message( "LOG: Can't find biplanes.ini! " );
-    log_message( "Creating new biplanes.ini", "\n" );
-    settings_write();
+    log_message( "LOG: Can't find " CONFIG_FILENAME "! " );
+    log_message( "Creating new " CONFIG_FILENAME, "\n" );
+    settingsWrite();
   }
-  else if ( !settingsReadSuccess )
+  else if ( settingsReadSuccess == false )
   {
-    std::ofstream log( "biplanes.log", std::ios::trunc );
-    log.close();
-    log_message( "LOG: Failed to parse biplanes.ini! Error:\n", jsonErrors, "\n\n" );
-    log_message( "LOG: Creating new biplanes.ini\n" );
-    settings_write();
+    log_message( "LOG: Failed to parse " CONFIG_FILENAME "! Error:\n", jsonErrors, "\n\n" );
+    log_message( "LOG: Creating new " CONFIG_FILENAME "\n" );
+    settings.close();
+    settingsWrite();
   }
   else
     settings.close();
 
-  if ( statsOutput )
+  if ( game.output.stats == true )
   {
-    if ( !stats_read() )
+    if ( statsRead() == false )
     {
-      log_message( "LOG: Failed to read biplanes.stats! " );
-      log_message( "Creating new biplanes.stats", "\n\n" );
+      log_message( "LOG: Failed to read " STATS_FILENAME "! " );
+      log_message( "Creating new " STATS_FILENAME "\n\n" );
 
-      if ( !stats_write() )
+      if ( stats_write() == false )
       {
-        log_message( "LOG: Failed to create biplanes.stats! " );
+        log_message( "LOG: Failed to create " STATS_FILENAME "! " );
         log_message( "Player statistics won't be saved!", "\n\n" );
       }
     }
   }
 }
 
-void log_message( const std::string& message, const std::string& buffer1, const std::string& buffer2, const std::string& buffer3 )
+void
+log_message(
+  const std::string& message,
+  const std::string& buffer1,
+  const std::string& buffer2,
+  const std::string& buffer3 )
 {
-  if ( consoleOutput )
+  const auto& game = gameState();
+
+  if ( game.output.toConsole == true )
     std::cout << message << buffer1 << buffer2 << buffer3;
 
-  if ( logFileOutput )
+  if ( game.output.toFile == true )
   {
-    std::ofstream log( "biplanes.log", std::ios::app );
-    if ( log.is_open() )
-      log << message << buffer1 << buffer2 << buffer3;
+    std::ofstream logFile { LOG_FILENAME, std::ios::app };
+
+    if ( logFile.is_open() == true )
+      logFile << message << buffer1 << buffer2 << buffer3;
   }
 }
 
 
-// LOG SDL2 Version
-void logSDL2Ver()
+void
+logSDL2Version()
 {
-  SDL_version SDL2_libVer,
-              SDL2_dllVer,
-              SDL2_img_libVer,
-              SDL2_mix_libVer;
-
-  std::string libVer, dllVer;
+  SDL_version SDL2_libVer;
+  SDL_version SDL2_dllVer;
+  SDL_version SDL2_img_libVer;
+  SDL_version SDL2_mix_libVer;
 
   SDL_VERSION( &SDL2_libVer );
   SDL_GetVersion( &SDL2_dllVer );
@@ -282,6 +278,8 @@ void logSDL2Ver()
   SDL_MIXER_VERSION( &SDL2_mix_libVer );
   const SDL_version* SDL2_mix_dllVer = Mix_Linked_Version();
 
+  std::string libVer;
+  std::string dllVer;
 
   libVer =  std::to_string( SDL2_libVer.major ) + ".";
   libVer += std::to_string( SDL2_libVer.minor ) + ".";
@@ -320,25 +318,29 @@ void logSDL2Ver()
 }
 
 
-bool stats_write()
+bool
+stats_write()
 {
-  std::ofstream statsOut( "biplanes.stats", std::ios::trunc );
-  if ( !statsOut.is_open() )
+  std::ofstream statsOut { STATS_FILENAME, std::ios::trunc };
+
+  if ( statsOut.is_open() == false )
     return false;
 
+  const auto& stats = gameState().stats.total;
+
   picojson::object jsonStats;
-  jsonStats["ChuteHits"]  = picojson::value( (double) stats_total.chute_hits );
-  jsonStats["Crashes"]    = picojson::value( (double) stats_total.crashes );
-  jsonStats["Deaths"]     = picojson::value( (double) stats_total.deaths );
-  jsonStats["Falls"]      = picojson::value( (double) stats_total.falls );
-  jsonStats["Jumps"]      = picojson::value( (double) stats_total.jumps );
-  jsonStats["Kills"]      = picojson::value( (double) stats_total.plane_kills );
-  jsonStats["Losses"]     = picojson::value( (double) stats_total.losses );
-  jsonStats["PilotHits"]  = picojson::value( (double) stats_total.pilot_hits );
-  jsonStats["PlaneHits"]  = picojson::value( (double) stats_total.plane_hits );
-  jsonStats["Rescues"]    = picojson::value( (double) stats_total.rescues );
-  jsonStats["Shots"]      = picojson::value( (double) stats_total.shots );
-  jsonStats["Wins"]       = picojson::value( (double) stats_total.wins );
+  jsonStats["ChuteHits"]  = picojson::value( (double) stats.chute_hits );
+  jsonStats["Crashes"]    = picojson::value( (double) stats.crashes );
+  jsonStats["Deaths"]     = picojson::value( (double) stats.deaths );
+  jsonStats["Falls"]      = picojson::value( (double) stats.falls );
+  jsonStats["Jumps"]      = picojson::value( (double) stats.jumps );
+  jsonStats["Kills"]      = picojson::value( (double) stats.plane_kills );
+  jsonStats["Losses"]     = picojson::value( (double) stats.losses );
+  jsonStats["PilotHits"]  = picojson::value( (double) stats.pilot_hits );
+  jsonStats["PlaneHits"]  = picojson::value( (double) stats.plane_hits );
+  jsonStats["Rescues"]    = picojson::value( (double) stats.rescues );
+  jsonStats["Shots"]      = picojson::value( (double) stats.shots );
+  jsonStats["Wins"]       = picojson::value( (double) stats.wins );
 
 
   std::string jsonOutput = picojson::value( jsonStats ).serialize( true );
@@ -349,188 +351,176 @@ bool stats_write()
   return true;
 }
 
-bool stats_read()
+bool
+statsRead()
 {
-  std::ifstream statsInput( "biplanes.stats" );
+  std::ifstream statsInput {STATS_FILENAME};
 
-  if ( !statsInput.is_open() )
+  if ( statsInput.is_open() == false )
     return false;
 
-  std::string jsonInput(  ( std::istreambuf_iterator <char> ( statsInput )  ),
-                          ( std::istreambuf_iterator <char> ()      ) );
+
+  const std::string jsonInput
+  {
+    std::istreambuf_iterator <char> {statsInput},
+    std::istreambuf_iterator <char> {},
+  };
 
   statsInput.close();
 
   picojson::value jsonParsed;
-  std::string jsonErrors = picojson::parse( jsonParsed, jsonInput );
-  if ( !jsonErrors.empty() )
+  std::string jsonErrors = picojson::parse(
+    jsonParsed, jsonInput );
+
+  if ( jsonErrors.empty() == false )
     return false;
 
-  if ( !jsonParsed.is <picojson::object> () )
+  if ( jsonParsed.is <picojson::object> () == false )
     return false;
+
+
+  auto& stats = gameState().stats.total;
 
   picojson::value::object& jsonStats = jsonParsed.get <picojson::object> ();
   try
   {
-    try { stats_total.chute_hits = jsonStats.at( "ChuteHits" ).get <double> (); }
+    try { stats.chute_hits = jsonStats.at( "ChuteHits" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.crashes = jsonStats.at( "Crashes" ).get <double> (); }
+    try { stats.crashes = jsonStats.at( "Crashes" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.deaths = jsonStats.at( "Deaths" ).get <double> (); }
+    try { stats.deaths = jsonStats.at( "Deaths" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.falls = jsonStats.at( "Falls" ).get <double> (); }
+    try { stats.falls = jsonStats.at( "Falls" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.jumps = jsonStats.at( "Jumps" ).get <double> (); }
+    try { stats.jumps = jsonStats.at( "Jumps" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.plane_kills = jsonStats.at( "Kills" ).get <double> (); }
+    try { stats.plane_kills = jsonStats.at( "Kills" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.losses = jsonStats.at( "Losses" ).get <double> (); }
+    try { stats.losses = jsonStats.at( "Losses" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.pilot_hits = jsonStats.at( "PilotHits" ).get <double> (); }
+    try { stats.pilot_hits = jsonStats.at( "PilotHits" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.plane_hits = jsonStats.at( "PlaneHits" ).get <double> (); }
+    try { stats.plane_hits = jsonStats.at( "PlaneHits" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.rescues = jsonStats.at( "Rescues" ).get <double> (); }
+    try { stats.rescues = jsonStats.at( "Rescues" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.shots = jsonStats.at( "Shots" ).get <double> (); }
+    try { stats.shots = jsonStats.at( "Shots" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
 
-    try { stats_total.wins = jsonStats.at( "Wins" ).get <double> (); }
+    try { stats.wins = jsonStats.at( "Wins" ).get <double> (); }
     catch ( std::out_of_range &e ) {};
   }
   catch ( std::out_of_range &e ) {};
+
+  calcDerivedStats(stats);
 
   return true;
 }
 
 
-Timer::Timer( const float newTimeout )
+std::string
+checkIp(
+  const std::string& ipAddress )
 {
-  counter = 0.0f;
-  timeout = newTimeout;
-  counting = false;
-}
+  if ( ipAddress.length() == 0 || ipAddress.length() > 15 )
+    return {};
 
-void Timer::Update()
-{
-  if ( counting )
-  {
-    if ( counter > 0.0f )
-      counter -= deltaTime;
-    else
-      Stop();
-  }
-}
-
-void Timer::Start()
-{
-  counting = true;
-  Reset();
-}
-
-void Timer::Stop()
-{
-  counting = false;
-  counter = 0.0f;
-}
-
-void Timer::Reset()
-{
-    counter = timeout;
-}
-
-void Timer::SetNewTimeout( float newTimeout )
-{
-    timeout = newTimeout;
-}
-
-float Timer::remainderTime() const
-{
-  return counter;
-}
-
-bool Timer::isReady() const
-{
-  return counter <= 0.0f;
-}
-
-
-std::string checkIp( std::string IpToCheck )
-{
-  if (  IpToCheck.length() == 0 ||
-        IpToCheck.length() > 15 )
-    return "";
-
-  std::stringstream s( IpToCheck );
+  std::stringstream stream {ipAddress};
   int a, b, c, d;
   char ch;
-  s >> a >> ch >> b >> ch >> c >> ch >> d;
+  stream >> a >> ch >> b >> ch >> c >> ch >> d;
+
   if ( a > 255 || a < 0 ||
        b > 255 || b < 0 ||
        c > 255 || c < 0 ||
        d > 255 || d < 0 ||
        ch != '.' )
-    return "";
+    return {};
 
-  return  std::to_string( a ) + "." +
-          std::to_string( b ) + "." +
-          std::to_string( c ) + "." +
-          std::to_string( d );
+  return
+  {
+    std::to_string(a) + "." +
+    std::to_string(b) + "." +
+    std::to_string(c) + "." +
+    std::to_string(d)
+  };
 }
 
-bool checkPort( std::string PortToCheck )
+bool
+checkPort(
+  const std::string& port )
 {
-  if ( PortToCheck.length() == 0 )
+  if ( port.length() == 0 )
     return false;
 
-  for ( char digit : PortToCheck )
-    if ( !isdigit( digit ) )
+
+  for ( const auto& digit : port )
+    if ( isdigit(digit) == false )
       return false;
 
-//  for ( unsigned int i = 0; i < PortToCheck.length(); i++)
-//  {
-//    if ( !isdigit( PortToCheck[i] ) )
-//      return false;
-//  }
 
-  if (  stoi( PortToCheck ) > 1024 &&
-        stoi( PortToCheck ) <= 65535 )
+  const auto portNum = stoi(port);
+
+  if ( portNum > 1024 && portNum <= 65535 )
     return true;
 
   return false;
 }
 
-bool checkPass( std::string PassToCheck )
+bool
+checkPass(
+  const std::string& password )
 {
-  if ( PassToCheck.length() == 0 )
+  if ( password.length() == 0 )
     return true;
 
-  if ( PassToCheck.length() > 15 )
+  if ( password.length() > 15 )
     return false;
 
-  for ( char letter : PassToCheck )
-    if (  letter >= '0' &&
-          letter <= '9' )
+
+  for ( const auto& letter : password )
+  {
+    if ( letter >= '0' && letter <= '9' )
       continue;
-    else if ( letter >= 'A' &&
-              letter <= 'Z' )
+
+    if ( letter >= 'A' && letter <= 'Z' )
       continue;
-    else if ( letter >= 'a' &&
-              letter <= 'z' )
+
+    if ( letter >= 'a' && letter <= 'z' )
       continue;
-    else
-      return false;
+
+    return false;
+  }
 
   return true;
 }
 
+bool
+checkScoreToWin(
+  const std::string& score )
+{
+  if ( score.length() > 3 )
+    return false;
+
+  for ( const auto& digit : score )
+    if ( isdigit(digit) == false )
+      return false;
+
+  const auto scoreNum = stoi(score);
+  const auto maxScore = std::numeric_limits <uint8_t>::max();
+
+  if ( scoreNum >= 0 && scoreNum < maxScore )
+    return true;
+
+  return false;
+}

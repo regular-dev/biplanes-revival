@@ -20,39 +20,49 @@
 
 #pragma once
 
-#include <include/structures.h>
-#include <include/utility.h>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+#include <include/timer.hpp>
 
 #include <map>
+#include <string>
 
 
 class Menu
 {
-private:
-  ROOMS current_room {ROOMS::MENU_COPYRIGHT};
-  std::map <ROOMS, unsigned char> buttons {};
-  uint8_t button_selected {};
-  bool button_pressed {true};
+  using MENU_SPECIFY = MENU_SPECIFY::MENU_SPECIFY;
+  using MENU_SETTINGS_CONTROLS = MENU_SETTINGS_CONTROLS::MENU_SETTINGS_CONTROLS;
+  using DIFFICULTY = DIFFICULTY::DIFFICULTY;
 
-  bool specifying_var[3] {};
-  bool typing {};
-  uint8_t define_key {};
-  bool defining_key {};
 
-  std::string inputIp {};
-  std::string inputPortHost {};
-  std::string inputPortClient {};
-  std::string inputPass {};
+  ROOMS mCurrentRoom {ROOMS::MENU_COPYRIGHT};
+  std::map <ROOMS, unsigned char> mButtons {};
+  uint8_t mSelectedButton {};
+  bool mButtonWasPressed {true};
 
-  MESSAGE_TYPE message {};
-  Timer* connected_message_timer {new Timer(3.0f)};
+  bool mSpecifyingVarState[4] {};
+  bool mIsTyping {};
+  MENU_SETTINGS_CONTROLS mKeyToDefine {};
+  bool mIsDefiningKey {};
+
+  std::string mInputIp {};
+  std::string mInputPortHost {};
+  std::string mInputPortClient {};
+  std::string mInputPassword {};
+  std::string mInputScoreToWin {};
+
+  MESSAGE_TYPE mCurrentMessage {};
+  Timer mConnectedMessageTimer {0.0};
+
 
 public:
   Menu();
+
   void ResizeWindow();
   void DrawMenu();
-  void setMessage( MESSAGE_TYPE );
-  void ChangeRoom( ROOMS );
+  void DrawButton();
+  void setMessage( const MESSAGE_TYPE );
+  void ChangeRoom( const ROOMS );
   void UpdateControls();
   void UpdateTyping();
   void UpdateDefiningKey();
@@ -61,58 +71,49 @@ public:
   void ButtonDown();
   void Select();
   void GoBack();
-  void ToggleTyping( unsigned char );
-  void EndTyping( unsigned char );
-  void ToggleDefiningKey( unsigned char );
-  void UpdateDefiningKey( unsigned char );
+  void ToggleTyping( const MENU_SPECIFY );
+  void EndTyping( const MENU_SPECIFY );
+  void ToggleDefiningKey( const MENU_SETTINGS_CONTROLS );
+  void UpdateDefiningKey( const MENU_SETTINGS_CONTROLS );
   void ResetKey();
   void ReturnToMainMenu();
 
-  unsigned char getSelectedButton();
-  bool getSpecifyingVar( unsigned char );
-  bool getDefiningKey();
-  std::string getInputIp();
-  std::string getInputPortHost();
-  std::string getInputPortClient();
-  std::string getInputPass();
-  MESSAGE_TYPE getMessage();
+  void screen_main();
+  void screen_settings();
+  void screen_help();
+  void screen_pause();
+  void screen_copyright();
+  void screen_splash();
+
+  void screen_stats_recent();
+  void screen_stats_total_page1();
+  void screen_stats_total_page2();
+
+  void screen_sp();
+  void screen_sp_setup();
+
+  void screen_mp();
+  void screen_mp_mmake();
+
+  void screen_mp_dc();
+  void screen_mp_dc_host();
+  void screen_mp_dc_join();
+
+  void screen_mp_dc_help();
+  void screen_mp_help_page1();
+  void screen_mp_help_page2();
+  void screen_mp_help_page3();
+  void screen_mp_help_page4();
+  void screen_mp_help_page5();
+  void screen_mp_help_page6();
+  void screen_mp_help_page7();
+  void screen_mp_help_page8();
+
+
+  bool isSpecifyingVar( const MENU_SPECIFY ) const;
+  bool isDefiningKey() const;
 };
 
-
-void game_loop_mp();
-void game_close();
-void menu_main();
-void menu_settings_controls();
-void menu_help();
-void menu_recent_stats();
-void menu_total_stats_page1();
-void menu_total_stats_page2();
-void stats_update();
-
-void menu_sp();
-void menu_sp_setup();
-
-void menu_mp();
-
-void menu_mp_mmake();
-
-void menu_mp_dc();
-void menu_mp_dc_host();
-void menu_mp_dc_join();
-
-void menu_mp_dc_help();
-void menu_mp_help_page1();
-void menu_mp_help_page2();
-void menu_mp_help_page3();
-void menu_mp_help_page4();
-void menu_mp_help_page5();
-void menu_mp_help_page6();
-void menu_mp_help_page7();
-void menu_mp_help_page8();
-
-void menu_pause();
-void menu_copyright();
-void menu_splash();
+extern class Menu menu;
 
 void window_resize();
-void sendDisconnectMessage();

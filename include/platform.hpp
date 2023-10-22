@@ -20,19 +20,18 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
 
+#define PLATFORM_WINDOWS  1
+#define PLATFORM_MAC      2
+#define PLATFORM_UNIX     3
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+#if defined(_WIN32)
+  #define PLATFORM PLATFORM_WINDOWS
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+#elif defined(__APPLE__)
+  #define PLATFORM PLATFORM_MAC
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+#else
+  #define PLATFORM PLATFORM_UNIX
+
+#endif

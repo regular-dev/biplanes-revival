@@ -20,32 +20,41 @@
 
 #pragma once
 
-#include <include/sdl.h>
+#include <SDL_rect.h>
+
+#include <cstdint>
+#include <vector>
 
 
 class Cloud
 {
-  float x {};
-  float y {};
-  bool dir {};
+  float mX {};
+  float mY {};
+  bool mDir {};
 
-  uint8_t id {};
-  bool opaque {};
-  SDL_Rect collision_box {};
+  uint8_t mId {};
+  bool mIsOpaque {};
+  SDL_Rect mCollisionBox {};
+
 
 public:
   Cloud() = default;
-  Cloud( bool newDir, uint8_t newId );
+  Cloud( const bool dir, const uint8_t id );
+
 
   void Update();
   void UpdateCoordinates();
   void UpdateHeight();
   void UpdateCollisionBox();
 
+
   void Draw();
   void setTransparent();
   void setOpaque();
   void Respawn();
 
-  bool isHit( float hitX, float hitY );
+
+  bool isHit( const float x, const float y ) const;
 };
+
+extern std::vector <Cloud> clouds;

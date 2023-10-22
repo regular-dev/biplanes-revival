@@ -19,96 +19,140 @@
 */
 
 #include <include/render.h>
+#include <include/sdl.h>
+#include <include/game_state.hpp>
+#include <include/plane.h>
+#include <include/sizes.hpp>
+#include <include/textures.hpp>
 #include <include/variables.h>
 
 #include <string>
 
 
-void draw_text( const char text[], int x, int y )
+void
+draw_text(
+  const char text[],
+  const int x, const int y )
 {
-  for ( unsigned int i = 0; i < strlen(text); i++ )
+  for ( size_t i = 0; i < strlen(text); i++ )
   {
-    textures.destrect.x = x + sizes.text_sizex * i;
-    textures.destrect.y = y;
-    textures.destrect.w = sizes.text_sizex;
-    textures.destrect.h = sizes.text_sizey;
-    SDL_RenderCopy( gRenderer, textures.main_font, &textures.font_rect[ text[i] - 32 ], &textures.destrect  );
+    const SDL_Rect textRect
+    {
+      x + sizes.text_sizex * i,
+      y,
+      sizes.text_sizex,
+      sizes.text_sizey,
+    };
+
+    SDL_RenderCopy(
+      gRenderer,
+      textures.main_font,
+      &textures.font_rect[text[i] - 32],
+      &textRect  );
   }
 }
 
-void draw_menu_button()
+void
+draw_background()
 {
-  SDL_Rect srcrect = { sizes.button_x, 0, 127, 12 };
-  textures.destrect.x = sizes.screen_width * 0.008;
-  textures.destrect.y = sizes.screen_height * 0.34755 + menu.getSelectedButton() * sizes.button_sizey;
-  textures.destrect.w = sizes.button_sizex;
-  textures.destrect.h = sizes.button_sizey;
-  SDL_RenderCopy( gRenderer, textures.menu_moving_button, &srcrect, &textures.destrect );
-}
-
-void draw_background()
-{
-  // Clear buffer
-  SDL_RenderClear( gRenderer );
+  SDL_RenderClear(gRenderer);
 
 
-  // Draw background
-  textures.destrect = { 0, 0, sizes.screen_width, sizes.screen_height };
-  SDL_RenderCopy( gRenderer, textures.texture_background, NULL, &textures.destrect );
+  const SDL_Rect backgroundRect
+  {
+    0, 0,
+    sizes.screen_width,
+    sizes.screen_height,
+  };
 
-  if ( show_hitboxes )
+  SDL_RenderCopy(
+    gRenderer,
+    textures.texture_background,
+    nullptr,
+    &backgroundRect );
+
+
+  if ( gameState().debug.collisions == true )
   {
     SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
-    SDL_RenderDrawLine( gRenderer,  0,
-                                    sizes.ground_y_collision,
-                                    sizes.screen_width,
-                                    sizes.ground_y_collision );
-  }
-}
-
-void draw_barn()
-{
-  textures.destrect.x = int(sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5);
-  textures.destrect.y = int(sizes.screen_height * 0.808);
-  textures.destrect.w = sizes.barn_sizex;
-  textures.destrect.h = sizes.barn_sizey;
-  SDL_RenderCopy( gRenderer, textures.texture_barn, NULL, &textures.destrect );
-
-  if ( show_hitboxes )
-  {
-    SDL_Rect barn_hit_box;
-    barn_hit_box.x = sizes.barn_x_bullet_collision;
-    barn_hit_box.y = sizes.barn_y_bullet_collision;
-    barn_hit_box.w = sizes.barn_sizex * 0.95f;
-    barn_hit_box.h = sizes.barn_sizey;
+    SDL_RenderDrawLine(
+      gRenderer,
+      0,
+      sizes.ground_y_collision,
+      sizes.screen_width,
+      sizes.ground_y_collision );
 
     SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barn_hit_box );
-
-    barn_hit_box.x = sizes.barn_x_collision;
-    barn_hit_box.y = sizes.barn_y_collision;
-
-    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barn_hit_box );
-
-    barn_hit_box.y = sizes.screen_height * 0.908;
-    barn_hit_box.x = sizes.barn_x_pilot_left_collision;
-    barn_hit_box.w = sizes.barn_x_pilot_right_collision - sizes.barn_x_pilot_left_collision;
-
-    SDL_SetRenderDrawColor( gRenderer, 0, 255, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barn_hit_box );
+    SDL_RenderDrawLine(
+      gRenderer,
+      0,
+      sizes.bullet_ground_collision,
+      sizes.screen_width,
+      sizes.bullet_ground_collision );
   }
 }
 
-void draw_score()
+void
+draw_barn()
 {
-  char text [5];
-  sprintf( text, "%d-%d", (int) plane_blue.getScore(), (int) plane_red.getScore() );
-  draw_text ( text, sizes.screen_width * 0.45, sizes.screen_height * 0.5 );
+  const SDL_Rect barnRect
+  {
+    sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5,
+    sizes.screen_height * 0.808,
+    sizes.barn_sizex,
+    sizes.barn_sizey,
+  };
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.texture_barn,
+    nullptr,
+    &barnRect );
+
+
+  if ( gameState().debug.collisions == true )
+  {
+    SDL_Rect barnHitbox
+    {
+      sizes.barn_x_bullet_collision,
+      sizes.barn_y_bullet_collision,
+      sizes.barn_sizex * 0.95f,
+      sizes.barn_sizey,
+    };
+
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+
+    barnHitbox.x = sizes.barn_x_collision;
+    barnHitbox.y = sizes.barn_y_collision;
+
+    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+
+    barnHitbox.y = sizes.ground_y_pilot_collision;
+    barnHitbox.x = sizes.barn_x_pilot_left_collision;
+    barnHitbox.w = sizes.barn_x_pilot_right_collision - sizes.barn_x_pilot_left_collision;
+
+    SDL_SetRenderDrawColor( gRenderer, 0, 255, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+  }
 }
 
-void display_update()
+void
+draw_score()
 {
-  SDL_RenderPresent( gRenderer );
-  //SDL_UpdateWindowSurface( gWindow );
+  const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  const auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+  char text [5];
+
+  sprintf( text, "%u-%u", planeBlue.score(), planeRed.score() );
+  draw_text( text, sizes.screen_width * 0.45, sizes.screen_height * 0.5 );
+}
+
+void
+display_update()
+{
+  SDL_RenderPresent(gRenderer);
+//  SDL_UpdateWindowSurface(gWindow);
 }

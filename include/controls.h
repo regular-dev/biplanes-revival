@@ -20,10 +20,43 @@
 
 #pragma once
 
-#include <include/structures.h>
-#include <include/plane.h>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+
+#include <SDL_keycode.h>
 
 
-void collect_local_input();
-void collect_opponent_input();
-void process_local_controls( Plane&, Controls& );
+struct Controls
+{
+  PLANE_PITCH pitch {};
+  PLANE_THROTTLE throttle {};
+  bool fire {};
+  bool jump {};
+
+
+  Controls() = default;
+};
+
+
+extern Controls controls_local;
+extern Controls controls_opponent;
+
+
+void readLocalInput();
+void readOpponentInput();
+void processLocalControls( Plane&, const Controls& );
+
+
+extern const SDL_Keycode DEFAULT_THROTTLE_UP;
+extern const SDL_Keycode DEFAULT_THROTTLE_DOWN;
+extern const SDL_Keycode DEFAULT_TURN_LEFT;
+extern const SDL_Keycode DEFAULT_TURN_RIGHT;
+extern const SDL_Keycode DEFAULT_FIRE;
+extern const SDL_Keycode DEFAULT_JUMP;
+
+extern SDL_Keycode THROTTLE_UP;
+extern SDL_Keycode THROTTLE_DOWN;
+extern SDL_Keycode TURN_LEFT;
+extern SDL_Keycode TURN_RIGHT;
+extern SDL_Keycode FIRE;
+extern SDL_Keycode JUMP;

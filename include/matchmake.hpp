@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+#include <include/timer.hpp>
+
 #include <lib/Net.h>
 
 #include <string>
@@ -37,13 +41,13 @@
 enum class MatchConnectStatus
 {
   FIND = 1000,
-  CONNECTED = 1001,
-  CANNOTCONNECT = 1002,
-  P2PACCEPT = 1003,
-  GOODBYE = 1004,
-  MMSTREAM = 1005,
-  MMECHO = 1006,
-  MMOPPONENT = 1007
+  CONNECTED,
+  CANNOTCONNECT,
+  P2PACCEPT,
+  GOODBYE,
+  MMSTREAM,
+  MMECHO,
+  MMOPPONENT,
 };
 
 enum class MatchMakerState
@@ -57,46 +61,40 @@ enum class MatchMakerState
   MATCH_NAT_PUNCH_2,
   MATCH_NAT_PUNCH_3,
   MATCH_READY,
-  MATCH_TIMEOUT
+  MATCH_TIMEOUT,
 };
 
-net::Address toAddress( const std::string& inputAddr, const std::string& inputPort);
+
+net::Address toAddress( const std::string& inputAddr, const std::string& inputPort );
+
 
 class MatchMaker
 {
-private:
-  MatchMaker();
-  MatchMaker( const MatchMaker& );
-  MatchMaker& operator= ( MatchMaker& );
+  net::Socket mSocket {};
+  std::string mPassword {};
+  int32_t mClientId {};
 
-  std::string passwd = "";
-  net::Socket m_mm_stream_sock;
-  int m_client_id;
+  MatchMakerState mState {};
+  Timer mTimer {0.0f};
 
-  MatchMakerState _state;
-  Timer* timer;
+  net::Address mOpponentAddress {};
+  SRV_CLI mClientNodeType {};
 
-  net::Address _mmakeServAddr;
-  net::Address _opponentAddress;
-  bool _srv_or_cli;
 
 public:
-  static MatchMaker& Inst()
-  {
-    static MatchMaker inst;
-    return inst;
-  }
+  MatchMaker() = default;
 
-  inline std::string password() const { return passwd; }
-  inline void setPassword( const std::string& s ) { passwd = s; }
 
-  void matchInitForOpponent();
-  void matchSendStatus( MatchConnectStatus mcs, net::Address addr_send );
+  std::string password() const;
+  void setPassword( const std::string& );
 
+  bool initNewSession();
+  void sendStatus( const MatchConnectStatus, const net::Address to );
+
+  void Update();
   void Reset();
 
-  void update();
   MatchMakerState state();
-  bool srv_or_cli();
+  SRV_CLI clientNodeType();
   net::Address opponentAddress();
 };

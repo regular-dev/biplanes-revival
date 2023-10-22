@@ -20,19 +20,26 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+#include <include/timer.hpp>
 
 
-extern const uint16_t DEFAULT_LOCAL_PORT;
-extern const uint16_t DEFAULT_REMOTE_PORT;
-extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
-extern const std::string MMAKE_PASSWORD_PREFIX;
+struct NetworkState
+{
+  net::ReliableConnection* connection {};
+  net::FlowControl* flowControl {};
+  MatchMaker* matchmaker {};
 
-extern uint16_t LOCAL_PORT;
-extern uint16_t REMOTE_PORT;
-extern std::string SERVER_IP;
-extern std::string MMAKE_PASSWORD;
+  Timer sendCoordsTimer {0.25};
 
-extern const uint8_t DEFAULT_WIN_SCORE;
+  SRV_CLI nodeType {SRV_CLI::SERVER};
+
+  bool connectionChanged {};
+  bool isOpponentConnected {};
+
+
+  NetworkState() = default;
+};
+
+NetworkState& networkState();

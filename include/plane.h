@@ -20,72 +20,75 @@
 
 #pragma once
 
-#include <include/utility.h>
+#include <include/fwd.hpp>
+#include <include/enums.hpp>
+#include <include/timer.hpp>
+#include <include/stats.hpp>
 
-#include <SDL.h>
+#include <SDL_rect.h>
 
+#include <array>
 #include <vector>
+#include <map>
 
-
-struct Plane_Data
-{
-  float x;
-  float y;
-  float dir;
-
-  float pilot_x;
-  float pilot_y;
-};
 
 class Plane
 {
-  bool type {};
-  uint8_t score {};
+  PLANE_TYPE mType {};
+  uint8_t mScore {};
 
-  float x;
-  float y;
-  float dir;
+  bool mIsLocal {};
+  bool mIsBot {};
 
-  float speed;
-  float max_speed_var;
+  float mX {};
+  float mY {};
+  float mDir {};
 
-  Timer fire_cooldown {0.0f};
-  Timer pitch_cooldown {0.0f};
+  float mSpeed {};
+  float mMaxSpeedVar {};
 
-  unsigned char hp;
-  bool dead;
-  Timer dead_cooldown {0.0f};
-  Timer protection {0.0f};
+  Timer mFireCooldown {0.0f};
+  Timer mPitchCooldown {0.0f};
 
-  bool onground;
-  bool takeoff;
-  bool jump;
+  uint8_t mHp {};
+  bool mIsDead {};
+  Timer mDeadCooldown {0.0f};
+  Timer mProtection {0.0f};
 
-  char smk_frame[5];
-  SDL_Rect smk_destrect[5];
+  bool mIsOnGround {};
+  bool mIsTakingOff {};
+  bool mHasJumped {};
 
-  Timer smk_anim {0.0f};
-  Timer smk_period {0.0f};
-  char smk_rect;
+  std::array <int8_t, 5> mSmokeFrame {};
+  std::array <SDL_Rect, 5> mSmokeDestRect {};
 
-  char fire_frame;
-  Timer fire_anim {0.0f};
+  Timer mSmokeAnim {0.0f};
+  Timer mSmokePeriod {0.0f};
+  int8_t mSmokeRect;
 
-  char expl_frame;
-  Timer expl_anim {0.0f};
+  int8_t mFireFrame {};
+  Timer mFireAnim {0.0f};
 
-  SDL_Rect hitbox;
+  int8_t mExplosionFrame {};
+  Timer mExplosionAnim {0.0f};
+
+  SDL_Rect mHitbox {};
+
 
 public:
-  Plane( bool );
-  void InitTimers();
+  Plane( const PLANE_TYPE );
+
+
+  void ResetTimers();
   void Update();
+
 
   void Accelerate();
   void Decelerate();
-  void Turn( unsigned char );
+  void Turn( const PLANE_PITCH );
   void Shoot();
   void Jump();
+
 
   void SpeedUpdate();
   void CoordinatesUpdate();
@@ -99,24 +102,35 @@ public:
   void ExplosionUpdate();
   void HitboxUpdate();
 
+
   void TakeOffStart();
   void TakeOffFinish();
-  void Hit( bool );
+
+  void Hit( Plane& attacker );
   void Explode();
   void Crash();
+
   void Respawn();
   void ResetSpawnProtection();
+
   void ResetScore();
+  void ScoreChange( const int8_t delta );
 
-  void ScoreChange( char );
-  bool isHit( float, float );
-  Plane_Data getData();
+  void ResetStats();
+  const Statistics& stats() const;
+
+  PLANE_TYPE type() const;
+  uint8_t score() const;
+
+  void setLocal( const bool );
+  bool isLocal() const;
+
+  void setBot( const bool );
+  bool isBot() const;
+
+
+//  Utility methods for AI
   void assignDataset( std::vector <float>& ) const;
-
-  bool getType();
-  unsigned char getScore();
-
-//  Utility methods for dataset
   SDL_Point getClosestCollision() const;
   float getDistanceToPoint( const SDL_Point& ) const;
   float getAngleToPoint( const SDL_Point&, const SDL_Point& ) const;
@@ -125,22 +139,34 @@ public:
   float getAngleRelative( const float, const float ) const;
 //
 
-  float getX();
-  float getY();
+
+  float x() const;
+  float y() const;
+
+
+  bool isHit( const float, const float ) const;
   bool isDead() const;
+
   bool canShoot() const;
   bool canJump() const;
 
-  void setCoords( Plane_Data );
-  void setDir( float );
+
+  PlaneData getData() const;
+  void setCoords( const PlaneData& );
+  void setDir( const float );
 
 
   class Input
   {
-    Plane* plane;
+    Plane* plane {};
+
 
   public:
-    Input( Plane* );
+    Input() = default;
+
+    void setPlane( Plane* );
+
+
     void Accelerate();
     void Decelerate();
     void TurnLeft();
@@ -154,15 +180,52 @@ public:
   {
     friend class Plane;
 
+    Plane* plane {};
+
+    bool mIsRunning {};
+    bool mIsChuteOpen {};
+    bool mIsDead {};
+
+    float mX {};
+    float mY {};
+    int16_t mDir {};
+
+    float mSpeed {};
+    float mVSpeed {};
+    float mGravity {};
+
+    int8_t mFallFrame {};
+    Timer mFallAnim {0.0f};
+
+    int8_t mChuteState {};
+    Timer mChuteAnim {0.0f};
+
+    uint8_t mRunFrame {};
+    Timer mRunAnim {0.0f};
+
+    int8_t mAngelFrame {};
+    int8_t mAngelLoop {};
+    Timer mAngelAnim {0.0f};
+
+    SDL_Rect mHitbox {};
+    SDL_Rect mChuteHitbox {};
+
+
   public:
-    Pilot( Plane* );
-    void InitTimers();
+    Pilot();
+
+    void setPlane( Plane* );
+
+
+    void ResetTimers();
     void Update();
 
-    void Move( unsigned char );
+
+    void Move( const PLANE_PITCH );
     void MoveIdle();
     void OpenChute();
     void ChuteUnlock();
+
 
     void FallUpdate();
     void RunUpdate();
@@ -176,56 +239,32 @@ public:
     void HitboxUpdate();
     void ChuteHitboxUpdate();
 
-    void Bail( float, float, float );
-    void ChuteHit();
+
+    void Bail( const float planeX, const float planeY, const float bailDir );
+    void ChuteHit( Plane& attacker );
     void Death();
-    void Kill( bool );
+    void Kill( Plane& attacker );
     void HitGroundCheck();
     void FallSurvive();
     void Rescue();
     void Respawn();
 
     bool isDead() const;
-    bool isHit( float, float );
-    bool ChuteisHit( float, float );
-    float getX();
-    float getY();
+    bool isHit( const float, const float ) const;
+    bool ChuteIsHit( const float, const float ) const;
 
-    void setX( float );
-    void setY( float );
+    float x() const;
+    float y() const;
 
-  private:
-    Plane* plane;
-
-    bool run {};
-    bool chute {};
-    bool dead {};
-
-    float x {};
-    float y {};
-    int16_t dir {};
-
-    float speed {};
-    float vspeed {};
-    float gravity {};
-
-    int8_t fall_frame {};
-    Timer fall_anim {0.0f};
-
-    int8_t chute_state {};
-    Timer chute_anim {0.0f};
-
-    uint8_t run_frame {};
-    Timer run_anim {0.0f};
-
-    int8_t angel_frame {};
-    int8_t angel_loop {};
-    Timer angel_anim {0.0f};
-
-    SDL_Rect pilot_hitbox;
-    SDL_Rect chute_hitbox;
+    void setX( const float );
+    void setY( const float );
   };
 
-  Input input {this};
-  Pilot pilot {this};
+
+  Input input {};
+  Pilot pilot {};
+
+  Statistics mStats {};
 };
+
+extern std::map <PLANE_TYPE, Plane> planes;

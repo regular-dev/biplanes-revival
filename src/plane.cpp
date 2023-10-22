@@ -18,1497 +18,1289 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/structures.h>
+#include <include/plane.h>
+#include <include/time.hpp>
+#include <include/game_state.hpp>
+#include <include/sdl.h>
+#include <include/cloud.h>
+#include <include/bullet.h>
+#include <include/menu.h>
+#include <include/network.hpp>
+#include <include/network_data.hpp>
+#include <include/sizes.hpp>
+#include <include/stats.hpp>
+#include <include/sounds.hpp>
+#include <include/textures.hpp>
 #include <include/variables.h>
+#include <include/utility.h>
 
 #include <cmath>
 
 
-Plane::Plane( bool construct_type )
-  : type{construct_type}
+Plane::Plane(
+  const PLANE_TYPE construct_type )
+  : mType{construct_type}
 {
-  fire_cooldown = Timer( sizes.plane_fire_cooldown_time );
-  pitch_cooldown = Timer( sizes.plane_pitch_cooldown_time );
-  dead_cooldown = Timer( sizes.plane_dead_cooldown_time );
-  protection = Timer( sizes.plane_spawn_protection_time );
+  mFireCooldown = {sizes.plane_fire_cooldown_time};
+  mPitchCooldown = {sizes.plane_pitch_cooldown_time};
+  mDeadCooldown = {sizes.plane_dead_cooldown_time};
+  mProtection = {sizes.plane_spawn_protection_time};
 
-  smk_anim = Timer( sizes.smk_frame_time );
-  smk_period = Timer( sizes.smk_anim_period );
-  fire_anim = Timer( sizes.fire_frame_time );
-  expl_anim = Timer( sizes.expl_frame_time );
+  mSmokeAnim = {sizes.smk_frame_time};
+  mSmokePeriod = {sizes.smk_anim_period};
+  mFireAnim = {sizes.fire_frame_time};
+  mExplosionAnim = {sizes.expl_frame_time};
 
   Respawn();
 }
 
-// INPUT
-Plane::Input::Input( Plane* parent_plane )
-  : plane{parent_plane}
+void
+Plane::ResetTimers()
 {
+  mFireCooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
+  mPitchCooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
+
+  mDeadCooldown.SetNewTimeout( sizes.plane_dead_cooldown_time );
+  mProtection.SetNewTimeout( sizes.plane_spawn_protection_time );
+
+  mSmokeAnim.SetNewTimeout( sizes.smk_frame_time );
+  mSmokePeriod.SetNewTimeout( sizes.smk_anim_period );
+  mFireAnim.SetNewTimeout( sizes.fire_frame_time );
+  mExplosionAnim.SetNewTimeout( sizes.expl_frame_time );
+
+  pilot.ResetTimers();
 }
 
-
-// Input Accelerate
-void Plane::Input::Accelerate()
+void
+Plane::Update()
 {
-  plane->Accelerate();
-}
+  if (  mIsDead == true &&
+        mIsLocal == true &&
+        mHasJumped == false &&
+        mDeadCooldown.isReady() == true )
+  {
+    Respawn();
+    ResetSpawnProtection();
 
-// Input Decelerate
-void Plane::Input::Decelerate()
-{
-  plane->Decelerate();
-}
+    eventPush(EVENTS::PLANE_RESPAWN);
+  }
 
-// Input Turn Left
-void Plane::Input::TurnLeft()
-{
-  if ( plane->jump )
-    plane->pilot.Move( PLANE_PITCH::PITCH_LEFT );
-  else if ( plane->type == (int) srv_or_cli )
-    plane->Turn( PLANE_PITCH::PITCH_LEFT );
-}
-
-// Input Turn Right
-void Plane::Input::TurnRight()
-{
-  if ( plane->jump )
-    plane->pilot.Move( PLANE_PITCH::PITCH_RIGHT );
-  else if ( plane->type == (int) srv_or_cli )
-    plane->Turn( PLANE_PITCH::PITCH_RIGHT );
-}
-
-// Input Turn Idle
-void Plane::Input::TurnIdle()
-{
-  if ( plane->jump )
-    plane->pilot.MoveIdle();
-}
-
-// Input Shoot
-void Plane::Input::Shoot()
-{
-  plane->Shoot();
-}
-
-// Input Jump
-void Plane::Input::Jump()
-{
-  if ( plane->jump )
-    plane->pilot.OpenChute();
-  else
-    plane->Jump();
-}
-
-void Plane::InitTimers()
-{
-  fire_cooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
-  pitch_cooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
-
-  dead_cooldown.SetNewTimeout( sizes.plane_dead_cooldown_time );
-  protection.SetNewTimeout( sizes.plane_spawn_protection_time );
-
-  smk_anim.SetNewTimeout( sizes.smk_frame_time );
-  smk_period.SetNewTimeout( sizes.smk_anim_period );
-  fire_anim.SetNewTimeout( sizes.fire_frame_time );
-  expl_anim.SetNewTimeout( sizes.expl_frame_time );
-
-  pilot.InitTimers();
-}
-
-
-// PLANE UPDATE
-void Plane::Update()
-{
   SpeedUpdate();
   CoordinatesUpdate();
   CollisionsUpdate();
   AbandonedUpdate();
 
-  if ( jump )
+  if ( mHasJumped == true )
     pilot.Update();
 
   HitboxUpdate();
 
-  pitch_cooldown.Update();
-  fire_cooldown.Update();
+  mPitchCooldown.Update();
+  mFireCooldown.Update();
 
-  dead_cooldown.Update();
-  protection.Update();
+  mDeadCooldown.Update();
+  mProtection.Update();
 
-  smk_anim.Update();
-  smk_period.Update();
-  fire_anim.Update();
-  expl_anim.Update();
+  mSmokeAnim.Update();
+  mSmokePeriod.Update();
+  mFireAnim.Update();
+  mExplosionAnim.Update();
 }
 
-// ACCELERATE
-void Plane::Accelerate()
+void
+Plane::Accelerate()
 {
-  if ( dead || jump )
+  if ( mIsDead == true || mHasJumped == true )
     return;
 
-  if ( onground )
+
+  if ( mIsOnGround == true )
   {
-    if ( !takeoff )
+    if ( mIsTakingOff == false )
       TakeOffStart();
 
-    speed += sizes.plane_incr_spd * 0.85f * deltaTime;
-  }
-  else
-  {
-    if ( dir != 0.0f )
-    {
-      if ( dir == 22.5f || dir == 337.5f )
-        speed += sizes.plane_incr_spd * 0.25f * deltaTime;
-      else if ( dir == 45.0f || dir == 315.0f )
-        speed += sizes.plane_incr_spd * 0.5f * deltaTime;
-      else
-        speed += sizes.plane_incr_spd * 0.75f * deltaTime;
+    mSpeed += sizes.plane_incr_spd * 0.85f * deltaTime;
 
-      if ( speed > max_speed_var )
-        speed = max_speed_var;
-    }
+    return;
+  }
+
+
+  if ( mDir != 0.0f )
+  {
+    if ( mDir == 22.5f || mDir == 337.5f )
+      mSpeed += sizes.plane_incr_spd * 0.25f * deltaTime;
+
+    else if ( mDir == 45.0f || mDir == 315.0f )
+      mSpeed += sizes.plane_incr_spd * 0.5f * deltaTime;
+
+    else
+      mSpeed += sizes.plane_incr_spd * 0.75f * deltaTime;
+
+    if ( mSpeed > mMaxSpeedVar )
+      mSpeed = mMaxSpeedVar;
   }
 }
 
-// DECELERATE
-void Plane::Decelerate()
+void
+Plane::Decelerate()
 {
-  if ( dead || jump )
+  if ( mIsDead == true || mHasJumped == true )
     return;
 
-  if ( takeoff )
-    speed -= sizes.plane_incr_spd * 0.75f * deltaTime;
-  else
+
+  if ( mIsTakingOff == true )
   {
-    speed -= sizes.plane_incr_spd * 0.5f * deltaTime;
+    mSpeed -= sizes.plane_incr_spd * 0.75f * deltaTime;
+    return;
+  }
 
-    if ( speed < 0.0f )
-      speed = 0.0f;
 
-    if ( max_speed_var > sizes.plane_max_speed_def )
-    {
-      max_speed_var -= sizes.plane_incr_spd * 0.5f * deltaTime;
+  mSpeed -= sizes.plane_incr_spd * 0.5f * deltaTime;
 
-      if ( max_speed_var < sizes.plane_max_speed_def )
-        max_speed_var = sizes.plane_max_speed_def;
-    }
+
+  if ( mSpeed < 0.0f )
+    mSpeed = 0.0f;
+
+  if ( mMaxSpeedVar <= sizes.plane_max_speed_def )
+    return;
+
+
+  mMaxSpeedVar = mSpeed;
+
+  if ( mMaxSpeedVar < sizes.plane_max_speed_def )
+    mMaxSpeedVar = sizes.plane_max_speed_def;
+}
+
+void
+Plane::Turn( const PLANE_PITCH inputDir )
+{
+  if ( mIsDead == true || mIsOnGround == true )
+    return;
+
+  if ( mPitchCooldown.isReady() == false )
+    return;
+
+
+  mPitchCooldown.Start();
+
+  float dir =
+    inputDir == PLANE_PITCH::PITCH_LEFT
+    ? -1.0f : 1.0f;
+
+  mDir += dir * sizes.plane_incr_rot;
+
+  if ( mDir < 0.0f )
+    mDir += 360.0f;
+
+  else if ( mDir >= 360.0f )
+    mDir -= 360.0f;
+}
+
+void
+Plane::Shoot()
+{
+//  THINK: is spawn protection condition needed ?
+//  THINK: is fire cooldown condition needed ?
+  if (  mHasJumped == true ||
+        mIsDead == true ||
+        mIsOnGround == true ||
+        mProtection.isReady() == false )
+    return;
+
+
+  if (  mIsLocal == true &&
+        mFireCooldown.isReady() == false )
+    return;
+
+
+  mFireCooldown.Start();
+  playSound(sounds.shoot, -1, false);
+
+  bullets.SpawnBullet(mX, mY, mDir, mType);
+
+
+  if ( mIsLocal == true )
+    eventPush(EVENTS::SHOOT);
+
+  if ( gameState().isRoundFinished == false )
+  {
+    mStats.shots++;
+    log_message("Plane::Shoot() mStats.shots++\n");
   }
 }
 
-// TURN
-void Plane::Turn( unsigned char input_dir )
+void
+Plane::Jump()
 {
-  if ( dead || onground )
+  if (  mIsDead == true ||
+        mIsOnGround == true ||
+        mProtection.isReady() == false )
     return;
 
-  if ( pitch_cooldown.isReady() )
-  {
-    pitch_cooldown.Start();
 
-    float turn_dir = input_dir == PLANE_PITCH::PITCH_LEFT ? -1.0f : 1.0f;
-    dir += turn_dir * sizes.plane_incr_rot;
+  const float jumpDir =
+    mType == PLANE_TYPE::RED
+    ? mDir + 90.0f
+    : mDir - 90.0f;
 
-    if ( dir < 0.0f )
-      dir += 360.0f;
-    else if ( dir >= 360.0f )
-      dir -= 360.0f;
-  }
-}
+  mHasJumped = true;
+  pilot.Bail(mX, mY, jumpDir);
 
-// SHOOT
-void Plane::Shoot()
-{
-  if ( jump || dead || onground || !protection.isReady() )
-    return;
 
-  if ( fire_cooldown.isReady() || type != (int) srv_or_cli )
-  {
-    if ( type == (int) srv_or_cli )
-    {
-      if ( opponent_connected && !game_finished )
-        stats_recent.shots++;
-
-      event_push( (unsigned char) EVENTS::SHOOT );
-    }
-
-    fire_cooldown.Start();
-    playSound( sounds.shoot, -1, false );
-
-    bullets.SpawnBullet( x, y, dir, type );
-  }
-}
-
-// JUMP
-void Plane::Jump()
-{
-  if ( dead || onground || !protection.isReady() )
-    return;
-
-  jump = true;
-  pilot.Bail( x, y, type == PLANE_TYPE::RED ? dir + 90 : dir - 90 );
-
-  if ( type != (int) srv_or_cli )
+  if ( mIsLocal == false )
     pilot.ChuteUnlock();
 }
 
 
-// UPDATE SPEED
-void Plane::SpeedUpdate()
+void
+Plane::SpeedUpdate()
 {
-  if ( onground )
-  {
-    TakeOffUpdate();
-    return;
-  }
+  if ( mIsOnGround == true )
+    return TakeOffUpdate();
 
-  // Decrease vertical speed
-  if ( dir <= 70 || dir >= 290 )
+
+//  Decrease vertical speed
+  if ( mDir <= 70 || mDir >= 290 )
   {
-    if ( dir == 0 )                         // 90 climb
+    if ( mDir == 0 )                         // 90 climb
     {
-      speed -= sizes.plane_incr_spd * 0.225f * deltaTime;
-      max_speed_var = speed;
+      mSpeed -= sizes.plane_incr_spd * 0.225f * deltaTime;
+      mMaxSpeedVar = mSpeed;
     }
-    else if ( dir <= 25 || dir >= 330 )     // 75 climb
+    else if ( mDir <= 25 || mDir >= 330 )     // 75 climb
     {
-      speed -= sizes.plane_incr_spd * 0.100f * deltaTime;
-      max_speed_var = speed;
+      mSpeed -= sizes.plane_incr_spd * 0.100f * deltaTime;
+      mMaxSpeedVar = mSpeed;
     }
-    else if ( dir <= 50 || dir >= 310 )     // 45 climb
+    else if ( mDir <= 50 || mDir >= 310 )     // 45 climb
     {
-      speed -= sizes.plane_incr_spd * 0.065f * deltaTime;
-      max_speed_var = speed;
+      mSpeed -= sizes.plane_incr_spd * 0.065f * deltaTime;
+      mMaxSpeedVar = mSpeed;
     }
     else                                    // 30 climb
     {
-      speed -= sizes.plane_incr_spd * 0.020f * deltaTime;
-      max_speed_var = speed;
+      mSpeed -= sizes.plane_incr_spd * 0.020f * deltaTime;
+      mMaxSpeedVar = mSpeed;
     }
 
-    if ( max_speed_var < sizes.plane_max_speed_def )
-      max_speed_var = sizes.plane_max_speed_def;
+    if ( mMaxSpeedVar < sizes.plane_max_speed_def )
+      mMaxSpeedVar = sizes.plane_max_speed_def;
 
-    if ( speed < 0.0f )
-      speed = 0.0f;
+    if ( mSpeed < 0.0f )
+      mSpeed = 0.0f;
+
+    return;
   }
 
-
-  // Increase vertical speed
-  else if ( dir > 113 && dir < 246 )
+//  Increase vertical speed
+  if ( mDir > 113 && mDir < 246 )
   {
-    if ( speed < sizes.plane_max_speed_acc )
+    if ( mSpeed < sizes.plane_max_speed_acc )
     {
-      speed += sizes.plane_incr_spd * 0.2 * deltaTime;
+      mSpeed += sizes.plane_incr_spd * 0.2 * deltaTime;
 
-      if ( speed > max_speed_var )
+      if ( mSpeed > mMaxSpeedVar )
       {
-        max_speed_var = speed;
+        mMaxSpeedVar = mSpeed;
 
-        if ( max_speed_var > sizes.plane_max_speed_acc )
+        if ( mMaxSpeedVar > sizes.plane_max_speed_acc )
         {
-          max_speed_var = sizes.plane_max_speed_acc;
-          speed = max_speed_var;
+          mMaxSpeedVar = sizes.plane_max_speed_acc;
+          mSpeed = mMaxSpeedVar;
         }
       }
-    }
-    else
-    {
-      speed = sizes.plane_max_speed_acc;
-      max_speed_var = speed;
-    }
-  }
-}
 
-// UPDATE COORDINATES
-void Plane::CoordinatesUpdate()
-{
-  if ( dead )
-  {
-    if ( !jump && dead_cooldown.isReady() && type == (int) srv_or_cli )
-    {
-      Respawn();
-      ResetSpawnProtection();
-
-      event_push( (unsigned char) EVENTS::PLANE_RESP );
-    }
-
-    return;
-  }
-  else if ( onground && !takeoff )
-    return;
-
-  // Change coordinates
-  x += speed * sin( dir * PI / 180.0f ) * deltaTime;
-
-  if ( !onground )
-  {
-    y -= speed * cos( dir * PI / 180.0f ) * deltaTime;
-
-    // Gravity
-    if ( speed < max_speed_var )
-      y += ( max_speed_var - speed ) * deltaTime;
-  }
-
-  // Screen borders teleport
-  if ( x > sizes.screen_width )
-    x = 0.0f;
-  else if ( x < 0.0f )
-    x = sizes.screen_width;
-  if ( y < 0.0f )
-    y = 0.0f;
-}
-
-// UPDATE COLLISIONS
-void Plane::CollisionsUpdate()
-{
-  if ( dead || ( onground && !takeoff ) )
-    return;
-
-  if ( type != (int) srv_or_cli )
-    return;
-
-  // Obstacle collisions
-  if  ( y > sizes.barn_y_collision &&
-        x > sizes.barn_x_collision &&
-        x < sizes.barn_x_collision + sizes.barn_sizex )
-  {
-    // Crash on barn
-    Crash();
-    event_push( (unsigned char) EVENTS::PLANE_DEATH );
-  }
-  else if ( !onground && y > sizes.ground_y_collision )
-  {
-    // Kiss ground
-    Crash();
-    event_push( (unsigned char) EVENTS::PLANE_DEATH );
-  }
-
-  if ( jump )
-    return;
-
-  for ( Cloud &cloud : clouds )
-  {
-    if ( (int) srv_or_cli == type )
-    {
-      if ( cloud.isHit( x, y ) )
-        cloud.setTransparent();
-      else
-        cloud.setOpaque();
-    }
-  }
-}
-
-// UPDATE ABANDONED FLIGHT
-void Plane::AbandonedUpdate()
-{
-  if ( dead || !jump || dir == 180.0f )
-    return;
-
-  if ( speed > sizes.plane_max_speed_def / 2 )
-    speed -= sizes.plane_incr_spd * 0.2 * deltaTime;
-
-  if ( pitch_cooldown.isReady() )
-  {
-    pitch_cooldown.Start();
-    if ( type == PLANE_TYPE::RED )
-      dir += dir < 180.0f ? sizes.plane_incr_rot : -sizes.plane_incr_rot;
-    else
-      dir += dir < 180.0f ? sizes.plane_incr_rot : -sizes.plane_incr_rot;
-  }
-}
-
-// UPDATE ANIMATIONS
-void Plane::AnimationsUpdate()
-{
-  if ( !dead )
-  {
-    textures.destrect.x = x - sizes.plane_sizex / 2;
-    textures.destrect.y = y - sizes.plane_sizey / 2;
-    textures.destrect.w = sizes.plane_sizex;
-    textures.destrect.h = sizes.plane_sizey;
-
-    if ( type == PLANE_TYPE::BLUE )
-    {
-      if ( protection.isReady() )
-        SDL_SetTextureAlphaMod( textures.texture_biplane_b, 255 );
-      else
-        SDL_SetTextureAlphaMod( textures.texture_biplane_b, 127 );
-
-      SDL_RenderCopyEx( gRenderer,
-                        textures.texture_biplane_b,
-                        NULL,
-                        &textures.destrect,
-                        dir - 90.0,
-                        NULL,
-                        SDL_FLIP_NONE );
-    }
-    else
-    {
-      if ( protection.isReady() )
-        SDL_SetTextureAlphaMod( textures.texture_biplane_r, 255 );
-      else
-        SDL_SetTextureAlphaMod( textures.texture_biplane_r, 127 );
-
-      SDL_RenderCopyEx( gRenderer,
-                        textures.texture_biplane_r,
-                        NULL,
-                        &textures.destrect,
-                        dir + 90.0,
-                        NULL,
-                        SDL_FLIP_NONE );
-    }
-
-    if ( show_hitboxes )
-    {
-      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-      SDL_RenderDrawRect( gRenderer, &hitbox );
-
-      SDL_Rect plane_center;
-      plane_center.x = x - sizes.plane_sizex * 0.05f;
-      plane_center.y = y - sizes.plane_sizey * 0.05f;
-      plane_center.w = sizes.plane_sizex * 0.1f;
-      plane_center.h = sizes.plane_sizey * 0.1f;
-      SDL_RenderDrawRect( gRenderer, &plane_center );
-    }
-  }
-
-  if ( jump )
-    pilot.AnimationsUpdate();
-
-  if ( !dead )
-  {
-    SmokeUpdate();
-    FireUpdate();
-  }
-  ExplosionUpdate();
-}
-
-// RESET ANIMATIONS
-void Plane::AnimationsReset()
-{
-  // FRAME APPEARANCE ORDER: { 4, 3, 2, 1, 5 }
-  smk_frame[0] = -3;
-  smk_frame[1] = -2;
-  smk_frame[2] = -1;
-  smk_frame[3] = 0;
-  smk_frame[4] = -4;
-  smk_destrect[0] = {};
-  smk_destrect[1] = {};
-  smk_destrect[2] = {};
-  smk_destrect[3] = {};
-  smk_destrect[4] = {};
-
-  smk_anim.Stop();
-  smk_period.Stop();
-  smk_rect = 4;
-
-  fire_anim.Stop();
-  fire_frame = 0;
-
-  expl_anim.Stop();
-  expl_frame = 0;
-
-  pilot.AnimationsReset();
-}
-
-// UPDATE SMOKE
-void Plane::SmokeUpdate()
-{
-  if ( hp > 1 )
-    return;
-
-  if ( smk_anim.isReady() )
-  {
-    smk_anim.Start();
-    for ( unsigned int i = 0; i < 5; i++ )
-    {
-      smk_frame[i]++;
-      if ( smk_frame[i] > 5 )
-        smk_frame[i] = 5;
-    }
-
-    if ( smk_period.isReady() )
-    {
-      smk_period.Start();
-
-      smk_frame[0] = -3;
-      smk_frame[1] = -2;
-      smk_frame[2] = -1;
-      smk_frame[3] = 0;
-      smk_frame[4] = -4;
-    }
-
-    if ( smk_rect == 0 )
-      smk_rect = 4;
-    else
-      smk_rect--;
-
-    smk_destrect[smk_rect].x = x - sizes.smk_sizex / 2;
-    smk_destrect[smk_rect].y = y - sizes.smk_sizey / 2;
-    smk_destrect[smk_rect].w = sizes.smk_sizex;
-    smk_destrect[smk_rect].h = sizes.smk_sizey;
-  }
-
-  for ( unsigned int i = 0; i < 5; i++ )
-  {
-    if ( smk_frame[i] >= 0 )
-      SDL_RenderCopy( gRenderer,
-                      textures.anim_smk,
-                      &textures.anim_smk_rect[ smk_frame[i] ],
-                      &smk_destrect[i] );
-  }
-}
-
-// UPDATE FIRE
-void Plane::FireUpdate()
-{
-  if ( hp > 0 )
-    return;
-
-  if ( fire_anim.isReady() )
-  {
-    fire_anim.Start();
-    fire_frame++;
-    if ( fire_frame > 2 )
-      fire_frame = 0;
-  }
-
-  textures.destrect.x = x - sizes.smk_sizex / 2;
-  textures.destrect.y = y - sizes.smk_sizey / 2;
-  textures.destrect.w = sizes.smk_sizex;
-  textures.destrect.h = sizes.smk_sizey;
-
-  if ( type == PLANE_TYPE::BLUE )
-    SDL_RenderCopyEx( gRenderer,
-                      textures.anim_fire,
-                      &textures.anim_fire_rect[fire_frame],
-                      &textures.destrect,
-                      dir + 180.0f,
-                      NULL,
-                      SDL_FLIP_NONE );
-  else
-    SDL_RenderCopyEx( gRenderer,
-                      textures.anim_fire,
-                      &textures.anim_fire_rect[fire_frame],
-                      &textures.destrect,
-                      dir -90.0f,
-                      NULL,
-                      SDL_FLIP_NONE );
-}
-
-// UPDATE EXPLOSION
-void Plane::ExplosionUpdate()
-{
-  if ( !dead )
-    return;
-
-  if ( expl_frame < 7 )
-  {
-    textures.destrect.x = x - sizes.expl_sizex / 2;
-    textures.destrect.y = y - sizes.expl_sizey / 2;
-    textures.destrect.w = sizes.expl_sizex;
-    textures.destrect.h = sizes.expl_sizey;
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_expl,
-                    &textures.anim_expl_rect[expl_frame],
-                    &textures.destrect );
-
-    if ( expl_anim.isReady() )
-    {
-      expl_anim.Start();
-      expl_frame++;
-    }
-  }
-}
-
-// UPDATE HITBOX
-void Plane::HitboxUpdate()
-{
-  if ( dead )
-    return;
-
-  hitbox.x = x - sizes.plane_sizex / 3;
-  hitbox.y = y - sizes.plane_sizey / 3;
-  hitbox.w = sizes.plane_sizex / 3 * 2;
-  hitbox.h = sizes.plane_sizey / 3 * 2;
-}
-
-// TAKEOFF UPDATE
-void Plane::TakeOffUpdate()
-{
-  if ( takeoff )
-  {
-    speed += sizes.plane_incr_spd * 0.75f * deltaTime;
-
-    if ( speed >= sizes.plane_max_speed_def )
-      TakeOffFinish();
-  }
-}
-
-// TAKEOFF START
-void Plane::TakeOffStart()
-{
-  if ( !takeoff )
-  {
-    takeoff = true;
-    dir = type == PLANE_TYPE::RED ? 270.0f : 90.0f;
-  }
-}
-
-// TAKEOFF FINISH
-void Plane::TakeOffFinish()
-{
-  takeoff = false;
-  onground = false;
-}
-
-// HIT
-void Plane::Hit( bool hit_by )
-{
-  if ( dead )
-    return;
-
-  if ( type == (int) srv_or_cli )
-  {
-    if ( protection.isReady() )
-      event_push( (unsigned char) EVENTS::HIT_PLANE );
-    else
       return;
-  }
-  else if ( opponent_connected && !game_finished )
-    stats_recent.plane_hits++;
-
-  if ( HARDCORE_MODE )
-    hp = 0;
-
-  if ( hp > 0 )
-  {
-    playSound( sounds.hit, -1, false );
-    hp--;
-  }
-  else
-  {
-    if ( opponent_connected && !game_finished )
-    {
-      if ( type != (int) srv_or_cli )
-        stats_recent.plane_kills++;
-      else
-        stats_recent.deaths++;
     }
 
-    Explode();
-
-    if ( hit_by == PLANE_TYPE::BLUE )
-      plane_blue.ScoreChange( 1 );
-    else
-      plane_red.ScoreChange( 1 );
+    mSpeed = sizes.plane_max_speed_acc;
+    mMaxSpeedVar = mSpeed;
   }
 }
 
-// DIE
-void Plane::Explode()
+void
+Plane::CoordinatesUpdate()
 {
-  playSound( sounds.expl, -1, false );
-  speed = 0.0f;
-  dead = true;
-  dead_cooldown.Start();
-}
-
-// CRASH
-void Plane::Crash()
-{
-  if ( dead )
+  if ( mIsDead == true )
     return;
 
-  Explode();
-
-  if ( !jump )
-  {
-    ScoreChange( -1 );
-
-    if ( type == (int) srv_or_cli )
-      if ( opponent_connected && !game_finished )
-        stats_recent.crashes++;
-  }
-}
-
-// RESPAWN
-void Plane::Respawn()
-{
-  dead = false;
-  hp = 2;
-  onground = true;
-  takeoff = false;
-  speed = 0.0f;
-  max_speed_var = sizes.plane_max_speed_def;
-
-  dead_cooldown.Stop();
-  fire_cooldown.Stop();
-  pitch_cooldown.Stop();
-  protection.Stop();
-
-  x = type == PLANE_TYPE::RED ? sizes.plane_red_landx : sizes.plane_blue_landx;
-  y = sizes.plane_landy;
-  dir = type == PLANE_TYPE::RED ? 292.5f : 67.5f;
-
-  jump = false;
-
-  pilot.Respawn();
-
-  hitbox.x = x - sizes.plane_sizex / 3;
-  hitbox.y = y - sizes.plane_sizey / 3;
-  hitbox.w = sizes.plane_sizex;
-  hitbox.h = sizes.plane_sizey;
-
-  AnimationsReset();
-}
-
-void Plane::ResetSpawnProtection()
-{
-  if ( type == PLANE_TYPE::RED )
-  {
-    if ( !plane_blue.onground && !plane_blue.dead )
-      protection.Start();
-    else
-      protection.Stop();
-  }
-  else
-  {
-    if ( !plane_red.onground && !plane_red.dead )
-      protection.Start();
-    else
-      protection.Stop();
-  }
-}
-
-void Plane::ResetScore()
-{
-  score = 0;
-}
-
-void Plane::ScoreChange( char deltaScore )
-{
-  if ( deltaScore < 0 && score < -deltaScore )
-    ResetScore();
-  else
-    score += deltaScore;
-
-  if ( !opponent_connected )
+  if ( mIsOnGround == true && mIsTakingOff == false )
     return;
 
-  if ( score >= sizes.winScore && !game_finished )
+
+//  Change coordinates
+  mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
+
+
+  if ( mIsOnGround == false )
   {
-    if ( type == (int) srv_or_cli )
-    {
-      playSound( sounds.victory, -1, false );
-      menu.setMessage( MESSAGE_TYPE::GAME_WON );
-      stats_recent.wins++;
-    }
-    else
-    {
-      playSound( sounds.loss, -1, false );
-      menu.setMessage( MESSAGE_TYPE::GAME_LOST );
-      stats_recent.losses++;
-    }
+    mY -= mSpeed * cos( mDir * M_PI / 180.0f ) * deltaTime;
 
-    game_finished = true;
-    stats_update();
-  }
-}
-
-// CHECK FOR COLLISION
-bool Plane::isHit( float check_x, float check_y )
-{
-  if ( dead )
-    return false;
-
-  if (  check_x > hitbox.x &&
-        check_x < hitbox.x + hitbox.w &&
-        check_y > hitbox.y &&
-        check_y < hitbox.y + hitbox.h )
-          return true;
-  else
-    return false;
-}
-
-bool Plane::getType()
-{
-  return type;
-}
-
-unsigned char Plane::getScore()
-{
-  return score;
-}
-
-float Plane::getX()
-{
-  return x;
-}
-
-float Plane::getY()
-{
-  return y;
-}
-
-
-Plane::Pilot::Pilot(  Plane* parentPlane )
-  : plane{parentPlane}
-{
-  fall_anim = Timer( sizes.pilot_fall_frame_time );
-
-  chute_state = CHUTE_STATE::CHUTE_NONE;
-  chute_anim = Timer( sizes.chute_frame_time );
-
-  run_anim = Timer( sizes.pilot_run_frame_time );
-
-  angel_anim = Timer( sizes.angel_frame_time );
-
-  pilot_hitbox.x = x - sizes.pilot_sizex / 2;
-  pilot_hitbox.y = y - sizes.pilot_sizey / 2;
-  pilot_hitbox.w = sizes.pilot_sizex;
-  pilot_hitbox.h = sizes.pilot_sizey;
-}
-
-// PILOT UPDATE
-void Plane::Pilot::Update()
-{
-  FallUpdate();
-  RunUpdate();
-  HitboxUpdate();
-  ChuteHitboxUpdate();
-  DeathUpdate();
-
-  fall_anim.Update();
-  chute_anim.Update();
-  run_anim.Update();
-  angel_anim.Update();
-}
-
-
-void Plane::Pilot::InitTimers()
-{
-  fall_anim.SetNewTimeout( sizes.pilot_fall_frame_time );
-  chute_anim.SetNewTimeout( sizes.chute_frame_time );
-  run_anim.SetNewTimeout( sizes.pilot_run_frame_time );
-  angel_anim.SetNewTimeout( sizes.angel_frame_time );
-}
-
-// PILOT MOVE
-void Plane::Pilot::Move( unsigned char input_dir )
-{
-  float move_dir = input_dir == PLANE_PITCH::PITCH_LEFT ? -1.0f : 1.0f;
-  if ( chute )
-  {
-    chute_state = input_dir;
-    x += move_dir * sizes.pilot_chute_speed * deltaTime;
-  }
-  else if ( run )
-  {
-    dir = move_dir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
-    x += move_dir * sizes.pilot_run_speed * deltaTime;
-
-    if ( run_anim.isReady() )
-    {
-      run_anim.Start();
-
-      run_frame++;
-      if ( run_frame > 2 )
-        run_frame = 0;
-    }
-  }
-}
-
-// PILOT MOVE IDLE
-void Plane::Pilot::MoveIdle()
-{
-  if ( run )
-  {
-    run_anim.Stop();
-    run_frame = 0;
-
-    return;
+//    Gravity
+    if ( mSpeed < mMaxSpeedVar )
+      mY += ( mMaxSpeedVar - mSpeed ) * deltaTime;
   }
 
-  if ( chute_state < CHUTE_STATE::CHUTE_DESTROYED )
-    chute_state = CHUTE_STATE::CHUTE_IDLE;
+//  Screen borders teleport
+  if ( mX > sizes.screen_width )
+    mX = 0.0f;
+  else if ( mX < 0.0f )
+    mX = sizes.screen_width;
+
+
+  if ( mY < 0.0f )
+    mY = 0.0f;
 }
 
-// PILOT EJECT
-void Plane::Pilot::Bail( float plane_x, float plane_y, float bail_dir )
+void
+Plane::CollisionsUpdate()
 {
-  if ( plane->type == (int) srv_or_cli )
-  {
-    if ( opponent_connected && !game_finished )
-      stats_recent.jumps++;
-
-    event_push( (unsigned char) EVENTS::EJECT );
-  }
-
-  x = plane_x;
-  y = plane_y;
-  dir = bail_dir;
-
-  if ( dir < 0 )
-    dir += 360;
-  else if ( dir >= 360 )
-    dir -= 360;
-
-  gravity = sizes.pilot_gravity;
-  speed = sizes.pilot_eject_speed;
-  vspeed = speed * cos( dir * PI / 180.0f );
-}
-
-// PILOT OPEN CHUTE
-void Plane::Pilot::OpenChute()
-{
-  if ( !chute && !run && chute_state == CHUTE_STATE::CHUTE_IDLE )
-  {
-    if ( plane->type == (int) srv_or_cli )
-      event_push( (unsigned char) EVENTS::EJECT );
-
-    chute = true;
-    gravity = sizes.pilot_chute_gravity;
-  }
-}
-
-// UNLOCK CHUTE
-void Plane::Pilot::ChuteUnlock()
-{
-  if ( plane->jump && chute_state == CHUTE_STATE::CHUTE_NONE )
-    chute_state = CHUTE_STATE::CHUTE_IDLE;
-}
-
-
-// UPDATE PILOT SPEED
-void Plane::Pilot::FallUpdate()
-{
-  if ( dead || run )
+  if (  mIsLocal == false ||
+        mIsDead == true ||
+        (mIsOnGround == true && mIsTakingOff == false) )
     return;
 
-  if ( speed > 0.0f )
-    x += speed * sin( dir * PI / 180.0f ) * deltaTime;
 
-  if ( chute )
+  const bool collidesWithBarn
   {
-    playSound( sounds.chute, plane->getType(), true );
+    mY > sizes.barn_y_collision &&
+    mX > sizes.barn_x_collision &&
+    mX < sizes.barn_x_collision + sizes.barn_sizex
+  };
 
-    if ( vspeed > 0.0f )
-      vspeed = -gravity * 0.4f;
-    else if ( vspeed < -sizes.screen_height * 0.08f )
-    {
-      vspeed += sizes.screen_height * 0.5f * deltaTime; // 0.375 ?
-
-      if ( vspeed > -sizes.screen_height * 0.08f )
-        vspeed = -sizes.screen_height * 0.08f;
-    }
-    else if ( vspeed > -sizes.screen_height * 0.08f )
-      vspeed -= sizes.screen_height * 0.5f * deltaTime;
-
-    if ( speed > 0.0f )
-      speed -= speed * 2.0f * deltaTime;
-  }
-  else
+  const bool collidesWithGround
   {
-    playSound( sounds.fall, plane->getType(), true );
+    mIsOnGround == false &&
+    mY > sizes.ground_y_collision
+  };
 
-    if ( vspeed > 0.0f )
-    {
-      gravity += gravity * 2.0f * deltaTime;
-      vspeed -= gravity * deltaTime;
-
-      if ( vspeed < 0.0f )
-        gravity = sizes.screen_height * 0.24f; //!!
-    }
-    else
-    {
-      gravity += gravity * deltaTime;
-      vspeed -= gravity * deltaTime;
-    }
+  if  ( collidesWithBarn == true ||
+        collidesWithGround == true )
+  {
+    Crash();
+    eventPush(EVENTS::PLANE_DEATH);
   }
 
-  y -= vspeed * deltaTime;
 
-
-  if ( speed > sizes.screen_width * 0.008f )
-    speed -= speed * 1.0f * deltaTime;
-  else
-    speed = 0.0f;
-
-  if ( speed < 0.0f )
-    speed = 0.0f;
-
-  if ( x < 0.0f )
-    x = sizes.screen_width;
-  else if ( x > sizes.screen_width )
-    x = 0.0f;
-
-  HitGroundCheck();
-
-  if ( plane->getType() != (int) srv_or_cli )
+  if ( mHasJumped == true || mIsBot == true )
     return;
 
-  for ( Cloud &cloud : clouds )
+
+  for ( auto& cloud : clouds )
   {
-    if ( cloud.isHit( x, y ) )
+    if ( cloud.isHit(mX, mY) == true )
       cloud.setTransparent();
     else
       cloud.setOpaque();
   }
 }
 
-// UPDATE PILOT RUN
-void Plane::Pilot::RunUpdate()
+// UPDATE ABANDONED PLANE
+void
+Plane::AbandonedUpdate()
 {
-  if ( !run || dead )
+  if (  mIsDead == true ||
+        mHasJumped == false ||
+        mDir == 180.0f )
     return;
 
-  if ( x < 0.0f )
-    x = sizes.screen_width;
-  else if ( x > sizes.screen_width )
-    x = 0.0f;
 
-  if ( plane->getType() != (int) srv_or_cli )
+  if ( mSpeed > sizes.plane_max_speed_def / 2 )
+    mSpeed -= sizes.plane_incr_spd * 0.2 * deltaTime;
+
+
+  if ( mPitchCooldown.isReady() == false )
     return;
 
-  if  ( x > sizes.barn_x_pilot_left_collision &&
-        x < sizes.barn_x_pilot_right_collision )
-  {
-    if ( opponent_connected && !game_finished )
-      stats_recent.rescues++;
+  mPitchCooldown.Start();
 
-    Rescue();
-    event_push( (unsigned char) EVENTS::PLANE_RESP );
-  }
-}
-
-// UPDATE PILOT DEATH
-void Plane::Pilot::DeathUpdate()
-{
-  if ( !dead )
-    return;
-
-  if ( angel_anim.isReady() )
-  {
-    angel_anim.Start();
-
-    if ( angel_frame == 3 )
-    {
-      if ( plane->getType() == (int) srv_or_cli )
-      {
-        plane->Respawn();
-        plane->ResetSpawnProtection();
-
-        event_push( (unsigned char) EVENTS::PLANE_RESP );
-      }
-      else
-        return;
-    }
-    else
-      angel_frame++;
-
-    if  ( angel_loop < 6 &&
-          angel_frame > 2 )
-    {
-      angel_frame = 0;
-      angel_loop++;
-    }
-    else if ( angel_loop == 6 &&
-              angel_frame == 2 )
-      angel_frame = 3;
-  }
-
-  y -= sizes.angel_ascent_speed * deltaTime;
-}
-
-// UPDATE ANIMATIONS
-void Plane::Pilot::AnimationsUpdate()
-{
-  if ( dead )
-  {
-    DeathAnimUpdate();
-    return;
-  }
-
-  if ( run )
-    RunAnimUpdate();
+  if ( mType == PLANE_TYPE::RED )
+    mDir += mDir < 180.0f ? sizes.plane_incr_rot : -sizes.plane_incr_rot;
   else
-  {
-    if ( chute )
-      ChuteAnimUpdate();
-    else
-      FallAnimUpdate();
-  }
-
-  if ( show_hitboxes )
-  {
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &pilot_hitbox );
-  }
+    mDir += mDir < 180.0f ? sizes.plane_incr_rot : -sizes.plane_incr_rot;
 }
 
-// RESET ANIMATIONS
-void Plane::Pilot::AnimationsReset()
+void
+Plane::AnimationsUpdate()
 {
-  fall_anim.Stop();
-  fall_frame = 0;
-
-  chute_anim.Stop();
-  chute_state = CHUTE_STATE::CHUTE_NONE;
-
-  run_anim.Stop();
-  run_frame = 0;
-
-  angel_anim.Stop();
-  angel_frame = 0;
-  angel_loop = 0;
-}
-
-// UPDATE PILOT FALL ANIMATION
-void Plane::Pilot::FallAnimUpdate()
-{
-  if ( fall_anim.isReady() )
+  if ( mIsDead == false )
   {
-    fall_anim.Start();
-    fall_frame = !fall_frame;
-  }
-
-  textures.destrect.x = x - sizes.pilot_sizex / 2;
-  textures.destrect.y = y - sizes.pilot_sizey / 2;
-  textures.destrect.w = sizes.pilot_sizex;
-  textures.destrect.h = sizes.pilot_sizey;
-  if ( plane->type == PLANE_TYPE::RED )
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_fall_r,
-                    &textures.anim_pilot_fall_rect[fall_frame],
-                    &textures.destrect );
-  else
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_fall_b,
-                    &textures.anim_pilot_fall_rect[fall_frame],
-                    &textures.destrect );
-}
-
-// UPDATE PILOT CHUTE ANIMATION
-void Plane::Pilot::ChuteAnimUpdate()
-{
-  if ( chute_state < CHUTE_STATE::CHUTE_DESTROYED )
-  {
-    textures.destrect.x = x - sizes.chute_sizex / 2;
-    textures.destrect.y = y - sizes.chute_sizey * 1.375f;
-    textures.destrect.w = sizes.chute_sizex;
-    textures.destrect.h = sizes.chute_sizey;
-    SDL_RenderCopy( gRenderer,
-                    textures.anim_chute,
-                    &textures.anim_chute_rect[chute_state],
-                    &textures.destrect );
-    if ( chute_anim.isReady() )
+    const SDL_Rect planeRect
     {
-      chute_anim.Start();
-      fall_frame = !fall_frame;
+      mX - sizes.plane_sizex / 2.0f,
+      mY - sizes.plane_sizey / 2.0f,
+      sizes.plane_sizex,
+      sizes.plane_sizey,
+    };
+
+    auto* planeTexture {textures.texture_biplane_b};
+    double textureAngle {mDir - 90.0};
+
+    if ( mType == PLANE_TYPE::RED )
+    {
+      planeTexture = textures.texture_biplane_r;
+      textureAngle = mDir + 90.0;
     }
 
-    textures.destrect.x = x - sizes.pilot_sizex / 2;
-    textures.destrect.y = y - sizes.pilot_sizey / 2;
-    textures.destrect.w = sizes.pilot_sizex;
-    textures.destrect.h = sizes.pilot_sizey;
-    if ( plane->type == PLANE_TYPE::RED )
-      SDL_RenderCopy( gRenderer,
-                      textures.anim_pilot_fall_r,
-                      &textures.anim_pilot_fall_rect[fall_frame],
-                      &textures.destrect );
+    if ( mProtection.isReady() == true )
+      SDL_SetTextureAlphaMod( planeTexture, 255 );
     else
-      SDL_RenderCopy( gRenderer,
-                      textures.anim_pilot_fall_b,
-                      &textures.anim_pilot_fall_rect[fall_frame],
-                      &textures.destrect );
+      SDL_SetTextureAlphaMod( planeTexture, 127 );
 
-    if ( show_hitboxes )
+    SDL_RenderCopyEx(
+      gRenderer,
+      planeTexture,
+      nullptr,
+      &planeRect,
+      textureAngle,
+      nullptr,
+      SDL_FLIP_NONE );
+
+    if ( gameState().debug.collisions == true )
     {
       SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-      SDL_RenderDrawRect( gRenderer, &chute_hitbox );
+      SDL_RenderDrawRect( gRenderer, &mHitbox );
+
+      const SDL_Rect planeCenter
+      {
+        mX - sizes.plane_sizex * 0.05f,
+        mY - sizes.plane_sizey * 0.05f,
+        sizes.plane_sizex * 0.1f,
+        sizes.plane_sizey * 0.1f,
+      };
+
+      SDL_RenderDrawRect( gRenderer, &planeCenter );
     }
+  }
+
+  if ( mHasJumped == true )
+    pilot.AnimationsUpdate();
+
+  if ( mIsDead == false )
+  {
+    SmokeUpdate();
+    FireUpdate();
+  }
+
+  ExplosionUpdate();
+
+  if ( gameState().debug.aiInputs == true )
+  {
+    SDL_Point dot = getClosestCollision();
+    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
+
+    if ( mHasJumped == false )
+      SDL_RenderDrawLine(
+        gRenderer,
+        mX, mY,
+        dot.x, dot.y );
+    else
+      SDL_RenderDrawLine(
+        gRenderer,
+        pilot.mX, pilot.mY,
+        dot.x, dot.y );
   }
 }
 
-// UPDATE PILOT RUN ANIMATION
-void Plane::Pilot::RunAnimUpdate()
+void
+Plane::AnimationsReset()
 {
-  textures.destrect.x = x - sizes.pilot_sizex / 2;
-  textures.destrect.y = y - sizes.pilot_sizey / 2;
-  textures.destrect.w = sizes.pilot_sizex;
-  textures.destrect.h = sizes.pilot_sizey;
+//  FRAME APPEARANCE ORDER: { 4, 3, 2, 1, 5 }
+  mSmokeFrame[0] = -3;
+  mSmokeFrame[1] = -2;
+  mSmokeFrame[2] = -1;
+  mSmokeFrame[3] = 0;
+  mSmokeFrame[4] = -4;
+  mSmokeDestRect[0] = {};
+  mSmokeDestRect[1] = {};
+  mSmokeDestRect[2] = {};
+  mSmokeDestRect[3] = {};
+  mSmokeDestRect[4] = {};
 
-  if ( dir == 270 )
-    if ( plane->type == PLANE_TYPE::RED )
-      SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_run_r,
-                    &textures.anim_pilot_run_rect[run_frame],
-                    &textures.destrect );
-    else
-      SDL_RenderCopy( gRenderer,
-                    textures.anim_pilot_run_b,
-                    &textures.anim_pilot_run_rect[run_frame],
-                    &textures.destrect );
-  else
-    if ( plane->type == PLANE_TYPE::RED )
-      SDL_RenderCopyEx( gRenderer,
-                    textures.anim_pilot_run_r,
-                    &textures.anim_pilot_run_rect[run_frame],
-                    &textures.destrect,
-                    NULL,
-                    NULL,
-                    SDL_FLIP_HORIZONTAL );
-    else
-      SDL_RenderCopyEx( gRenderer,
-                    textures.anim_pilot_run_b,
-                    &textures.anim_pilot_run_rect[run_frame],
-                    &textures.destrect,
-                    NULL,
-                    NULL,
-                    SDL_FLIP_HORIZONTAL );
+  mSmokeAnim.Stop();
+  mSmokePeriod.Stop();
+  mSmokeRect = 4;
+
+  mFireAnim.Stop();
+  mFireFrame = 0;
+
+  mExplosionAnim.Stop();
+  mExplosionFrame = 0;
+
+  pilot.AnimationsReset();
 }
 
-// UPDATE PILOT DEATH ANIMATION
-void Plane::Pilot::DeathAnimUpdate()
+void
+Plane::SmokeUpdate()
 {
-  textures.destrect.x = x - sizes.angel_sizex / 2;
-  textures.destrect.y = y - sizes.angel_sizey / 2;
-  textures.destrect.w = sizes.angel_sizex;
-  textures.destrect.h = sizes.angel_sizey;
-  SDL_RenderCopy( gRenderer,
-                  textures.anim_pilot_angel,
-                  &textures.anim_pilot_angel_rect[angel_frame],
-                  &textures.destrect );
-
-}
-
-// PILOT HITBOX UPDATE
-void Plane::Pilot::HitboxUpdate()
-{
-  if ( dead )
-    return;
-  pilot_hitbox.x = x - sizes.pilot_sizex / 2;
-  pilot_hitbox.y = y - sizes.pilot_sizey / 2;
-  pilot_hitbox.w = sizes.pilot_sizex;
-  pilot_hitbox.h = sizes.pilot_sizey;
-}
-
-// CHUTE HITBOX UPDATE
-void Plane::Pilot::ChuteHitboxUpdate()
-{
-  if ( dead || !chute )
+  if ( mHp > 1 )
     return;
 
-  chute_hitbox.x = x - sizes.chute_sizex / 2;
-  chute_hitbox.y = y - sizes.chute_sizey * 1.375f;
-  chute_hitbox.w = sizes.chute_sizex;
-  chute_hitbox.h = sizes.chute_sizey;
-}
 
-// CHUTE CHECK COLLISION
-bool Plane::Pilot::ChuteisHit( float check_x, float check_y )
-{
-  if ( !chute )
-    return false;
-
-  if (  check_x > chute_hitbox.x &&
-        check_x < chute_hitbox.x + chute_hitbox.w &&
-        check_y > chute_hitbox.y &&
-        check_y < chute_hitbox.y + chute_hitbox.h )
-          return true;
-  else
-    return false;
-}
-
-float Plane::Pilot::getX()
-{
-  return x;
-}
-
-float Plane::Pilot::getY()
-{
-  return y;
-}
-
-void Plane::Pilot::setX( float new_x )
-{
-  if ( plane->jump )
-    x = new_x;
-}
-
-void Plane::Pilot::setY( float new_y )
-{
-  if ( plane->jump )
-    y = new_y;
-}
-
-
-// PILOT DESTROY CHUTE
-void Plane::Pilot::ChuteHit()
-{
-  if ( plane->type != (int) srv_or_cli )
-    if ( opponent_connected && !game_finished )
-      stats_recent.chute_hits++;
-
-  playSound( sounds.hitChute, -1, false );
-  chute_state = CHUTE_STATE::CHUTE_DESTROYED;
-  chute = false;
-}
-
-// PILOT DEATH
-void Plane::Pilot::Death()
-{
-  playSound( sounds.dead, -1, false );
-
-  run = false;
-  chute = false;
-  dead = true;
-
-  dir = 0;
-  speed = 0.0f;
-  vspeed = 0.0f;
-  gravity = 0.0f;
-  chute_state = CHUTE_STATE::CHUTE_NONE;
-}
-
-// PILOT KILL
-void Plane::Pilot::Kill( bool killed_by )
-{
-  if ( plane->type != (int) srv_or_cli )
-    if ( opponent_connected && !game_finished )
-      stats_recent.pilot_hits++;
-
-  Death();
-  if ( killed_by == PLANE_TYPE::BLUE )
-    plane_blue.ScoreChange( 2 );
-  else
-    plane_red.ScoreChange( 2 );
-}
-
-// PILOT HIT GROUND
-void Plane::Pilot::HitGroundCheck()
-{
-  if ( y > sizes.ground_y_pilot_collision )
+  if ( mSmokeAnim.isReady() == true )
   {
-    if ( plane->getType() != (int) srv_or_cli )
+    mSmokeAnim.Start();
+
+    for ( size_t i = 0; i < mSmokeFrame.size(); i++ )
+    {
+      ++mSmokeFrame[i];
+
+      if ( mSmokeFrame[i] > 5 )
+        mSmokeFrame[i] = 5;
+    }
+
+    if ( mSmokePeriod.isReady() == true )
+    {
+      mSmokePeriod.Start();
+
+      mSmokeFrame[0] = -3;
+      mSmokeFrame[1] = -2;
+      mSmokeFrame[2] = -1;
+      mSmokeFrame[3] = 0;
+      mSmokeFrame[4] = -4;
+    }
+
+    if ( mSmokeRect == 0 )
+      mSmokeRect = 4;
+    else
+      --mSmokeRect;
+
+    mSmokeDestRect[mSmokeRect] =
+    {
+      mX - sizes.smk_sizex / 2.0f,
+      mY - sizes.smk_sizey / 2.0f,
+      sizes.smk_sizex,
+      sizes.smk_sizey,
+    };
+  }
+
+  for ( size_t i = 0; i < mSmokeFrame.size(); i++ )
+  {
+    if ( mSmokeFrame[i] < 0 )
+      continue;
+
+    SDL_RenderCopy(
+      gRenderer,
+      textures.anim_smk,
+      &textures.anim_smk_rect[ mSmokeFrame[i] ],
+      &mSmokeDestRect[i] );
+  }
+}
+
+void
+Plane::FireUpdate()
+{
+  if ( mHp > 0 )
+    return;
+
+
+  if ( mFireAnim.isReady() == true )
+  {
+    mFireAnim.Start();
+    ++mFireFrame;
+
+    if ( mFireFrame > 2 )
+      mFireFrame = 0;
+  }
+
+  const SDL_Rect textureRect
+  {
+    mX - sizes.smk_sizex / 2.0f,
+    mY - sizes.smk_sizey / 2.0f,
+    sizes.smk_sizex,
+    sizes.smk_sizey,
+  };
+
+  const double textureAngle =
+    mType == PLANE_TYPE::RED
+    ? mDir + 180.0
+    : mDir - 90.0;
+
+  SDL_RenderCopyEx(
+    gRenderer,
+    textures.anim_fire,
+    &textures.anim_fire_rect[mFireFrame],
+    &textureRect,
+    textureAngle,
+    nullptr,
+    SDL_FLIP_NONE );
+}
+
+void
+Plane::ExplosionUpdate()
+{
+  if ( mIsDead == false )
+    return;
+
+  if ( mExplosionFrame >= 7 )
+    return;
+
+
+  const SDL_Rect explosionRect
+  {
+    mX - sizes.expl_sizex / 2.0f,
+    mY - sizes.expl_sizey / 2.0f,
+    sizes.expl_sizex,
+    sizes.expl_sizey,
+  };
+
+  SDL_RenderCopy(
+    gRenderer,
+    textures.anim_expl,
+    &textures.anim_expl_rect[mExplosionFrame],
+    &explosionRect );
+
+  if ( mExplosionAnim.isReady() == true )
+  {
+    mExplosionAnim.Start();
+    ++mExplosionFrame;
+  }
+}
+
+void
+Plane::HitboxUpdate()
+{
+  if ( mIsDead == true )
+    return;
+
+  mHitbox =
+  {
+    mX - sizes.plane_sizex / 3.0f,
+    mY - sizes.plane_sizey / 3.0f,
+    sizes.plane_sizex / 3.0f * 2.0f,
+    sizes.plane_sizey / 3.0f * 2.0f,
+  };
+}
+
+void
+Plane::TakeOffUpdate()
+{
+  if ( mIsTakingOff == false )
+    return;
+
+  mSpeed += sizes.plane_incr_spd * 0.75f * deltaTime;
+
+  if ( mSpeed >= sizes.plane_max_speed_def )
+    TakeOffFinish();
+}
+
+void
+Plane::TakeOffStart()
+{
+  if ( mIsTakingOff == true )
+    return;
+
+  mIsTakingOff = true;
+  mDir = mType == PLANE_TYPE::RED ? 270.0f : 90.0f;
+}
+
+void
+Plane::TakeOffFinish()
+{
+  mIsTakingOff = false;
+  mIsOnGround = false;
+}
+
+void
+Plane::Hit( Plane& attacker )
+{
+  if ( mIsDead == true )
+    return;
+
+
+  if ( mIsLocal == true )
+  {
+    if ( mProtection.isReady() == false )
       return;
 
-    // SURVIVE LANDING
-    if ( vspeed >= -sizes.pilot_chute_gravity )
-    {
-      FallSurvive();
-      event_push( (unsigned char) EVENTS::PILOT_LAND );
-    }
-    else
-    {
-      if ( plane->getType() == (int) srv_or_cli )
-        if ( opponent_connected && !game_finished )
-          stats_recent.falls++;
+    eventPush(EVENTS::HIT_PLANE);
+  }
 
-      Death();
-      plane->ScoreChange( -1 );
-      event_push( (unsigned char) EVENTS::PILOT_DEATH );
-    }
+  if ( gameState().isRoundFinished == false )
+  {
+    attacker.mStats.plane_hits++;
+    log_message("Plane::Hit() attacker.mStats.plane_hits++\n");
+  }
+
+
+  if ( gameState().isHardcoreEnabled == true )
+    mHp = 0;
+
+  if ( mHp > 0 )
+  {
+    playSound(sounds.hit, -1, false);
+    --mHp;
+
+    return;
+  }
+
+  Explode();
+  attacker.ScoreChange(1);
+
+
+  if ( gameState().isRoundFinished == false )
+  {
+    mStats.deaths++;
+    attacker.mStats.plane_kills++;
+    log_message("Plane::Hit() mStats.deaths++\n");
+    log_message("Plane::Hit() attacker.mStats.plane_kills++\n");
   }
 }
 
-// PILOT SURVIVE FALL
-void Plane::Pilot::FallSurvive()
+// DIE
+void
+Plane::Explode()
 {
-  y = sizes.ground_y_pilot_collision;
-
-  run = true;
-  chute = false;
-
-  speed = 0.0f;
-  vspeed = 0.0f;
-  gravity = 0.0f;
-  chute_state = CHUTE_STATE::CHUTE_IDLE;
+  playSound(sounds.expl, -1, false);
+  mSpeed = 0.0f;
+  mIsDead = true;
+  mDeadCooldown.Start();
 }
 
-// PILOT RESCUE
-void Plane::Pilot::Rescue()
+void
+Plane::Crash()
 {
-  playSound( sounds.rescue, plane->type, false );
+  if ( mIsDead == true )
+    return;
 
-  plane->Respawn();
-  plane->ResetSpawnProtection();
+
+  Explode();
+
+
+  if ( mHasJumped == true )
+    return;
+
+  ScoreChange(-1);
+
+
+  if ( gameState().isRoundFinished == false )
+  {
+    mStats.crashes++;
+    log_message("Plane::Crash() mStats.crashes++\n");
+  }
 }
 
-// PILOT RESPAWN
-void Plane::Pilot::Respawn()
+void
+Plane::Respawn()
 {
-  run = false;
-  chute = false;
-  dead = false;
+  mIsDead = false;
+  mHp = 2;
+  mIsOnGround = true;
+  mIsTakingOff = false;
+  mSpeed = 0.0f;
+  mMaxSpeedVar = sizes.plane_max_speed_def;
 
-  dir = 0;
-  gravity = 0.0f;
-  speed = 0.0f;
-  vspeed = 0.0f;
+  mDeadCooldown.Stop();
+  mFireCooldown.Stop();
+  mPitchCooldown.Stop();
+  mProtection.Stop();
+
+  mX = mType == PLANE_TYPE::RED
+    ? sizes.plane_red_landx
+    : sizes.plane_blue_landx;
+
+  mY = sizes.plane_landy;
+
+  mDir = mType == PLANE_TYPE::RED
+    ? 292.5f : 67.5f;
+
+  mHasJumped = false;
+
+  pilot.Respawn();
+
+  HitboxUpdate();
 
   AnimationsReset();
 }
 
-
-bool Plane::Pilot::isDead() const
+void
+Plane::ResetSpawnProtection()
 {
-  return dead;
+  const auto& opponentPlane =
+    planes.at(static_cast <PLANE_TYPE> (!mType));
+
+  if (  opponentPlane.mIsOnGround == false &&
+        opponentPlane.mIsDead == false )
+    mProtection.Start();
+  else
+    mProtection.Stop();
 }
 
-// CHECK PILOT COLLISION
-bool Plane::Pilot::isHit( float check_x, float check_y )
+void
+Plane::ResetScore()
 {
-  if ( dead || !plane->jump )
+  mScore = 0;
+}
+
+void
+Plane::ScoreChange(
+  const int8_t deltaScore )
+{
+  if ( mScore + deltaScore < 0 )
+    ResetScore();
+  else
+    mScore += deltaScore;
+
+  auto& game = gameState();
+
+  if (  game.winScore == 0 ||
+        mScore < game.winScore ||
+        game.isRoundFinished == true )
+    return;
+
+
+  auto& opponentPlane =
+    planes.at(static_cast <PLANE_TYPE> (!mType));
+
+  if ( mIsLocal == true )
+  {
+    if ( mIsBot == true )
+    {
+      if ( opponentPlane.isBot() == false )
+      {
+        playSound(sounds.loss, -1, false);
+        menu.setMessage(MESSAGE_TYPE::GAME_LOST);
+      }
+      else
+      {
+        playSound(sounds.victory, -1, false);
+
+        if ( mType == PLANE_TYPE::BLUE )
+          menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
+        else
+          menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
+
+//      TODO: finish bot match
+      }
+    }
+    else
+    {
+      playSound(sounds.victory, -1, false);
+      menu.setMessage(MESSAGE_TYPE::GAME_WON);
+    }
+  }
+  else
+  {
+    playSound(sounds.loss, -1, false);
+    menu.setMessage(MESSAGE_TYPE::GAME_LOST);
+  }
+
+
+  mStats.wins++;
+  opponentPlane.mStats.losses++;
+  log_message("Plane::ScoreChange() mStats.wins++\n");
+  log_message("Plane::ScoreChange() opponentPlane.mStats.losses++\n");
+
+  game.isRoundFinished = true;
+
+  updateRecentStats();
+
+  if ( game.gameMode != GAME_MODE::BOT_VS_BOT )
+    updateTotalStats();
+}
+
+void
+Plane::ResetStats()
+{
+  mStats = {};
+  log_message("Plane::ResetStats()\n");
+}
+
+const Statistics&
+Plane::stats() const
+{
+  return mStats;
+}
+
+bool
+Plane::isHit(
+  const float x,
+  const float y ) const
+{
+  if ( mIsDead == true )
     return false;
 
-  if (  check_x > pilot_hitbox.x &&
-        check_x < pilot_hitbox.x + pilot_hitbox.w &&
-        check_y > pilot_hitbox.y &&
-        check_y < pilot_hitbox.y + pilot_hitbox.h )
-          return true;
-  else
-    return false;
+
+  const SDL_Point hitPoint {x, y};
+
+  return SDL_PointInRect(&hitPoint, &mHitbox);
+}
+
+PLANE_TYPE
+Plane::type() const
+{
+  return mType;
+}
+
+uint8_t
+Plane::score() const
+{
+  return mScore;
+}
+
+void
+Plane::setLocal(
+  const bool local )
+{
+  mIsLocal = local;
+}
+
+bool
+Plane::isLocal() const
+{
+  return mIsLocal;
+}
+
+void
+Plane::setBot(
+  const bool bot )
+{
+  mIsBot = bot;
+}
+
+bool
+Plane::isBot() const
+{
+  return mIsBot;
+}
+
+float
+Plane::x() const
+{
+  return mX;
+}
+
+float
+Plane::y() const
+{
+  return mY;
 }
 
 // Get coordinates for sending
-Plane_Data Plane::getData()
+PlaneData
+Plane::getData() const
 {
-  Plane_Data data_buf;
-  data_buf.x = x;
-  data_buf.y = y;
-  data_buf.dir = dir;
-  data_buf.pilot_x = pilot.getX();
-  data_buf.pilot_y = pilot.getY();
-
-  return data_buf;
+  return
+  {
+    mX,
+    mY,
+    mDir,
+    pilot.x(),
+    pilot.y(),
+  };
 }
 
-bool Plane::isDead() const
+bool
+Plane::isDead() const
 {
-  return ( pilot.isDead() || ( !jump && dead ) );
+  return
+    pilot.isDead() == true ||
+    ( mHasJumped == false && mIsDead == true );
 }
 
-bool Plane::canShoot() const
+bool
+Plane::canShoot() const
 {
-  return !onground && protection.isReady();
+  return
+    mIsOnGround == false &&
+    mProtection.isReady() == true;
 }
 
-bool Plane::canJump() const
+bool
+Plane::canJump() const
 {
-  return  ( !jump && !onground && protection.isReady() ) ||
-          ( jump && !pilot.run && !pilot.chute && pilot.chute_state != CHUTE_STATE::CHUTE_DESTROYED );
+  return
+    mHasJumped == false &&
+    mIsOnGround == false &&
+    mProtection.isReady() == true ||
+    ( mHasJumped == true &&
+      pilot.mIsRunning == false &&
+      pilot.mIsChuteOpen == false &&
+      pilot.mChuteState != CHUTE_STATE::CHUTE_DESTROYED );
 }
 
-void Plane::setCoords( Plane_Data data )
+void
+Plane::setCoords(
+  const PlaneData& data )
 {
-  x = data.x;
-  y = data.y;
+  mX = data.x;
+  mY = data.y;
 }
 
-void Plane::setDir( float new_dir )
+void
+Plane::setDir(
+  const float new_dir )
 {
-  dir = new_dir;
+  mDir = new_dir;
+}
+
+SDL_Point
+Plane::getClosestCollision() const
+{
+  SDL_Point dot;
+
+  if ( mHasJumped == false )
+  {
+    const SDL_Point dotBarn
+    {
+      std::max( (float) sizes.barn_x_collision,
+                std::min( mX, sizes.barn_x_collision + sizes.barn_sizex * 0.95f ) ),
+      std::max( (float) sizes.barn_y_collision,
+                std::min( mY, sizes.barn_y_collision + (float) sizes.barn_sizey ) ),
+    };
+
+    dot =
+    {
+      mX,
+      sizes.ground_y_collision,
+    };
+
+    float distanceToBarn    = sqrt( pow( dotBarn.x - mX, 2 ) + pow( dotBarn.y - mY, 2 ) );
+    float distanceToGround  = sqrt( pow( dot.x - mX, 2 )     + pow( dot.y - mY, 2 ) );
+
+    if ( distanceToBarn < distanceToGround )
+      return dotBarn;
+
+    return dot;
+  }
+
+//  dot.x = pilot->x;
+//  dot.y = sizes.ground_y_pilot_collision;
+
+  // Distance to barn rescue X points
+  dot =
+  {
+    std::max( (float) sizes.barn_x_pilot_left_collision,
+              std::min( pilot.mX, (float) sizes.barn_x_pilot_right_collision ) ),
+    std::max( sizes.ground_y_pilot_collision,
+              std::min( pilot.mY, sizes.ground_y_pilot_collision ) ),
+  };
+
+  return dot;
+}
+
+float
+Plane::getDistanceToPoint(
+  const SDL_Point& dot ) const
+{
+  if ( mHasJumped == false )
+    return sqrt( pow( dot.x - mX, 2 ) + pow( dot.y - mY, 2 ) );
+
+  return sqrt( pow( dot.x - pilot.mX, 2 ) + pow( dot.y - pilot.mY, 2 ) );
+}
+
+float
+Plane::getAngleToPoint(
+  const SDL_Point& source,
+  const SDL_Point& target ) const
+{
+  float angle = atan2( target.y - source.y, target.x - source.x ) + M_PI / 2;
+
+  angle *= 180.0 / M_PI;
+
+  if ( angle < 0.0f )
+    angle += 360.0f;
+
+  return angle;
+}
+
+float
+Plane::getSpeedDir() const
+{
+  if ( mHasJumped == false )
+  {
+    float speedY = 0.0f;
+
+    if ( mIsOnGround == false )
+      speedY = mSpeed * cos( mDir * M_PI / 180.0 ) + mMaxSpeedVar - mSpeed;
+
+    const float speedX = mSpeed * sin( mDir * M_PI / 180.0 );
+    float speedDir = atan2( speedY, speedX ) + M_PI / 2.0;
+
+    speedDir *= 180.0f / M_PI;
+
+    if ( speedDir < 0.0f )
+      speedDir += 360.0f;
+
+    if ( mIsOnGround == true && mIsTakingOff == false )
+      return 0.0f;
+
+    return speedDir;
+  }
+
+  if ( pilot.mIsRunning == true )
+    return pilot.mDir;
+
+  const float pilotSpeedX = pilot.mSpeed * sin( pilot.mDir * M_PI / 180.0 );
+  float pilotDir = atan2( -pilot.mVSpeed, pilotSpeedX ) + M_PI / 2.0;
+
+  pilotDir *= 180.0f / M_PI;
+
+  if ( pilotDir < 0.0f )
+    pilotDir += 360.0f;
+
+  return pilotDir;
+}
+
+float
+Plane::getSpeed() const
+{
+  if ( mHasJumped == false )
+    return mSpeed;
+
+  const float pilotSpeedX = pilot.mSpeed * sin( pilot.mDir * M_PI / 180.0f );
+
+  return sqrt( pow( pilotSpeedX, 2) + pow( -pilot.mVSpeed, 2 ) );
+}
+
+float
+Plane::getAngleRelative(
+  const float angleSource,
+  const float angleTarget ) const
+{
+  float relativeAngle = angleTarget - angleSource;
+
+  if ( relativeAngle > 180.0f )
+    relativeAngle -= 360.0f;
+  else if ( relativeAngle < -180.0f )
+    relativeAngle += 360.0f;
+
+  return relativeAngle;
+}
+
+void
+Plane::assignDataset(
+  std::vector <float>& inputs ) const
+{
+  const auto& opponentPlane =
+    planes.at(static_cast <PLANE_TYPE> (!mType));
+
+
+  Bullet bullet = bullets.GetClosestBullet(mX, mY, mType);
+
+  const bool bulletPresent =
+    bullet.firedBy() == mType
+    ? false : true;
+
+
+  if ( isDead() == true )
+  {
+    inputs.push_back(3.0f); //  fly / jump / run / dead
+    inputs.push_back(0.0f); //  hp
+    inputs.push_back(0.0f); //  chute state
+
+    inputs.push_back(0.0f); //  protection
+    inputs.push_back(0.0f); //  fire cooldown
+
+    inputs.push_back(0.0f); //  speed
+    inputs.push_back(0.0f); //  speed dir
+    inputs.push_back(0.0f); //  dir
+
+    inputs.push_back(0.0f); //  on ground
+    inputs.push_back(0.0f); //  distance to collision
+    inputs.push_back(0.0f); //  angle to collision
+
+    inputs.push_back(0.0f); //  distance to opponent
+    inputs.push_back(0.0f); //  angle to opponent
+
+    inputs.push_back(0.0f); //  bullet present
+    inputs.push_back(0.0f); //  distance to bullet
+    inputs.push_back(0.0f); //  dir to bullet
+    inputs.push_back(0.0f); //  bullet dir to plane
+
+    inputs.push_back( mDeadCooldown.remainderTime() );
+
+    return;
+  }
+
+  if ( mHasJumped == true && pilot.mIsRunning == true )
+    inputs.push_back(2.0f);
+
+  else if ( mHasJumped == true && pilot.mIsRunning == false )
+    inputs.push_back(1.0f);
+
+  else if ( mHasJumped == false && pilot.mIsRunning == false )
+    inputs.push_back(0.0f);
+
+
+//  Info about both planes
+  inputs.push_back(mHp);
+
+  if ( pilot.mIsChuteOpen == true )
+    inputs.push_back(1.0f);
+
+  else if ( pilot.mChuteState == CHUTE_STATE::CHUTE_DESTROYED )
+    inputs.push_back(2.0f);
+
+  else
+    inputs.push_back(0.0f);
+
+  inputs.push_back( mProtection.remainderTime() );
+  inputs.push_back( mFireCooldown.remainderTime() );
+
+  inputs.push_back( getSpeed() );
+  inputs.push_back( getSpeedDir() );
+
+  const auto opponent =
+    opponentPlane.mHasJumped == false
+    ? SDL_Point { opponentPlane.x(), opponentPlane.y() }
+    : SDL_Point { opponentPlane.pilot.x(), opponentPlane.pilot.y() };
+
+
+  if ( mHasJumped == false )
+  {
+    const float opponentDirToAI = getAngleToPoint( { mX, mY }, opponent );
+    inputs.push_back( getAngleRelative( mDir, opponentDirToAI ) );
+  }
+  else
+  {
+//    TODO: PILOT DIR
+    inputs.push_back( getSpeedDir() );
+  }
+
+  inputs.push_back( opponentPlane.mDeadCooldown.remainderTime() );
+
+  SDL_Point closestCollision = getClosestCollision();
+
+//  Data about AI plane
+  inputs.push_back( mIsOnGround );
+
+  inputs.push_back( getDistanceToPoint( closestCollision ) );
+  inputs.push_back( getAngleToPoint( { mX, mY }, closestCollision ) );  // todo: make relative to speedDir ???
+
+  inputs.push_back( getDistanceToPoint( opponent ) );
+
+  if ( mHasJumped == false )
+  {
+    const float dirToOpponent = getAngleToPoint( { mX, mY }, opponent );
+    inputs.push_back( getAngleRelative( mDir, dirToOpponent ) );
+  }
+  else
+  {
+    const float dirToOpponent = getAngleToPoint( { pilot.mX, pilot.mY }, opponent );
+    inputs.push_back( getAngleRelative( getSpeedDir(), dirToOpponent ) );
+  }
+
+//  Data about closest bullet
+
+  inputs.push_back( bulletPresent );
+
+  if ( bulletPresent == true )
+  {
+    inputs.push_back( getDistanceToPoint( { bullet.x(), bullet.y() } ) );
+
+    const float aiDirToBullet = getAngleToPoint( { mX, mY }, { bullet.x(), bullet.y() } );
+    inputs.push_back( getAngleRelative( mDir, aiDirToBullet ) );
+
+    const float bulletDirToAI = getAngleToPoint( { bullet.x(), bullet.y() }, { mX, mY } );
+    inputs.push_back( getAngleRelative( bullet.dir(), bulletDirToAI ) );
+
+    return;
+  }
+
+  inputs.push_back(0.0f);
+  inputs.push_back(0.0f);
+  inputs.push_back(0.0f);
+
+  return;
 }
