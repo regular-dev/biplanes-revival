@@ -442,9 +442,7 @@ Plane::AnimationsUpdate()
       textureAngle = mDir + 90.0;
     }
 
-    if ( mProtection.isReady() == true )
-      SDL_SetTextureAlphaMod( planeTexture, 255 );
-    else
+    if ( mProtection.isReady() == false )
       SDL_SetTextureAlphaMod( planeTexture, 127 );
 
     SDL_RenderCopyEx(
@@ -455,6 +453,8 @@ Plane::AnimationsUpdate()
       textureAngle,
       nullptr,
       SDL_FLIP_NONE );
+
+    SDL_SetTextureAlphaMod( planeTexture, 255 );
 
     if ( gameState().debug.collisions == true )
     {
