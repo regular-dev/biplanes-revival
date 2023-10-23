@@ -8,6 +8,12 @@ add_executable(${TARGET})
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
+# tiny-dnn
+set(USE_SERIALIZER OFF CACHE BOOL "" FORCE)
+set(USE_IMAGE_API OFF CACHE BOOL "" FORCE)
+set(USE_DOUBLE OFF CACHE BOOL "" FORCE)
+
+
 set_target_properties(${TARGET} PROPERTIES
   CXX_STANDARD_REQUIRED ON
   CXX_STANDARD 14
@@ -92,6 +98,8 @@ target_sources(${TARGET} PRIVATE
   include/zeppelin.hpp
 )
 
+add_subdirectory(lib/tiny-dnn)
+
 target_compile_definitions(${TARGET} PRIVATE
   BIPLANES_EXE_NAME="${TARGET}"
   BIPLANES_VERSION="${${TARGET}_VERSION}"
@@ -122,6 +130,7 @@ target_link_libraries(${TARGET} PRIVATE
   SDL2::Main
   SDL2::Image
   SDL2::Mixer
+  tiny_dnn
 )
 
 if (WIN32)
