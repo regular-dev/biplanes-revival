@@ -3,6 +3,8 @@
 It's a PC recreation of an old cellphone game "Bluetooth Biplanes"
 (originally developed by Morpheme Ltd. in 2004)
 
+## [Gameplay video](https://youtu.be/mIgMNh6gGXs)
+
 ## Features:
 
   - Crossplatform
@@ -12,8 +14,6 @@ It's a PC recreation of an old cellphone game "Bluetooth Biplanes"
   - Hardcore mode: one-shot kills + more clouds for cover
   - Automated statistics system keeps track of your performance
   - Moddable sounds and sprites
-
-[Gameplay video](https://youtu.be/mIgMNh6gGXs)
 
 Written in C++ from scratch using sprites from original game
 
@@ -80,7 +80,6 @@ make
 For sharing static builds with other people 
 you should provide the following SDL2 win32 releases as well:
 
-    [SDL2.dll](https://github.com/libsdl-org/SDL/releases)
-    [SDL2_image.dll](https://github.com/libsdl-org/SDL_image/releases)
-    [SDL2_mixer.dll](https://github.com/libsdl-org/SDL_mixer/releases)
-
+- [SDL2.dll](https://github.com/libsdl-org/SDL/releases)
+- [SDL2_image.dll](https://github.com/libsdl-org/SDL_image/releases)
+- [SDL2_mixer.dll](https://github.com/libsdl-org/SDL_mixer/releases)
