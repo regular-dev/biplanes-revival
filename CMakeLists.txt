@@ -100,6 +100,9 @@ target_sources(${TARGET} PRIVATE
 
   src/zeppelin.cpp
   include/zeppelin.hpp
+
+  src/ai_backend.cpp
+  include/ai_backend.hpp
 )
 
 add_subdirectory(lib/tiny-dnn)
