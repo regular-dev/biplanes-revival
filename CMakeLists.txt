@@ -8,6 +8,10 @@ add_executable(${TARGET})
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
+if (WIN32)
+  option(${TARGET}_DISABLE_CONSOLE "${TARGET}: Don't show console window" ON)
+endif()
+
 # tiny-dnn
 set(USE_SERIALIZER OFF CACHE BOOL "" FORCE)
 set(USE_IMAGE_API OFF CACHE BOOL "" FORCE)
@@ -134,9 +138,7 @@ target_link_libraries(${TARGET} PRIVATE
 )
 
 if (WIN32)
-  set_target_properties(${TARGET}
-    PROPERTIES
-    WIN32_EXECUTABLE FALSE
+  set_target_properties(${TARGET} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
   )
 
@@ -144,8 +146,26 @@ if (WIN32)
     ws2_32
     -static-libgcc
     -static-libstdc++
-    -mconsole
   )
+
+  if (${${TARGET}_DISABLE_CONSOLE})
+    set_target_properties(${TARGET} PROPERTIES
+      WIN32_EXECUTABLE TRUE
+    )
+
+    target_link_libraries(${TARGET} PUBLIC
+      -mwindows
+    )
+  else()
+    set_target_properties(${TARGET} PROPERTIES
+      WIN32_EXECUTABLE FALSE
+    )
+
+    target_link_libraries(${TARGET} PUBLIC
+      -mconsole
+    )
+  endif()
+
 endif()
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
