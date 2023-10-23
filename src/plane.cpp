@@ -41,34 +41,6 @@ Plane::Plane(
   const PLANE_TYPE construct_type )
   : mType{construct_type}
 {
-  mFireCooldown = {sizes.plane_fire_cooldown_time};
-  mPitchCooldown = {sizes.plane_pitch_cooldown_time};
-  mDeadCooldown = {sizes.plane_dead_cooldown_time};
-  mProtection = {sizes.plane_spawn_protection_time};
-
-  mSmokeAnim = {sizes.smk_frame_time};
-  mSmokePeriod = {sizes.smk_anim_period};
-  mFireAnim = {sizes.fire_frame_time};
-  mExplosionAnim = {sizes.expl_frame_time};
-
-  Respawn();
-}
-
-void
-Plane::ResetTimers()
-{
-  mFireCooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
-  mPitchCooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
-
-  mDeadCooldown.SetNewTimeout( sizes.plane_dead_cooldown_time );
-  mProtection.SetNewTimeout( sizes.plane_spawn_protection_time );
-
-  mSmokeAnim.SetNewTimeout( sizes.smk_frame_time );
-  mSmokePeriod.SetNewTimeout( sizes.smk_anim_period );
-  mFireAnim.SetNewTimeout( sizes.fire_frame_time );
-  mExplosionAnim.SetNewTimeout( sizes.expl_frame_time );
-
-  pilot.ResetTimers();
 }
 
 void
@@ -80,8 +52,6 @@ Plane::Update()
         mDeadCooldown.isReady() == true )
   {
     Respawn();
-    ResetSpawnProtection();
-
     eventPush(EVENTS::PLANE_RESPAWN);
   }
 
@@ -262,7 +232,7 @@ Plane::SpeedUpdate()
 //  Decrease vertical speed
   if ( mDir <= 70 || mDir >= 290 )
   {
-    if ( mDir == 0 )                         // 90 climb
+    if ( mDir == 0 )                          // 90 climb
     {
       mSpeed -= sizes.plane_incr_spd * 0.225f * deltaTime;
       mMaxSpeedVar = mSpeed;
@@ -277,7 +247,7 @@ Plane::SpeedUpdate()
       mSpeed -= sizes.plane_incr_spd * 0.065f * deltaTime;
       mMaxSpeedVar = mSpeed;
     }
-    else                                    // 30 climb
+    else                                      // 30 climb
     {
       mSpeed -= sizes.plane_incr_spd * 0.020f * deltaTime;
       mMaxSpeedVar = mSpeed;
@@ -405,12 +375,13 @@ Plane::AbandonedUpdate()
     return;
 
 
-  if ( mSpeed > sizes.plane_max_speed_def / 2 )
+  if ( mSpeed > sizes.plane_max_speed_def / 2.0f )
     mSpeed -= sizes.plane_incr_spd * 0.2 * deltaTime;
 
 
   if ( mPitchCooldown.isReady() == false )
     return;
+
 
   mPitchCooldown.Start();
 
@@ -506,16 +477,12 @@ void
 Plane::AnimationsReset()
 {
 //  FRAME APPEARANCE ORDER: { 4, 3, 2, 1, 5 }
-  mSmokeFrame[0] = -3;
-  mSmokeFrame[1] = -2;
-  mSmokeFrame[2] = -1;
-  mSmokeFrame[3] = 0;
-  mSmokeFrame[4] = -4;
-  mSmokeDestRect[0] = {};
-  mSmokeDestRect[1] = {};
-  mSmokeDestRect[2] = {};
-  mSmokeDestRect[3] = {};
-  mSmokeDestRect[4] = {};
+  mSmokeFrame =
+  {
+    -3, -2, -1, 0, -4,
+  };
+
+  mSmokeDestRect = {};
 
   mSmokeAnim.Stop();
   mSmokePeriod.Stop();
@@ -526,6 +493,17 @@ Plane::AnimationsReset()
 
   mExplosionAnim.Stop();
   mExplosionFrame = 0;
+
+  mFireCooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
+  mPitchCooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
+
+  mDeadCooldown.SetNewTimeout( sizes.plane_dead_cooldown_time );
+  mProtection.SetNewTimeout( sizes.plane_spawn_protection_time );
+
+  mSmokeAnim.SetNewTimeout( sizes.smk_frame_time );
+  mSmokePeriod.SetNewTimeout( sizes.smk_anim_period );
+  mFireAnim.SetNewTimeout( sizes.fire_frame_time );
+  mExplosionAnim.SetNewTimeout( sizes.expl_frame_time );
 
   pilot.AnimationsReset();
 }
@@ -541,23 +519,22 @@ Plane::SmokeUpdate()
   {
     mSmokeAnim.Start();
 
-    for ( size_t i = 0; i < mSmokeFrame.size(); i++ )
+    for ( size_t i = 0; i < mSmokeFrame.size(); ++i )
     {
       ++mSmokeFrame[i];
 
-      if ( mSmokeFrame[i] > 5 )
-        mSmokeFrame[i] = 5;
+      if ( mSmokeFrame[i] > mSmokeFrame.size() )
+        mSmokeFrame[i] = mSmokeFrame.size();
     }
 
     if ( mSmokePeriod.isReady() == true )
     {
       mSmokePeriod.Start();
 
-      mSmokeFrame[0] = -3;
-      mSmokeFrame[1] = -2;
-      mSmokeFrame[2] = -1;
-      mSmokeFrame[3] = 0;
-      mSmokeFrame[4] = -4;
+      mSmokeFrame =
+      {
+        -3, -2, -1, 0, -4,
+      };
     }
 
     if ( mSmokeRect == 0 )
@@ -574,7 +551,7 @@ Plane::SmokeUpdate()
     };
   }
 
-  for ( size_t i = 0; i < mSmokeFrame.size(); i++ )
+  for ( size_t i = 0; i < mSmokeFrame.size(); ++i )
   {
     if ( mSmokeFrame[i] < 0 )
       continue;
@@ -702,7 +679,8 @@ Plane::TakeOffFinish()
 }
 
 void
-Plane::Hit( Plane& attacker )
+Plane::Hit(
+  Plane& attacker )
 {
   if ( mIsDead == true )
     return;
@@ -811,6 +789,8 @@ Plane::Respawn()
   HitboxUpdate();
 
   AnimationsReset();
+
+  ResetSpawnProtection();
 }
 
 void

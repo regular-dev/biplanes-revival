@@ -79,17 +79,13 @@ public:
   Plane( const PLANE_TYPE );
 
 
-  void ResetTimers();
-  void Update();
-
-
   void Accelerate();
   void Decelerate();
   void Turn( const PLANE_PITCH );
   void Shoot();
   void Jump();
 
-
+  void Update();
   void SpeedUpdate();
   void CoordinatesUpdate();
   void CollisionsUpdate();
@@ -101,7 +97,6 @@ public:
   void FireUpdate();
   void ExplosionUpdate();
   void HitboxUpdate();
-
 
   void TakeOffStart();
   void TakeOffFinish();
@@ -216,17 +211,12 @@ public:
 
     void setPlane( Plane* );
 
-
-    void ResetTimers();
-    void Update();
-
-
     void Move( const PLANE_PITCH );
     void MoveIdle();
     void OpenChute();
     void ChuteUnlock();
 
-
+    void Update();
     void FallUpdate();
     void RunUpdate();
     void DeathUpdate();
@@ -238,7 +228,6 @@ public:
     void DeathAnimUpdate();
     void HitboxUpdate();
     void ChuteHitboxUpdate();
-
 
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );

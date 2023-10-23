@@ -36,22 +36,9 @@
 
 Plane::Pilot::Pilot()
 {
-  mFallAnim = {sizes.pilot_fall_frame_time};
-
   mChuteState = CHUTE_STATE::CHUTE_NONE;
-  mChuteAnim = {sizes.chute_frame_time};
 
-  mRunAnim = {sizes.pilot_run_frame_time};
-
-  mAngelAnim = {sizes.angel_frame_time};
-
-  mHitbox =
-  {
-    mX - sizes.pilot_sizex / 2.0f,
-    mY - sizes.pilot_sizey / 2.0f,
-    sizes.pilot_sizex,
-    sizes.pilot_sizey,
-  };
+  HitboxUpdate();
 }
 
 void
@@ -76,28 +63,18 @@ Plane::Pilot::Update()
   mAngelAnim.Update();
 }
 
-
-void
-Plane::Pilot::ResetTimers()
-{
-  mFallAnim.SetNewTimeout( sizes.pilot_fall_frame_time );
-  mChuteAnim.SetNewTimeout( sizes.chute_frame_time );
-  mRunAnim.SetNewTimeout( sizes.pilot_run_frame_time );
-  mAngelAnim.SetNewTimeout( sizes.angel_frame_time );
-}
-
 void
 Plane::Pilot::Move(
-  const PLANE_PITCH input_dir )
+  const PLANE_PITCH inputDir )
 {
-  const auto move_dir =
-    input_dir == PLANE_PITCH::PITCH_LEFT
+  const auto moveDir =
+    inputDir == PLANE_PITCH::PITCH_LEFT
     ? -1.0f : 1.0f;
 
   if ( mIsChuteOpen == true )
   {
-    mChuteState = input_dir;
-    mX += move_dir * sizes.pilot_chute_speed * deltaTime;
+    mChuteState = inputDir;
+    mX += moveDir * sizes.pilot_chute_speed * deltaTime;
 
     return;
   }
@@ -105,14 +82,14 @@ Plane::Pilot::Move(
   if ( mIsRunning == false )
     return;
 
-  mDir = move_dir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
-  mX += move_dir * sizes.pilot_run_speed * deltaTime;
+  mDir = moveDir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
+  mX += moveDir * sizes.pilot_run_speed * deltaTime;
 
   if ( mRunAnim.isReady() == false )
     return;
 
   mRunAnim.Start();
-  mRunFrame++;
+  ++mRunFrame;
 
   if ( mRunFrame > 2 )
     mRunFrame = 0;
@@ -204,7 +181,7 @@ Plane::Pilot::FallUpdate()
 
   if ( mIsChuteOpen == true )
   {
-      playSound(sounds.chute, plane->type(), true);
+    playSound(sounds.chute, plane->type(), true);
 
     if ( mVSpeed > 0.0f )
       mVSpeed = -mGravity * 0.4f;
@@ -216,6 +193,7 @@ Plane::Pilot::FallUpdate()
       if ( mVSpeed > -sizes.screen_height * 0.08f )
         mVSpeed = -sizes.screen_height * 0.08f;
     }
+
     else if ( mVSpeed > -sizes.screen_height * 0.08f )
       mVSpeed -= sizes.screen_height * 0.5f * deltaTime;
 
@@ -224,7 +202,7 @@ Plane::Pilot::FallUpdate()
   }
   else
   {
-      playSound(sounds.fall, plane->type(), true);
+    playSound(sounds.fall, plane->type(), true);
 
     if ( mVSpeed > 0.0f )
     {
@@ -245,7 +223,7 @@ Plane::Pilot::FallUpdate()
 
 
   if ( mSpeed > sizes.screen_width * 0.008f )
-    mSpeed -= mSpeed * 1.0f * deltaTime;
+    mSpeed -= mSpeed * deltaTime;
   else
     mSpeed = 0.0f;
 
@@ -312,43 +290,39 @@ Plane::Pilot::DeathUpdate()
     return;
 
 
-  if ( mAngelAnim.isReady() == true )
-  {
-    mAngelAnim.Start();
-
-    if ( mAngelFrame == 3 )
-    {
-      if ( plane->mIsLocal == false )
-        return;
-
-      plane->Respawn();
-      plane->ResetSpawnProtection();
-
-      eventPush(EVENTS::PLANE_RESPAWN);
-    }
-    else
-      ++mAngelFrame;
-
-    if  ( mAngelLoop < 6 && mAngelFrame > 2 )
-    {
-      mAngelFrame = 0;
-      ++mAngelLoop;
-    }
-    else if ( mAngelLoop == 6 && mAngelFrame == 2 )
-      mAngelFrame = 3;
-  }
-
   mY -= sizes.angel_ascent_speed * deltaTime;
+
+  if ( mAngelAnim.isReady() == false )
+    return;
+
+  mAngelAnim.Start();
+
+  if ( mAngelFrame == 3 )
+  {
+    if ( plane->mIsLocal == false )
+      return;
+
+    plane->Respawn();
+
+    eventPush(EVENTS::PLANE_RESPAWN);
+  }
+  else
+    ++mAngelFrame;
+
+  if ( mAngelLoop < 6 && mAngelFrame > 2 )
+  {
+    mAngelFrame = 0;
+    ++mAngelLoop;
+  }
+  else if ( mAngelLoop == 6 && mAngelFrame == 2 )
+    mAngelFrame = 3;
 }
 
 void
 Plane::Pilot::AnimationsUpdate()
 {
   if ( mIsDead == true )
-  {
-    DeathAnimUpdate();
-    return;
-  }
+    return DeathAnimUpdate();
 
 
   if ( mIsRunning == true )
@@ -385,6 +359,11 @@ Plane::Pilot::AnimationsReset()
   mAngelAnim.Stop();
   mAngelFrame = 0;
   mAngelLoop = 0;
+
+  mFallAnim.SetNewTimeout( sizes.pilot_fall_frame_time );
+  mChuteAnim.SetNewTimeout( sizes.chute_frame_time );
+  mRunAnim.SetNewTimeout( sizes.pilot_run_frame_time );
+  mAngelAnim.SetNewTimeout( sizes.angel_frame_time );
 }
 
 void
@@ -526,7 +505,6 @@ Plane::Pilot::DeathAnimUpdate()
     textures.anim_pilot_angel,
     &textures.anim_pilot_angel_rect[mAngelFrame],
     &angelRect );
-
 }
 
 void
@@ -663,8 +641,8 @@ Plane::Pilot::HitGroundCheck()
   if ( mVSpeed >= -sizes.pilot_chute_gravity )
   {
     FallSurvive();
-
     eventPush(EVENTS::PILOT_LAND);
+
     return;
   }
 
@@ -707,7 +685,6 @@ Plane::Pilot::Rescue()
   playSound(sounds.rescue, plane->mType, false);
 
   plane->Respawn();
-  plane->ResetSpawnProtection();
 
   if ( gameState().isRoundFinished  == false )
   {

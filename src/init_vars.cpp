@@ -40,10 +40,7 @@ init_sizes()
 
 //  Plane
   for ( auto& [planeType, plane] : planes )
-  {
-    plane.ResetTimers();
     plane.AnimationsReset();
-  }
 
   sizes.ground_y_collision = sizes.screen_height * 0.875f;
   sizes.plane_sizex = sizes.screen_width * 0.0935f;

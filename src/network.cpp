@@ -261,8 +261,6 @@ processOpponentData()
         case (uint8_t) EVENTS::PLANE_RESPAWN:
         {
           planeRemote.Respawn();
-          planeRemote.ResetSpawnProtection();
-
           continue;
         }
 

@@ -202,10 +202,12 @@ game_reset()
   for ( auto& [planeType, plane] : planes )
   {
     plane.Respawn();
-    plane.ResetSpawnProtection();
     plane.ResetScore();
     plane.ResetStats();
   }
+
+  for ( auto& [planeType, plane] : planes )
+    plane.ResetSpawnProtection();
 
   zeppelin.Respawn();
   bullets.Clear();
