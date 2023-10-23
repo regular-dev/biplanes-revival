@@ -50,16 +50,15 @@ Packet opponentDataPrev {};
 
 const uint16_t DEFAULT_LOCAL_PORT   = 55555;
 const uint16_t DEFAULT_REMOTE_PORT  = 55555;
-const std::string DEFAULT_SERVER_IP       = "127.0.0.1";
-const std::string DEFAULT_MMAKE_PASSWORD  = "";
+const std::string DEFAULT_SERVER_IP = "127.0.0.1";
 
 //  Incompatible game versions must have different prefix
-const std::string MMAKE_PASSWORD_PREFIX   = "biplanes1.0_";
+const std::string MMAKE_PASSWORD_PREFIX   = "biplanes1.1_";
 
-uint16_t LOCAL_PORT         = DEFAULT_LOCAL_PORT;
-uint16_t REMOTE_PORT        = DEFAULT_REMOTE_PORT;
-std::string SERVER_IP       = DEFAULT_SERVER_IP;
-std::string MMAKE_PASSWORD  = DEFAULT_MMAKE_PASSWORD;
+uint16_t LOCAL_PORT   = DEFAULT_LOCAL_PORT;
+uint16_t REMOTE_PORT  = DEFAULT_REMOTE_PORT;
+std::string SERVER_IP = DEFAULT_SERVER_IP;
+std::string MMAKE_PASSWORD {};
 
 const uint8_t DEFAULT_WIN_SCORE = 10;
 

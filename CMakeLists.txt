@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 set(TARGET BiplanesRevival)
-set(${TARGET}_VERSION 1.0.5)
+set(${TARGET}_VERSION 1.1.0)
 project(${TARGET} VERSION ${${TARGET}_VERSION} LANGUAGES C CXX)
 
 add_executable(${TARGET})

@@ -165,7 +165,7 @@ Menu::EndTyping(
       if ( checkPass(mInputPassword) == true )
         MMAKE_PASSWORD = mInputPassword;
       else
-        MMAKE_PASSWORD = DEFAULT_MMAKE_PASSWORD;
+        MMAKE_PASSWORD = {};
 
       break;
     }

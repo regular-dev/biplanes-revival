@@ -27,7 +27,6 @@
 extern const uint16_t DEFAULT_LOCAL_PORT;
 extern const uint16_t DEFAULT_REMOTE_PORT;
 extern const std::string DEFAULT_SERVER_IP;
-extern const std::string DEFAULT_MMAKE_PASSWORD;
 extern const std::string MMAKE_PASSWORD_PREFIX;
 
 extern uint16_t LOCAL_PORT;
