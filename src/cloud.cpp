@@ -18,8 +18,8 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/cloud.h>
-#include <include/sdl.h>
+#include <include/cloud.hpp>
+#include <include/sdl.hpp>
 #include <include/time.hpp>
 #include <include/game_state.hpp>
 #include <include/sizes.hpp>

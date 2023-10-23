@@ -18,10 +18,10 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/zeppelin.h>
-#include <include/sdl.h>
+#include <include/zeppelin.hpp>
+#include <include/sdl.hpp>
 #include <include/time.hpp>
-#include <include/plane.h>
+#include <include/plane.hpp>
 #include <include/sizes.hpp>
 #include <include/textures.hpp>
 

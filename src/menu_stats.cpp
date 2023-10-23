@@ -18,15 +18,15 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/menu.h>
-#include <include/sdl.h>
-#include <include/render.h>
-#include <include/plane.h>
+#include <include/menu.hpp>
+#include <include/sdl.hpp>
+#include <include/render.hpp>
+#include <include/plane.hpp>
 #include <include/game_state.hpp>
 #include <include/stats.hpp>
 #include <include/sizes.hpp>
-#include <include/variables.h>
-#include <include/utility.h>
+#include <include/variables.hpp>
+#include <include/utility.hpp>
 
 
 void

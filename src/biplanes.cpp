@@ -19,26 +19,26 @@
 */
 
 #include <include/biplanes.hpp>
-#include <include/init_vars.h>
-#include <include/sdl.h>
+#include <include/init_vars.hpp>
+#include <include/sdl.hpp>
 #include <include/time.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/network_data.hpp>
 #include <include/network_state.hpp>
-#include <include/menu.h>
-#include <include/render.h>
-#include <include/plane.h>
-#include <include/bullet.h>
-#include <include/cloud.h>
-#include <include/zeppelin.h>
-#include <include/controls.h>
+#include <include/menu.hpp>
+#include <include/render.hpp>
+#include <include/plane.hpp>
+#include <include/bullet.hpp>
+#include <include/cloud.hpp>
+#include <include/zeppelin.hpp>
+#include <include/controls.hpp>
 #include <include/matchmake.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/stats.hpp>
 #include <include/textures.hpp>
-#include <include/variables.h>
+#include <include/variables.hpp>
 
 #include <lib/Net.h>
 #include <lib/picojson.h>

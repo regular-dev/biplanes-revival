@@ -18,13 +18,13 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/menu.h>
-#include <include/render.h>
-#include <include/sdl.h>
-#include <include/controls.h>
+#include <include/menu.hpp>
+#include <include/render.hpp>
+#include <include/sdl.hpp>
+#include <include/controls.hpp>
 #include <include/sizes.hpp>
 #include <include/textures.hpp>
-#include <include/variables.h>
+#include <include/variables.hpp>
 
 
 void

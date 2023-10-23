@@ -18,12 +18,12 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/utility.h>
-#include <include/sdl.h>
+#include <include/utility.hpp>
+#include <include/sdl.hpp>
 #include <include/game_state.hpp>
-#include <include/controls.h>
+#include <include/controls.hpp>
 #include <include/stats.hpp>
-#include <include/variables.h>
+#include <include/variables.hpp>
 
 #include <lib/picojson.h>
 

@@ -18,12 +18,12 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/menu.h>
-#include <include/sdl.h>
+#include <include/menu.hpp>
+#include <include/sdl.hpp>
 #include <include/game_state.hpp>
-#include <include/controls.h>
-#include <include/variables.h>
-#include <include/utility.h>
+#include <include/controls.hpp>
+#include <include/variables.hpp>
+#include <include/utility.hpp>
 
 
 void

@@ -18,13 +18,13 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/render.h>
-#include <include/sdl.h>
+#include <include/render.hpp>
+#include <include/sdl.hpp>
 #include <include/game_state.hpp>
-#include <include/plane.h>
+#include <include/plane.hpp>
 #include <include/sizes.hpp>
 #include <include/textures.hpp>
-#include <include/variables.h>
+#include <include/variables.hpp>
 
 #include <string>
 

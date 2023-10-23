@@ -18,12 +18,12 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/bullet.h>
-#include <include/sdl.h>
+#include <include/bullet.hpp>
+#include <include/sdl.hpp>
 #include <include/time.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
-#include <include/plane.h>
+#include <include/plane.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>

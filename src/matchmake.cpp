@@ -20,8 +20,8 @@
 
 #include <include/matchmake.hpp>
 #include <include/network_state.hpp>
-#include <include/menu.h>
-#include <include/variables.h>
+#include <include/menu.hpp>
+#include <include/variables.hpp>
 
 #include <lib/picojson.h>
 

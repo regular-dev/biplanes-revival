@@ -33,7 +33,7 @@ target_sources(${TARGET} PRIVATE
   include/stats.hpp
   include/sounds.hpp
   include/textures.hpp
-  include/variables.h
+  include/variables.hpp
 
   lib/Net.h
 
@@ -42,16 +42,16 @@ target_sources(${TARGET} PRIVATE
 
 
   src/bullet.cpp
-  include/bullet.h
+  include/bullet.hpp
 
   src/cloud.cpp
-  include/cloud.h
+  include/cloud.hpp
 
   src/controls.cpp
-  include/controls.h
+  include/controls.hpp
 
   src/init_vars.cpp
-  include/init_vars.h
+  include/init_vars.hpp
 
   src/matchmake.cpp
   include/matchmake.hpp
@@ -63,7 +63,7 @@ target_sources(${TARGET} PRIVATE
   src/menu_mp.cpp
   src/menu_help.cpp
   src/menu_stats.cpp
-  include/menu.h
+  include/menu.hpp
 
   src/network.cpp
   include/network.hpp
@@ -71,13 +71,13 @@ target_sources(${TARGET} PRIVATE
   src/plane.cpp
   src/plane_input.cpp
   src/plane_pilot.cpp
-  include/plane.h
+  include/plane.hpp
 
   src/render.cpp
-  include/render.h
+  include/render.hpp
 
   src/sdl.cpp
-  include/sdl.h
+  include/sdl.hpp
 
   src/time.cpp
   include/time.hpp
@@ -86,10 +86,10 @@ target_sources(${TARGET} PRIVATE
   include/timer.hpp
 
   src/utility.cpp
-  include/utility.h
+  include/utility.hpp
 
   src/zeppelin.cpp
-  include/zeppelin.h
+  include/zeppelin.hpp
 )
 
 target_compile_definitions(${TARGET} PRIVATE

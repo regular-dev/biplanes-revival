@@ -18,16 +18,16 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/menu.h>
-#include <include/sdl.h>
+#include <include/menu.hpp>
+#include <include/sdl.hpp>
 #include <include/biplanes.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/network_state.hpp>
 #include <include/matchmake.hpp>
-#include <include/plane.h>
-#include <include/variables.h>
-#include <include/utility.h>
+#include <include/plane.hpp>
+#include <include/variables.hpp>
+#include <include/utility.hpp>
 
 
 void

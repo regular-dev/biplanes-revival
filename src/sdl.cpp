@@ -18,10 +18,10 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/sdl.h>
+#include <include/sdl.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
-#include <include/utility.h>
+#include <include/utility.hpp>
 
 
 int32_t SCREEN_HEIGHT {};

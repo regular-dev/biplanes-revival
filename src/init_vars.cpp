@@ -18,14 +18,14 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/init_vars.h>
-#include <include/sdl.h>
-#include <include/cloud.h>
-#include <include/plane.h>
+#include <include/init_vars.hpp>
+#include <include/sdl.hpp>
+#include <include/cloud.hpp>
+#include <include/plane.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
-#include <include/utility.h>
+#include <include/utility.hpp>
 
 
 void

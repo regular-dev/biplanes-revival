@@ -18,7 +18,7 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/plane.h>
+#include <include/plane.hpp>
 #include <include/enums.hpp>
 
 

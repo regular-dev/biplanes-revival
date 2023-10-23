@@ -19,13 +19,13 @@
 */
 
 #include <include/network.hpp>
-#include <include/plane.h>
-#include <include/controls.h>
+#include <include/plane.hpp>
+#include <include/controls.hpp>
 #include <include/game_state.hpp>
 #include <include/network_data.hpp>
 #include <include/network_state.hpp>
 #include <include/sizes.hpp>
-#include <include/variables.h>
+#include <include/variables.hpp>
 
 #include <lib/Net.h>
 

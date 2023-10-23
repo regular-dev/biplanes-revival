@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <include/platform.hpp>
-#include <include/utility.h>
+#include <include/utility.hpp>
 
 #if PLATFORM == PLATFORM_WINDOWS
     #include <winsock2.h>
