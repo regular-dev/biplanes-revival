@@ -590,8 +590,13 @@ Plane::FireUpdate()
 
   const double textureAngle =
     mType == PLANE_TYPE::RED
-    ? mDir + 180.0
+    ? mDir + 90.0
     : mDir - 90.0;
+
+  const auto textureFlip =
+    mType == PLANE_TYPE::BLUE
+    ? SDL_FLIP_NONE
+    : SDL_FLIP_HORIZONTAL;
 
   SDL_RenderCopyEx(
     gRenderer,
@@ -600,7 +605,7 @@ Plane::FireUpdate()
     &textureRect,
     textureAngle,
     nullptr,
-    SDL_FLIP_NONE );
+    textureFlip );
 }
 
 void
