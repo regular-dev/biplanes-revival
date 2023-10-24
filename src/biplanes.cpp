@@ -352,7 +352,8 @@ game_loop_sp()
   for ( auto& [planeType, plane] : planes )
     plane.Update();
 
-  bullets.UpdateBullets();
+  zeppelin.Update();
+  bullets.Update();
 
   game_draw();
 }
@@ -479,7 +480,8 @@ game_loop_mp()
     remotePlane.Update();
   }
 
-  bullets.UpdateBullets();
+  zeppelin.Update();
+  bullets.Update();
 
 
 //  SEND PACKET
@@ -510,7 +512,7 @@ game_draw()
 {
   draw_background();
 
-  zeppelin.Update();
+  zeppelin.Draw();
   bullets.Draw();
 
 

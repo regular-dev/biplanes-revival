@@ -34,14 +34,6 @@ Zeppelin::Zeppelin()
 void
 Zeppelin::Update()
 {
-  UpdateCoordinates();
-  Draw();
-  DrawScore();
-}
-
-void
-Zeppelin::UpdateCoordinates()
-{
   mX += sizes.zeppelin_speed * deltaTime;
 
   if ( mX <= sizes.screen_width + sizes.zeppelin_sizex / 2.0f )
@@ -82,11 +74,8 @@ Zeppelin::Draw()
     textures.texture_zeppelin,
     nullptr,
     &zeppelinRect );
-}
 
-void
-Zeppelin::DrawScore()
-{
+
   const auto& planeRed = planes.at(PLANE_TYPE::RED);
   const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
 

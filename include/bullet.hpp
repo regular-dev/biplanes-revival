@@ -84,7 +84,7 @@ public:
     const PLANE_TYPE );
 
   void Clear();
-  void UpdateBullets();
+  void Update();
   void Draw();
 
   Bullet GetClosestBullet(

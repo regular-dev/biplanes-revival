@@ -249,7 +249,7 @@ BulletSpawner::SpawnBullet(
 }
 
 void
-BulletSpawner::UpdateBullets()
+BulletSpawner::Update()
 {
   size_t i {};
 
