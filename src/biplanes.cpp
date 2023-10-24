@@ -379,14 +379,24 @@ game_loop_mp()
 
   connection->Update(deltaTime);
 
-  if (  connection->ConnectFailed() == true &&
-        network.nodeType == SRV_CLI::CLIENT )
-  {
-    connection->Stop();
-    menu.ReturnToMainMenu();
 
-    return;
+  if ( connection->ConnectHasErrors() == true )
+  {
+    if ( connection->ConnectFailed() == true )
+      menu.setMessage(MESSAGE_TYPE::CONNECTION_FAILED);
+
+    else if ( connection->ConnectTimedOut() == true )
+      menu.setMessage(MESSAGE_TYPE::CONNECTION_TIMED_OUT);
+
+    if ( network.nodeType == SRV_CLI::CLIENT )
+    {
+      connection->Stop();
+      menu.ReturnToMainMenu();
+
+      return;
+    }
   }
+
 
   if ( connection->IsConnected() == true )
   {

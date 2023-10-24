@@ -399,6 +399,16 @@ namespace net
       return state == ConnectFail;
     }
 
+    bool ConnectTimedOut() const
+    {
+      return state == ConnectTimeout;
+    }
+
+    bool ConnectHasErrors() const
+    {
+      return state == ConnectFail || state == ConnectTimeout;
+    }
+
     bool IsConnected() const
     {
       return state == Connected;
@@ -423,7 +433,6 @@ namespace net
         if ( state == Connecting )
         {
           log_message( "NETWORK: Connection failed!\n" );
-//          menu.setMessage( MESSAGE_TYPE::CONNECTION_FAILED );
           ClearData();
           state = ConnectFail;
           OnDisconnect();
@@ -431,10 +440,9 @@ namespace net
         else if ( state == Connected )
         {
           log_message( "NETWORK: Connection timed out!\n" );
-//          menu.setMessage( MESSAGE_TYPE::CONNECTION_TIMED_OUT );
           ClearData();
           if ( state == Connecting )
-            state = ConnectFail;
+            state = ConnectTimeout;
           OnDisconnect();
         }
       }
@@ -524,6 +532,7 @@ namespace net
       Listening,
       Connecting,
       ConnectFail,
+      ConnectTimeout,
       Connected
     };
 
