@@ -54,7 +54,10 @@ SDL_init()
 
 //  Set texture filtering to linear
   if ( SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "0" ) == false )
-    log_message( "\nWarning: Failed to enable linear texture filtering!\n" );
+  {
+    log_message( "\nWarning: Failed to enable nearest texture sampling! Graphics will be blurry.\n" );
+    show_warning( "SDL: Failed to enable nearest texture sampling!", "Graphics will be blurry" );
+  }
 
 
 //  Disable Always-on-Top

@@ -34,7 +34,6 @@ target_sources(${TARGET} PRIVATE
 
   include/fwd.hpp
   include/enums.hpp
-  include/platform.hpp
 
   include/game_state.hpp
   include/network_data.hpp
@@ -105,7 +104,19 @@ target_sources(${TARGET} PRIVATE
   include/ai_backend.hpp
 )
 
+
 add_subdirectory(lib/tiny-dnn)
+
+
+include(FetchContent)
+
+FetchContent_Declare(TimeUtils
+  GIT_REPOSITORY git@github.com:Casqade/TimeUtils
+  GIT_TAG        main
+  GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(TimeUtils)
+
 
 target_compile_definitions(${TARGET} PRIVATE
   BIPLANES_EXE_NAME="${TARGET}"
@@ -138,6 +149,7 @@ target_link_libraries(${TARGET} PRIVATE
   SDL2::Image
   SDL2::Mixer
   tiny_dnn
+  TimeUtils::TimeUtils
 )
 
 if (WIN32)

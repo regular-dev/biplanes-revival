@@ -19,60 +19,6 @@
 */
 
 #include <include/time.hpp>
-#include <include/platform.hpp>
-
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-  #include <time.h>
-  #include <cstdint>
-
-#elif PLATFORM == PLATFORM_WINDOWS
-  #include <windows.h>
-
-#endif
 
 
 double deltaTime {};
-
-
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-static double
-getCurrentTime()
-{
-//  POSIX implementation
-  timespec time;
-  clock_gettime( CLOCK_MONOTONIC, &time );
-  return static_cast <uint64_t> (time.tv_sec) * 1'000'000 + time.tv_nsec / 1000;
-}
-#endif
-
-double
-countDelta()
-{
-#if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-
-  static double StartingTime {};
-  static double EndingTime {};
-  static double Frequency {};
-
-  EndingTime = getCurrentTime() / 1'000'000.0;
-  deltaTime = EndingTime - StartingTime;
-  StartingTime = getCurrentTime() / 1'000'000.0;
-
-#elif PLATFORM == PLATFORM_WINDOWS
-
-  static LARGE_INTEGER StartingTime {};
-  static LARGE_INTEGER EndingTime {};
-  static LARGE_INTEGER Frequency {};
-
-  QueryPerformanceFrequency(&Frequency);
-  QueryPerformanceCounter(&EndingTime);
-
-  deltaTime = static_cast <double> (EndingTime.QuadPart - StartingTime.QuadPart)
-              / Frequency.QuadPart;
-
-  QueryPerformanceCounter(&StartingTime);
-
-#endif
-
-  return deltaTime;
-}

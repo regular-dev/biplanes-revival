@@ -114,6 +114,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR MINGW OR
         target_compile_definitions(${project_library_target_name} INTERFACE
           CNN_USE_SSE
         )
+        target_compile_options(${project_library_target_name} INTERFACE
+          -msse3
+        )
         set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -msse3")
     endif(USE_SSE AND COMPILER_HAS_SSE_FLAG)
     # set Advanced Vector Extensions (AVX)
@@ -121,12 +124,20 @@ if(CMAKE_COMPILER_IS_GNUCXX OR MINGW OR
         target_compile_definitions(${project_library_target_name} INTERFACE
           CNN_USE_AVX
         )
+        target_compile_options(${project_library_target_name} INTERFACE
+          -mavx
+        )
         set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -mavx")
     endif(USE_AVX AND COMPILER_HAS_AVX_FLAG)
     # set Advanced Vector Extensions 2 (AVX2)
     if(USE_AVX2 AND COMPILER_HAS_AVX2_FLAG)
         target_compile_definitions(${project_library_target_name} INTERFACE
           CNN_USE_AVX2
+        )
+        target_compile_options(${project_library_target_name} INTERFACE
+          -mavx2
+          -mfma
+          -march=core-avx2
         )
         set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -mavx2 -mfma -march=core-avx2")
     endif(USE_AVX2 AND COMPILER_HAS_AVX2_FLAG)
@@ -136,6 +147,21 @@ if(CMAKE_COMPILER_IS_GNUCXX OR MINGW OR
     set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -Wall -Wpedantic -Wno-narrowing -Wno-deprecated")
     set(EXTRA_C_FLAGS_RELEASE "${EXTRA_C_FLAGS_RELEASE} -O3")
     set(EXTRA_C_FLAGS_DEBUG   "${EXTRA_C_FLAGS_DEBUG} -g3 -pthread")
+
+    target_compile_options(${project_library_target_name} INTERFACE
+      -Wall
+      -Wpedantic
+      -Wno-narrowing
+      -Wno-deprecated
+    )
+
+    target_compile_options(${project_library_target_name} INTERFACE
+      "$<$<CONFIG:DEBUG>:SHELL:-g3 -pthread>"
+    )
+    target_compile_options(${project_library_target_name} INTERFACE
+      "$<$<CONFIG:RELEASE>:SHELL:-O3>"
+    )
+
 elseif(MSVC)
     if(USE_SSE)
         target_compile_definitions(${project_library_target_name} INTERFACE

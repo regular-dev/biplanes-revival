@@ -32,10 +32,7 @@ public:
   Zeppelin();
 
   void Update();
-  void UpdateCoordinates();
   void Draw();
-  void DrawScore();
-
   void Respawn();
 };
 
