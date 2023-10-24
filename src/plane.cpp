@@ -718,8 +718,13 @@ Plane::Hit(
   }
 
   Explode();
-  attacker.ScoreChange(1);
 
+
+  if ( mHasJumped == true )
+    return;
+
+
+  attacker.ScoreChange(1);
 
   if ( gameState().isRoundFinished == false )
   {
