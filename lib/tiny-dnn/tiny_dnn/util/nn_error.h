@@ -9,6 +9,7 @@
 
 #include <exception>
 #include <string>
+#include <iostream>
 #include "tiny_dnn/util/colored_print.h"
 
 namespace tiny_dnn {

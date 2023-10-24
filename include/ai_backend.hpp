@@ -20,9 +20,45 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+#include <memory>
+
+#include "tiny_dnn/util/util.h"
+
+namespace tiny_dnn {
+  class sequential;
+
+  template<typename T>
+  class network;
+
+  struct RMSprop;
+}
 
 class AI_Backend
 {
 public:
-  AI_Backend() = default;
+  using EvalInput = tiny_dnn::vec_t;
+  using InputBatch = std::vector< tiny_dnn::vec_t >;
+  using Label = tiny_dnn::label_t;
+  using Labels = std::vector< Label >;
+  using SeqNet = tiny_dnn::network< tiny_dnn::sequential >;
+  using Optimizer = tiny_dnn::RMSprop;
+
+  explicit AI_Backend();
+  explicit AI_Backend(const std::string &model_path);
+
+  void train(const InputBatch&, const Labels&,
+             unsigned int batch_size, unsigned int epochs);
+
+  Label predictLabel(const EvalInput&) const;
+  Labels predictBatchLabels(const InputBatch&) const;
+
+  void save_model(const std::string &path) const;
+
+protected:
+  std::shared_ptr< SeqNet > m_mdl;
+  std::shared_ptr< Optimizer > m_opt;
+
+  void init_net();
 };
