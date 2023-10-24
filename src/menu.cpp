@@ -150,8 +150,10 @@ Menu::isDefiningKey() const
 void
 Menu::DrawMenu()
 {
-  const auto& game = gameState();
+  AnimateButton();
 
+
+  const auto& game = gameState();
 
   if ( game.isPaused == true )
   {
@@ -166,6 +168,7 @@ Menu::DrawMenu()
   }
   else
     mConnectedMessageTimer.Update();
+
 
   switch (menu.mCurrentRoom)
   {
@@ -568,8 +571,6 @@ Menu::DrawMenu()
     default:
       break;
   }
-
-  AnimateButton();
 }
 
 void
