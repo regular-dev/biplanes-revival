@@ -211,7 +211,7 @@ struct m256_shift_left_impl {};
 
 template <unsigned int N>
 struct m256_shift_left_impl<N, Range<N == 0>> {
-  static __m256 doit(__m256i a) { return a; }
+  static __m256i doit(__m256i a) { return a; }
 };
 
 template <unsigned int N>
