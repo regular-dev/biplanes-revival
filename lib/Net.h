@@ -7,6 +7,26 @@
 #ifndef NET_H
 #define NET_H
 
+#define PLATFORM_WINDOWS  1
+#define PLATFORM_UNIX     2
+
+#if defined(_WIN32)
+
+  #define PLATFORM PLATFORM_WINDOWS
+  #include <winsock2.h>
+
+#elif defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
+
+  #define PLATFORM PLATFORM_UNIX
+
+  #include <fcntl.h>
+  #include <unistd.h>
+  #include <arpa/inet.h>
+
+#else
+  static_assert(false, "Net.h is incompatible with your system");
+
+#endif
 
 #include <cassert>
 #include <cstdint>
@@ -16,24 +36,7 @@
 #include <list>
 #include <vector>
 
-#include <include/platform.hpp>
 #include <include/utility.hpp>
-
-#if PLATFORM == PLATFORM_WINDOWS
-    #include <winsock2.h>
-
-#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-//  TODO: test includes
-//    #include <sys/socket.h>
-//    #include <netinet/in.h>
-    #include <fcntl.h>
-    #include <unistd.h>
-  #include <arpa/inet.h>
-//  #include <netdb.h>
-#else
-    #error unknown platform!
-
-#endif
 
 
 namespace net
@@ -124,11 +127,12 @@ namespace net
   inline bool InitializeSockets()
   {
     #if PLATFORM == PLATFORM_WINDOWS
-    WSADATA WsaData;
-    return WSAStartup( MAKEWORD( 2,2 ), &WsaData ) != 0;
+      WSADATA WsaData;
+      return WSAStartup( MAKEWORD( 2,2 ), &WsaData ) != 0;
 
-    #elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+    #else
       return false;
+
     #endif
   }
 
@@ -136,7 +140,7 @@ namespace net
   inline void ShutdownSockets()
   {
     #if PLATFORM == PLATFORM_WINDOWS
-    WSACleanup();
+      WSACleanup();
     #endif
   }
 
@@ -187,26 +191,22 @@ namespace net
 
       // set non-blocking io
 
-      #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-
-        int nonBlocking = 1;
-        if ( fcntl( socketHandle, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
-        {
-          log_message( "NETWORK: Failed to set Non-Blocking mode for a socket!\n" );
-          Close();
-          return false;
-        }
-      #elif PLATFORM == PLATFORM_WINDOWS
+      #if PLATFORM == PLATFORM_WINDOWS
 
         DWORD nonBlocking = 1;
+
         if ( ioctlsocket( socketHandle, FIONBIO, &nonBlocking ) != 0 )
+      #else
+
+        int nonBlocking = 1;
+
+        if ( fcntl( socketHandle, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
+      #endif
         {
           log_message( "NETWORK: Failed to set Non-Blocking mode for a socket!\n" );
           Close();
           return false;
         }
-
-      #endif
 
       return true;
     }
@@ -215,11 +215,14 @@ namespace net
     {
       if ( socketHandle != 0 )
       {
-        #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-        close( socketHandle );
-        #elif PLATFORM == PLATFORM_WINDOWS
-        closesocket( socketHandle );
+        #if PLATFORM == PLATFORM_WINDOWS
+          closesocket( socketHandle );
+
+        #else
+          close( socketHandle );
+
         #endif
+
         socketHandle = 0;
       }
     }
@@ -346,7 +349,7 @@ namespace net
           OnDisconnect();
         OnStop();
         #if PLATFORM == PLATFORM_WINDOWS
-          net::ShutdownSockets(); // todo: remove this line?
+          net::ShutdownSockets(); // TODO: remove this line?
         #endif
       }
     }

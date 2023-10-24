@@ -42,6 +42,9 @@
 
 #include <lib/Net.h>
 #include <lib/picojson.h>
+#include <TimeUtils/Duration.hpp>
+
+using TimeUtils::Duration;
 
 
 Packet localData {};
@@ -63,13 +66,9 @@ std::string MMAKE_PASSWORD {};
 const uint8_t DEFAULT_WIN_SCORE = 10;
 
 
-// Actually game ticks per second
-const uint32_t FRAMERATE {240};
-
-// packet send rate
-const static double TICK_RATE {64.0};
-const static double TICK_TIME {1.0 / TICK_RATE};
-double tickTime {};
+const static uint32_t TICK_RATE {240};
+const static uint32_t PACKET_RATE {64};
+static Duration packetSendTime {};
 
 const static int32_t ProtocolId {0x11223344};
 const static float ConnectionTimeout {10.0f};
@@ -145,21 +144,32 @@ main(
   sounds_load();
   init_sizes();
 
-  log_message( "\nLOG: Reached main menu loop!\n\n" );
 
-  Timer fpsTimer {1.0 / FRAMERATE};
+  const auto tickInterval = 1.0 / TICK_RATE;
+
+  auto timePrevious = TimeUtils::Now();
+  auto tickPrevious = timePrevious + tickInterval;
+
+  log_message( "\nLOG: Reached main menu loop!\n\n" );
 
   while ( gameState().isExiting == false )
   {
-    countDelta();
-    fpsTimer.Update();
+    TimeUtils::SleepUntil(tickPrevious + tickInterval);
 
-    if ( fpsTimer.isReady() == false )
-      SDL_Delay( fpsTimer.remainderTime() * 1000 );
-
-    fpsTimer.Start();
+    const auto currentTime = TimeUtils::Now();
+    deltaTime = static_cast <double> (currentTime - timePrevious);
+    timePrevious = currentTime;
 
     network.matchmaker->Update();
+
+    uint32_t ticks = 0;
+
+    for ( ; currentTime >= tickPrevious + tickInterval;
+            tickPrevious += tickInterval )
+      ++ticks;
+
+//    Fixed time step
+    deltaTime = ticks * tickInterval;
 
 //    TODO: test 'while'
     if ( SDL_PollEvent(&windowEvent) != 0 )
@@ -168,7 +178,13 @@ main(
       menu.UpdateControls();
     }
 
+    if ( ticks == 0 )
+      continue;
+
+
+//    TODO: split logic & rendering
     menu.DrawMenu();
+
     display_update();
   }
 
@@ -303,6 +319,7 @@ game_init_mp()
   network.isOpponentConnected = false;
 
   network.flowControl = new net::FlowControl();
+  packetSendTime = {};
   game_reset();
 
   log_message( "\nLOG: Multiplayer game initialized successfully!\n\n" );
@@ -334,19 +351,14 @@ game_loop_sp()
     processLocalControls(*playerPlane, controls_local);
   }
 
-  if ( tickTime >= TICK_TIME )
+//  TODO: skip if game is paused
+  for ( auto& [planeType, plane] : planes )
   {
-    tickTime -= TICK_TIME;
-
-    for ( auto& [planeType, plane] : planes )
+    if ( plane.isBot() == true )
     {
-      if ( plane.isBot() == true )
-      {
-//        TODO: train/process bot
-      }
+//      TODO: train/process bot
     }
   }
-  tickTime += deltaTime;
 
 
   for ( auto& [planeType, plane] : planes )
@@ -424,7 +436,7 @@ game_loop_mp()
   uint8_t packet[sizeof(Packet)] {};
 
 //  TODO: test 'while'
-  if ( connection->ReceivePacket( packet, sizeof(packet) ) > 0 )
+  while ( connection->ReceivePacket( packet, sizeof(packet) ) > 0 )
   {
     if (  network.connectionChanged == false &&
           network.isOpponentConnected == false )
@@ -450,6 +462,7 @@ game_loop_mp()
     network.connectionChanged = true;
     opponentData.disconnect = false;
   }
+
 
 //  INPUT
   if ( game.isPaused == false )
@@ -487,16 +500,20 @@ game_loop_mp()
 //  SEND PACKET
   packLocalData();
 
-  if ( tickTime >= TICK_TIME )
+  const Duration packetSendInterval = 1.0 / PACKET_RATE;
+
+  if ( packetSendTime >= packetSendInterval )
   {
-    tickTime -= TICK_TIME;
+    while ( packetSendTime >= packetSendInterval )
+      packetSendTime -= packetSendInterval;
 
     memcpy( packet, &localData, sizeof(packet) );
 
     connection->SendPacket( packet, sizeof(packet) );
     eventsFinishIteration();
   }
-  tickTime += deltaTime;
+
+  packetSendTime += deltaTime;
 
 
   if ( network.sendCoordsTimer.isReady() == true )
