@@ -192,7 +192,7 @@ public:
     int8_t mFallFrame {};
     Timer mFallAnim {0.0f};
 
-    int8_t mChuteState {};
+    CHUTE_STATE mChuteState {CHUTE_NONE};
     Timer mChuteAnim {0.0f};
 
     uint8_t mRunFrame {};

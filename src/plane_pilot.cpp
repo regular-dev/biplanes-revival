@@ -36,8 +36,6 @@
 
 Plane::Pilot::Pilot()
 {
-  mChuteState = CHUTE_STATE::CHUTE_NONE;
-
   HitboxUpdate();
 }
 
@@ -73,7 +71,7 @@ Plane::Pilot::Move(
 
   if ( mIsChuteOpen == true )
   {
-    mChuteState = inputDir;
+    mChuteState = static_cast <CHUTE_STATE> (inputDir);
     mX += moveDir * sizes.pilot_chute_speed * deltaTime;
 
     return;
