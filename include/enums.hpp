@@ -62,7 +62,7 @@ enum PLANE_PITCH : uint8_t
   PITCH_RIGHT,
 };
 
-enum CHUTE_STATE
+enum CHUTE_STATE : uint8_t
 {
   CHUTE_IDLE,
   CHUTE_LEFT,
