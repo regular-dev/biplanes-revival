@@ -73,6 +73,9 @@ SDL_init()
   sizes.screen_height = SCREEN_HEIGHT * 0.75f;
   sizes.screen_width = sizes.screen_height * 1.23f;
 
+  sizes.screen_height_new = sizes.screen_height;
+  sizes.screen_width_new = sizes.screen_width;
+
 
 //  Create window
   log_message( "SDL Startup: Creating SDL window..." );
