@@ -43,6 +43,7 @@ struct Sizes
 
 
 //  PLANE
+  const uint8_t plane_hp_max {2};
   float ground_y_collision {};
   uint16_t plane_sizex {};
   uint16_t plane_sizey {};

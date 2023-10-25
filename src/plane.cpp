@@ -740,8 +740,18 @@ void
 Plane::Explode()
 {
   playSound(sounds.expl, -1, false);
+
   mSpeed = 0.0f;
+  mDir = 0.0f;
+  mHp = 0;
+
   mIsDead = true;
+  mIsOnGround = false;
+  mIsTakingOff = false;
+
+  mProtection.Stop();
+  mFireCooldown.Stop();
+  mPitchCooldown.Stop();
   mDeadCooldown.Start();
 }
 
@@ -772,7 +782,7 @@ void
 Plane::Respawn()
 {
   mIsDead = false;
-  mHp = 2;
+  mHp = sizes.plane_hp_max;
   mIsOnGround = true;
   mIsTakingOff = false;
   mSpeed = 0.0f;
