@@ -60,6 +60,8 @@ Menu::UpdateControls()
 
   else
   {
+    auto& game = gameState();
+
     if ( mButtonWasPressed == false )
     {
       if ( keyboardState[SDL_SCANCODE_DOWN] == 1 )
@@ -83,14 +85,12 @@ Menu::UpdateControls()
         setMessage(MESSAGE_TYPE::NONE);
         ChangeRoom(ROOMS::MENU_RECENT_STATS);
 
-        auto& stats = gameState().stats;
+        auto& stats = game.stats;
         calcDerivedStats(stats.recent[PLANE_TYPE::RED]);
         calcDerivedStats(stats.recent[PLANE_TYPE::BLUE]);
         calcDerivedStats(stats.total);
       }
     }
-
-    auto& game = gameState();
 
     if ( windowEvent.type == SDL_QUIT && game.isPaused == false )
       game.isExiting = true;

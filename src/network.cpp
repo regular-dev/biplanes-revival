@@ -35,8 +35,8 @@
 static std::deque <unsigned char> eventsLocal( 32, 'n' );
 static bool eventsIterationFinished {true};
 
-static uint8_t eventCounterLoc {};
-static uint8_t eventCounterOpp {};
+static uint8_t eventCounterLocal {};
+static uint8_t eventCounterRemote {};
 
 static bool sentGameParams {};
 
@@ -79,11 +79,11 @@ eventPush(
   if ( eventsIterationFinished == true )
   {
     eventsLocal.pop_front();
-    eventsLocal.push_back(eventCounterLoc);
+    eventsLocal.push_back(eventCounterLocal);
     eventsIterationFinished = false;
 
-    if ( ++eventCounterLoc > 63 )
-      eventCounterLoc = 0;
+    if ( ++eventCounterLocal >= 64 )
+      eventCounterLocal = 0;
   }
 
   eventsLocal.pop_front();
@@ -101,8 +101,8 @@ eventsPack()
 void
 eventsReset()
 {
-  eventCounterLoc = 0;
-  eventCounterOpp = 0;
+  eventCounterLocal = 0;
+  eventCounterRemote = 0;
   eventsIterationFinished = true;
   sentGameParams = false;
 
@@ -195,7 +195,7 @@ processOpponentData()
     {
       if ( eventNewIteration == true )
       {
-        if ( opponentData.events[i] == eventCounterOpp )
+        if ( opponentData.events[i] == eventCounterRemote )
           eventNewIteration = false;
 
         continue;
@@ -278,20 +278,16 @@ processOpponentData()
 
         default:
         {
-          if ( eventCounterOpp < 63 )
-            ++eventCounterOpp;
-          else
-            eventCounterOpp = 0;
+          if ( ++eventCounterRemote >= 64 )
+            eventCounterRemote = 0;
 
           break;
         }
       }
     }
 
-    if ( eventCounterOpp < 63 )
-      ++eventCounterOpp;
-    else
-      eventCounterOpp = 0;
+    if ( ++eventCounterRemote >= 64 )
+      eventCounterRemote = 0;
   }
 
   opponentDataPrev = opponentData;
