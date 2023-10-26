@@ -20,68 +20,98 @@
 
 #pragma once
 
-#include <include/fwd.hpp>
-#include <include/enums.hpp>
 #include <include/timer.hpp>
 
 #include <vector>
+#include <cstdint>
 
 
-class Bullet
+class Effect
 {
+protected:
   float mX {};
   float mY {};
-  float mDir {};
 
-  bool mIsDead {false};
-  PLANE_TYPE mFiredBy {};
+  Timer mAnim {0.0};
+  uint8_t mFrame {};
+  uint8_t mFrameCount {};
 
 
 public:
-  Bullet(
-    const float planeX,
-    const float planeY,
-    const float planeDir,
-    const PLANE_TYPE );
+  Effect(
+    const float x,
+    const float y,
+    const double frameTime,
+    const uint8_t frameCount );
+
+
+  virtual ~Effect() = default;
 
 
   void Update();
   void Draw() const;
 
-  void Destroy();
+  bool hasFinished() const;
 
-  bool isDead() const;
-  PLANE_TYPE firedBy() const;
 
-  float x() const;
-  float y() const;
-  float dir() const;
+protected:
+  virtual void DrawImpl() const = 0;
 };
 
 
-class BulletSpawner
+class Effects
 {
-  std::vector <Bullet> mInstances {};
+  std::vector <Effect*> mEffects {};
 
 
 public:
-  BulletSpawner() = default;
+  Effects() = default;
+  ~Effects();
 
-
-  void SpawnBullet(
-    const float x,
-    const float y,
-    const float dir,
-    const PLANE_TYPE );
-
+  void Spawn( Effect* );
   void Clear();
+
   void Update();
   void Draw() const;
-
-  Bullet GetClosestBullet(
-    const float x,
-    const float y,
-    const PLANE_TYPE ) const;
 };
 
-extern class BulletSpawner bullets;
+extern Effects effects;
+
+
+class SmokePuff : public Effect
+{
+public:
+  SmokePuff(
+    const float x,
+    const float y );
+
+
+protected:
+  void DrawImpl() const override;
+};
+
+
+class Explosion : public Effect
+{
+public:
+  Explosion(
+    const float x,
+    const float y );
+
+
+protected:
+  void DrawImpl() const override;
+};
+
+
+class BulletImpact : public Effect
+{
+public:
+  BulletImpact(
+    const float x,
+    const float y );
+
+
+protected:
+  void DrawImpl() const override;
+};

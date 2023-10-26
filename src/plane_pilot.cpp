@@ -54,11 +54,130 @@ Plane::Pilot::Update()
   HitboxUpdate();
   ChuteHitboxUpdate();
   DeathUpdate();
+}
 
-  mFallAnim.Update();
-  mChuteAnim.Update();
-  mRunAnim.Update();
-  mAngelAnim.Update();
+void
+Plane::Pilot::Draw() const
+{
+  if ( plane->hasJumped() == false )
+    return;
+
+
+  if ( mIsDead == true )
+  {
+    const SDL_Rect angelRect
+    {
+      mX - sizes.angel_sizex / 2.0f,
+      mY - sizes.angel_sizey / 2.0f,
+      sizes.angel_sizex,
+      sizes.angel_sizey,
+    };
+
+    SDL_RenderCopy(
+      gRenderer,
+      textures.anim_pilot_angel,
+      &textures.anim_pilot_angel_rect[mAngelFrame],
+      &angelRect );
+
+    return;
+  }
+
+
+  if ( mIsChuteOpen == true )
+  {
+    const SDL_Rect chuteRect
+    {
+      mX - sizes.chute_sizex / 2.0f,
+      mY - sizes.chute_sizey * 1.375f,
+      sizes.chute_sizex,
+      sizes.chute_sizey,
+    };
+
+    SDL_RenderCopy(
+      gRenderer,
+      textures.anim_chute,
+      &textures.anim_chute_rect[mChuteState],
+      &chuteRect );
+  }
+
+
+  if ( mIsRunning == true )
+  {
+    auto* const pilotTexture =
+      plane->mType == PLANE_TYPE::RED
+      ? textures.anim_pilot_run_r
+      : textures.anim_pilot_run_b;
+
+    const SDL_Rect pilotRect
+    {
+      mX - sizes.pilot_sizex / 2.0f,
+      mY - sizes.pilot_sizey / 2.0f,
+      sizes.pilot_sizex,
+      sizes.pilot_sizey,
+    };
+
+    if ( mDir == 270 )
+    {
+      SDL_RenderCopy(
+        gRenderer,
+        pilotTexture,
+        &textures.anim_pilot_run_rect[mRunFrame],
+        &pilotRect );
+    }
+    else
+    {
+      SDL_RenderCopyEx(
+        gRenderer,
+        pilotTexture,
+        &textures.anim_pilot_run_rect[mRunFrame],
+        &pilotRect,
+        0.0,
+        nullptr,
+        SDL_FLIP_HORIZONTAL );
+    }
+  }
+  else
+  {
+    auto* const pilotTexture =
+      plane->mType == PLANE_TYPE::RED
+      ? textures.anim_pilot_fall_r
+      : textures.anim_pilot_fall_b;
+
+    const SDL_Rect pilotRect
+    {
+      mX - sizes.pilot_sizex / 2.0f,
+      mY - sizes.pilot_sizey / 2.0f,
+      sizes.pilot_sizex,
+      sizes.pilot_sizey,
+    };
+
+    SDL_RenderCopy(
+      gRenderer,
+      pilotTexture,
+      &textures.anim_pilot_fall_rect[mFallFrame],
+      &pilotRect );
+  }
+
+
+  if ( gameState().debug.collisions == true )
+  {
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &mChuteHitbox );
+
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &mHitbox );
+  }
+
+  if ( gameState().debug.aiInputs == true )
+  {
+    SDL_Point dot = getClosestCollision();
+    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
+
+    SDL_RenderDrawLine(
+      gRenderer,
+      mX, mY,
+      dot.x, dot.y );
+  }
 }
 
 void
@@ -293,53 +412,53 @@ Plane::Pilot::DeathUpdate()
   if ( mAngelAnim.isReady() == false )
     return;
 
+
   mAngelAnim.Start();
 
-  if ( mAngelFrame == 3 )
+  if ( mAngelFrame == sizes.angel_frame_count - 1 )
   {
-    if ( plane->mIsLocal == false )
-      return;
+    if ( plane->mIsLocal == true )
+    {
+      plane->Respawn();
+      eventPush(EVENTS::PLANE_RESPAWN);
+    }
 
-    plane->Respawn();
+    return;
+  }
 
-    eventPush(EVENTS::PLANE_RESPAWN);
+
+  ++mAngelFrame;
+
+  if ( mAngelFrame != sizes.angel_frame_count - 1 )
+    return;
+
+
+  if ( mAngelLoop < sizes.angel_loop_count )
+  {
+    ++mAngelLoop;
+    mAngelFrame = 0;
   }
   else
-    ++mAngelFrame;
-
-  if ( mAngelLoop < 6 && mAngelFrame > 2 )
   {
-    mAngelFrame = 0;
-    ++mAngelLoop;
+//    TODO: if frame == 2 -> set frame to frame count
   }
-  else if ( mAngelLoop == 6 && mAngelFrame == 2 )
-    mAngelFrame = 3;
 }
 
 void
 Plane::Pilot::AnimationsUpdate()
 {
   if ( mIsDead == true )
-    return DeathAnimUpdate();
+    return mAngelAnim.Update();
 
 
   if ( mIsRunning == true )
-    RunAnimUpdate();
+    return mRunAnim.Update();
 
+
+  if ( mIsChuteOpen == true )
+    ChuteAnimUpdate();
   else
-  {
-    if ( mIsChuteOpen == true )
-      ChuteAnimUpdate();
-    else
-      FallAnimUpdate();
-  }
-
-
-  if ( gameState().debug.collisions == true )
-  {
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &mHitbox );
-  }
+    FallAnimUpdate();
 }
 
 void
@@ -367,31 +486,13 @@ Plane::Pilot::AnimationsReset()
 void
 Plane::Pilot::FallAnimUpdate()
 {
+  mFallAnim.Update();
+
   if ( mFallAnim.isReady() == true )
   {
     mFallAnim.Start();
     mFallFrame = !mFallFrame;
   }
-
-
-  auto* const pilotTexture =
-    plane->mType == PLANE_TYPE::RED
-    ? textures.anim_pilot_fall_r
-    : textures.anim_pilot_fall_b;
-
-  const SDL_Rect pilotRect
-  {
-    mX - sizes.pilot_sizex / 2.0f,
-    mY - sizes.pilot_sizey / 2.0f,
-    sizes.pilot_sizex,
-    sizes.pilot_sizey,
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    pilotTexture,
-    &textures.anim_pilot_fall_rect[mFallFrame],
-    &pilotRect );
 }
 
 void
@@ -401,108 +502,13 @@ Plane::Pilot::ChuteAnimUpdate()
     return;
 
 
-  const SDL_Rect chuteRect
-  {
-    mX - sizes.chute_sizex / 2.0f,
-    mY - sizes.chute_sizey * 1.375f,
-    sizes.chute_sizex,
-    sizes.chute_sizey,
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.anim_chute,
-    &textures.anim_chute_rect[mChuteState],
-    &chuteRect );
-
+  mChuteAnim.Update();
 
   if ( mChuteAnim.isReady() == true )
   {
     mChuteAnim.Start();
     mFallFrame = !mFallFrame;
   }
-
-
-  auto* const pilotTexture =
-    plane->mType == PLANE_TYPE::RED
-    ? textures.anim_pilot_fall_r
-    : textures.anim_pilot_fall_b;
-
-  const SDL_Rect pilotRect
-  {
-    mX - sizes.pilot_sizex / 2.0f,
-    mY - sizes.pilot_sizey / 2.0f,
-    sizes.pilot_sizex,
-    sizes.pilot_sizey,
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    pilotTexture,
-    &textures.anim_pilot_fall_rect[mFallFrame],
-    &pilotRect );
-
-
-  if ( gameState().debug.collisions == true )
-  {
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &mChuteHitbox );
-  }
-}
-
-void
-Plane::Pilot::RunAnimUpdate()
-{
-  const SDL_Rect pilotRect
-  {
-    mX - sizes.pilot_sizex / 2.0f,
-    mY - sizes.pilot_sizey / 2.0f,
-    sizes.pilot_sizex,
-    sizes.pilot_sizey,
-  };
-
-  auto* const pilotTexture =
-    plane->mType == PLANE_TYPE::RED
-    ? textures.anim_pilot_run_r
-    : textures.anim_pilot_run_b;
-
-  if ( mDir == 270 )
-  {
-    SDL_RenderCopy(
-      gRenderer,
-      pilotTexture,
-      &textures.anim_pilot_run_rect[mRunFrame],
-      &pilotRect );
-
-    return;
-  }
-
-  SDL_RenderCopyEx(
-    gRenderer,
-    pilotTexture,
-    &textures.anim_pilot_run_rect[mRunFrame],
-    &pilotRect,
-    0.0,
-    nullptr,
-    SDL_FLIP_HORIZONTAL );
-}
-
-void
-Plane::Pilot::DeathAnimUpdate()
-{
-  const SDL_Rect angelRect
-  {
-    mX - sizes.angel_sizex / 2.0f,
-    mY - sizes.angel_sizey / 2.0f,
-    sizes.angel_sizex,
-    sizes.angel_sizey,
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.anim_pilot_angel,
-    &textures.anim_pilot_angel_rect[mAngelFrame],
-    &angelRect );
 }
 
 void
@@ -587,6 +593,7 @@ Plane::Pilot::ChuteHit(
   playSound(sounds.hitChute, -1, false);
   mChuteState = CHUTE_STATE::CHUTE_DESTROYED;
   mIsChuteOpen = false;
+  mFallAnim.Stop();
 
 
   if ( gameState().isRoundFinished == false )
@@ -728,4 +735,17 @@ Plane::Pilot::isHit(
   const SDL_Point hitPoint {x, y};
 
   return SDL_PointInRect(&hitPoint, &mHitbox);
+}
+
+SDL_Point
+Plane::Pilot::getClosestCollision() const
+{
+//  Distance to barn rescue X points
+  return
+  {
+    std::max( (float) sizes.barn_x_pilot_left_collision,
+              std::min( mX, (float) sizes.barn_x_pilot_right_collision ) ),
+    std::max( sizes.ground_y_pilot_collision,
+              std::min( mY, sizes.ground_y_pilot_collision ) ),
+  };
 }

@@ -27,6 +27,7 @@
 #include <include/menu.hpp>
 #include <include/network.hpp>
 #include <include/network_data.hpp>
+#include <include/effects.hpp>
 #include <include/sizes.hpp>
 #include <include/stats.hpp>
 #include <include/sounds.hpp>
@@ -71,10 +72,114 @@ Plane::Update()
   mDeadCooldown.Update();
   mProtection.Update();
 
-  mSmokeAnim.Update();
-  mSmokePeriod.Update();
-  mFireAnim.Update();
-  mExplosionAnim.Update();
+  AnimationsUpdate();
+}
+
+void
+Plane::Draw() const
+{
+  if ( mIsDead == true )
+    return;
+
+
+  const SDL_Rect planeRect
+  {
+    mX - sizes.plane_sizex / 2.0f,
+    mY - sizes.plane_sizey / 2.0f,
+    sizes.plane_sizex,
+    sizes.plane_sizey,
+  };
+
+  auto* planeTexture {textures.texture_biplane_b};
+  double textureAngle {mDir - 90.0};
+
+  if ( mType == PLANE_TYPE::RED )
+  {
+    planeTexture = textures.texture_biplane_r;
+    textureAngle = mDir + 90.0;
+  }
+
+  if ( mProtection.isReady() == false )
+    SDL_SetTextureAlphaMod( planeTexture, 127 );
+
+  SDL_RenderCopyEx(
+    gRenderer,
+    planeTexture,
+    nullptr,
+    &planeRect,
+    textureAngle,
+    nullptr,
+    SDL_FLIP_NONE );
+
+  SDL_SetTextureAlphaMod( planeTexture, 255 );
+
+
+  DrawFire();
+
+
+  if ( gameState().debug.collisions == true )
+  {
+    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+    SDL_RenderDrawRect( gRenderer, &mHitbox );
+
+    const SDL_Rect planeCenter
+    {
+      mX - sizes.plane_sizex * 0.05f,
+      mY - sizes.plane_sizey * 0.05f,
+      sizes.plane_sizex * 0.1f,
+      sizes.plane_sizey * 0.1f,
+    };
+
+    SDL_RenderDrawRect( gRenderer, &planeCenter );
+  }
+
+
+  if ( mHasJumped == false && gameState().debug.aiInputs == true )
+  {
+    SDL_Point dot = getClosestCollision();
+    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
+
+    if ( mHasJumped == false )
+      SDL_RenderDrawLine(
+        gRenderer,
+        mX, mY,
+        dot.x, dot.y );
+  }
+}
+
+void
+Plane::DrawFire() const
+{
+  if ( mHp > 0 )
+    return;
+
+
+  const SDL_Rect textureRect
+  {
+    mX - sizes.smk_sizex / 2.0f,
+    mY - sizes.smk_sizey / 2.0f,
+    sizes.smk_sizex,
+    sizes.smk_sizey,
+  };
+
+  const double textureAngle =
+    mType == PLANE_TYPE::RED
+    ? mDir + 90.0
+    : mDir - 90.0;
+
+  const auto textureFlip =
+    mType == PLANE_TYPE::BLUE
+    ? SDL_FLIP_NONE
+    : SDL_FLIP_HORIZONTAL;
+
+  SDL_RenderCopyEx(
+    gRenderer,
+    textures.anim_fire,
+    &textures.anim_fire_rect[mFireFrame],
+    &textureRect,
+    textureAngle,
+    nullptr,
+    textureFlip );
 }
 
 void
@@ -89,7 +194,7 @@ Plane::Accelerate()
     if ( mIsTakingOff == false )
       TakeOffStart();
 
-    mSpeed += sizes.plane_incr_spd * 0.85f * deltaTime;
+    mSpeed += sizes.plane_incr_speed * 0.85f * deltaTime;
 
     return;
   }
@@ -98,13 +203,13 @@ Plane::Accelerate()
   if ( mDir != 0.0f )
   {
     if ( mDir == 22.5f || mDir == 337.5f )
-      mSpeed += sizes.plane_incr_spd * 0.25f * deltaTime;
+      mSpeed += sizes.plane_incr_speed * 0.25f * deltaTime;
 
     else if ( mDir == 45.0f || mDir == 315.0f )
-      mSpeed += sizes.plane_incr_spd * 0.5f * deltaTime;
+      mSpeed += sizes.plane_incr_speed * 0.5f * deltaTime;
 
     else
-      mSpeed += sizes.plane_incr_spd * 0.75f * deltaTime;
+      mSpeed += sizes.plane_incr_speed * 0.75f * deltaTime;
 
     if ( mSpeed > mMaxSpeedVar )
       mSpeed = mMaxSpeedVar;
@@ -120,12 +225,12 @@ Plane::Decelerate()
 
   if ( mIsTakingOff == true )
   {
-    mSpeed -= sizes.plane_incr_spd * 0.75f * deltaTime;
+    mSpeed -= sizes.plane_incr_speed * 0.75f * deltaTime;
     return;
   }
 
 
-  mSpeed -= sizes.plane_incr_spd * 0.5f * deltaTime;
+  mSpeed -= sizes.plane_incr_speed * 0.5f * deltaTime;
 
 
   if ( mSpeed < 0.0f )
@@ -176,7 +281,6 @@ Plane::Shoot()
         mIsOnGround == true ||
         mProtection.isReady() == false )
     return;
-
 
   if (  mIsLocal == true &&
         mFireCooldown.isReady() == false )
@@ -234,22 +338,22 @@ Plane::SpeedUpdate()
   {
     if ( mDir == 0 )                          // 90 climb
     {
-      mSpeed -= sizes.plane_incr_spd * 0.225f * deltaTime;
+      mSpeed -= sizes.plane_incr_speed * 0.225f * deltaTime;
       mMaxSpeedVar = mSpeed;
     }
     else if ( mDir <= 25 || mDir >= 330 )     // 75 climb
     {
-      mSpeed -= sizes.plane_incr_spd * 0.100f * deltaTime;
+      mSpeed -= sizes.plane_incr_speed * 0.100f * deltaTime;
       mMaxSpeedVar = mSpeed;
     }
     else if ( mDir <= 50 || mDir >= 310 )     // 45 climb
     {
-      mSpeed -= sizes.plane_incr_spd * 0.065f * deltaTime;
+      mSpeed -= sizes.plane_incr_speed * 0.065f * deltaTime;
       mMaxSpeedVar = mSpeed;
     }
     else                                      // 30 climb
     {
-      mSpeed -= sizes.plane_incr_spd * 0.020f * deltaTime;
+      mSpeed -= sizes.plane_incr_speed * 0.020f * deltaTime;
       mMaxSpeedVar = mSpeed;
     }
 
@@ -267,7 +371,7 @@ Plane::SpeedUpdate()
   {
     if ( mSpeed < sizes.plane_max_speed_acc )
     {
-      mSpeed += sizes.plane_incr_spd * 0.2 * deltaTime;
+      mSpeed += sizes.plane_incr_speed * 0.2 * deltaTime;
 
       if ( mSpeed > mMaxSpeedVar )
       {
@@ -376,7 +480,7 @@ Plane::AbandonedUpdate()
 
 
   if ( mSpeed > sizes.plane_max_speed_def / 2.0f )
-    mSpeed -= sizes.plane_incr_spd * 0.2 * deltaTime;
+    mSpeed -= sizes.plane_incr_speed * 0.2 * deltaTime;
 
 
   if ( mPitchCooldown.isReady() == false )
@@ -392,107 +496,14 @@ Plane::AbandonedUpdate()
 }
 
 void
-Plane::AnimationsUpdate()
-{
-  if ( mIsDead == false )
-  {
-    const SDL_Rect planeRect
-    {
-      mX - sizes.plane_sizex / 2.0f,
-      mY - sizes.plane_sizey / 2.0f,
-      sizes.plane_sizex,
-      sizes.plane_sizey,
-    };
-
-    auto* planeTexture {textures.texture_biplane_b};
-    double textureAngle {mDir - 90.0};
-
-    if ( mType == PLANE_TYPE::RED )
-    {
-      planeTexture = textures.texture_biplane_r;
-      textureAngle = mDir + 90.0;
-    }
-
-    if ( mProtection.isReady() == false )
-      SDL_SetTextureAlphaMod( planeTexture, 127 );
-
-    SDL_RenderCopyEx(
-      gRenderer,
-      planeTexture,
-      nullptr,
-      &planeRect,
-      textureAngle,
-      nullptr,
-      SDL_FLIP_NONE );
-
-    SDL_SetTextureAlphaMod( planeTexture, 255 );
-
-    if ( gameState().debug.collisions == true )
-    {
-      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-      SDL_RenderDrawRect( gRenderer, &mHitbox );
-
-      const SDL_Rect planeCenter
-      {
-        mX - sizes.plane_sizex * 0.05f,
-        mY - sizes.plane_sizey * 0.05f,
-        sizes.plane_sizex * 0.1f,
-        sizes.plane_sizey * 0.1f,
-      };
-
-      SDL_RenderDrawRect( gRenderer, &planeCenter );
-    }
-  }
-
-  if ( mHasJumped == true )
-    pilot.AnimationsUpdate();
-
-  if ( mIsDead == false )
-  {
-    SmokeUpdate();
-    FireUpdate();
-  }
-
-  ExplosionUpdate();
-
-  if ( gameState().debug.aiInputs == true )
-  {
-    SDL_Point dot = getClosestCollision();
-    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
-
-    if ( mHasJumped == false )
-      SDL_RenderDrawLine(
-        gRenderer,
-        mX, mY,
-        dot.x, dot.y );
-    else
-      SDL_RenderDrawLine(
-        gRenderer,
-        pilot.mX, pilot.mY,
-        dot.x, dot.y );
-  }
-}
-
-void
 Plane::AnimationsReset()
 {
-//  FRAME APPEARANCE ORDER: { 4, 3, 2, 1, 5 }
-  mSmokeFrame =
-  {
-    -3, -2, -1, 0, -4,
-  };
-
-  mSmokeDestRect = {};
-
+  mSmokeFrame = 0;
   mSmokeAnim.Stop();
   mSmokePeriod.Stop();
-  mSmokeRect = 4;
 
   mFireAnim.Stop();
   mFireFrame = 0;
-
-  mExplosionAnim.Stop();
-  mExplosionFrame = 0;
 
   mFireCooldown.SetNewTimeout( sizes.plane_fire_cooldown_time );
   mPitchCooldown.SetNewTimeout( sizes.plane_pitch_cooldown_time );
@@ -503,9 +514,23 @@ Plane::AnimationsReset()
   mSmokeAnim.SetNewTimeout( sizes.smk_frame_time );
   mSmokePeriod.SetNewTimeout( sizes.smk_anim_period );
   mFireAnim.SetNewTimeout( sizes.fire_frame_time );
-  mExplosionAnim.SetNewTimeout( sizes.expl_frame_time );
 
   pilot.AnimationsReset();
+}
+
+void
+Plane::AnimationsUpdate()
+{
+  if ( mHasJumped == true )
+    pilot.AnimationsUpdate();
+
+
+  if ( mIsDead == true )
+    return;
+
+
+  SmokeUpdate();
+  FireUpdate();
 }
 
 void
@@ -515,52 +540,26 @@ Plane::SmokeUpdate()
     return;
 
 
-  if ( mSmokeAnim.isReady() == true )
+  mSmokeAnim.Update();
+  mSmokePeriod.Update();
+
+  if ( mSmokePeriod.isReady() == true )
   {
-    mSmokeAnim.Start();
-
-    for ( size_t i = 0; i < mSmokeFrame.size(); ++i )
-    {
-      ++mSmokeFrame[i];
-
-      if ( mSmokeFrame[i] > mSmokeFrame.size() )
-        mSmokeFrame[i] = mSmokeFrame.size();
-    }
-
-    if ( mSmokePeriod.isReady() == true )
-    {
-      mSmokePeriod.Start();
-
-      mSmokeFrame =
-      {
-        -3, -2, -1, 0, -4,
-      };
-    }
-
-    if ( mSmokeRect == 0 )
-      mSmokeRect = 4;
-    else
-      --mSmokeRect;
-
-    mSmokeDestRect[mSmokeRect] =
-    {
-      mX - sizes.smk_sizex / 2.0f,
-      mY - sizes.smk_sizey / 2.0f,
-      sizes.smk_sizex,
-      sizes.smk_sizey,
-    };
+    mSmokePeriod.Start();
+    mSmokeAnim.Stop();
+    mSmokeFrame = 0;
   }
 
-  for ( size_t i = 0; i < mSmokeFrame.size(); ++i )
-  {
-    if ( mSmokeFrame[i] < 0 )
-      continue;
 
-    SDL_RenderCopy(
-      gRenderer,
-      textures.anim_smk,
-      &textures.anim_smk_rect[ mSmokeFrame[i] ],
-      &mSmokeDestRect[i] );
+  if ( mSmokeAnim.isReady() == false )
+    return;
+
+
+  if ( mSmokeFrame < sizes.smk_frame_count )
+  {
+    effects.Spawn(new SmokePuff{mX, mY});
+    mSmokeAnim.Start();
+    ++mSmokeFrame;
   }
 }
 
@@ -571,6 +570,8 @@ Plane::FireUpdate()
     return;
 
 
+  mFireAnim.Update();
+
   if ( mFireAnim.isReady() == true )
   {
     mFireAnim.Start();
@@ -578,64 +579,6 @@ Plane::FireUpdate()
 
     if ( mFireFrame > 2 )
       mFireFrame = 0;
-  }
-
-  const SDL_Rect textureRect
-  {
-    mX - sizes.smk_sizex / 2.0f,
-    mY - sizes.smk_sizey / 2.0f,
-    sizes.smk_sizex,
-    sizes.smk_sizey,
-  };
-
-  const double textureAngle =
-    mType == PLANE_TYPE::RED
-    ? mDir + 90.0
-    : mDir - 90.0;
-
-  const auto textureFlip =
-    mType == PLANE_TYPE::BLUE
-    ? SDL_FLIP_NONE
-    : SDL_FLIP_HORIZONTAL;
-
-  SDL_RenderCopyEx(
-    gRenderer,
-    textures.anim_fire,
-    &textures.anim_fire_rect[mFireFrame],
-    &textureRect,
-    textureAngle,
-    nullptr,
-    textureFlip );
-}
-
-void
-Plane::ExplosionUpdate()
-{
-  if ( mIsDead == false )
-    return;
-
-  if ( mExplosionFrame >= 7 )
-    return;
-
-
-  const SDL_Rect explosionRect
-  {
-    mX - sizes.expl_sizex / 2.0f,
-    mY - sizes.expl_sizey / 2.0f,
-    sizes.expl_sizex,
-    sizes.expl_sizey,
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.anim_expl,
-    &textures.anim_expl_rect[mExplosionFrame],
-    &explosionRect );
-
-  if ( mExplosionAnim.isReady() == true )
-  {
-    mExplosionAnim.Start();
-    ++mExplosionFrame;
   }
 }
 
@@ -660,7 +603,7 @@ Plane::TakeOffUpdate()
   if ( mIsTakingOff == false )
     return;
 
-  mSpeed += sizes.plane_incr_spd * 0.75f * deltaTime;
+  mSpeed += sizes.plane_incr_speed * 0.75f * deltaTime;
 
   if ( mSpeed >= sizes.plane_max_speed_def )
     TakeOffFinish();
@@ -714,6 +657,15 @@ Plane::Hit(
     playSound(sounds.hit, -1, false);
     --mHp;
 
+    if ( mHp == 1 )
+    {
+//      TODO: start puffing
+      mSmokeAnim.Start();
+      mSmokePeriod.Start();
+    }
+    else if ( mHp == 0 )
+      mFireAnim.Start();
+
     return;
   }
 
@@ -753,6 +705,8 @@ Plane::Explode()
   mFireCooldown.Stop();
   mPitchCooldown.Stop();
   mDeadCooldown.Start();
+
+  effects.Spawn(new Explosion{mX, mY});
 }
 
 void
@@ -999,24 +953,45 @@ Plane::isDead() const
 }
 
 bool
+Plane::hasJumped() const
+{
+  return mHasJumped;
+}
+
+bool
+Plane::canTurn() const
+{
+  return
+    isDead() == false &&
+    ( ( mIsOnGround == false &&
+        mHasJumped == false &&
+        mPitchCooldown.isReady() == true ) ||
+      pilot.mIsRunning == true ||
+      pilot.mIsChuteOpen == true );
+}
+
+bool
 Plane::canShoot() const
 {
   return
+    isDead() == false &&
+    mHasJumped == false &&
     mIsOnGround == false &&
-    mProtection.isReady() == true;
+    mProtection.isReady() == true &&
+    mFireCooldown.isReady() == true;
 }
 
 bool
 Plane::canJump() const
 {
   return
-    mHasJumped == false &&
+    isDead() == false &&
     mIsOnGround == false &&
-    mProtection.isReady() == true ||
-    ( mHasJumped == true &&
-      pilot.mIsRunning == false &&
-      pilot.mIsChuteOpen == false &&
-      pilot.mChuteState != CHUTE_STATE::CHUTE_DESTROYED );
+    mProtection.isReady() == true &&
+    pilot.mIsRunning == false &&
+    pilot.mIsChuteOpen == false &&
+    ( mHasJumped == false ||
+      pilot.mChuteState == CHUTE_IDLE );
 }
 
 void
@@ -1037,44 +1012,25 @@ Plane::setDir(
 SDL_Point
 Plane::getClosestCollision() const
 {
-  SDL_Point dot;
-
-  if ( mHasJumped == false )
+  const SDL_Point dotBarn
   {
-    const SDL_Point dotBarn
-    {
-      std::max( (float) sizes.barn_x_collision,
-                std::min( mX, sizes.barn_x_collision + sizes.barn_sizex * 0.95f ) ),
-      std::max( (float) sizes.barn_y_collision,
-                std::min( mY, sizes.barn_y_collision + (float) sizes.barn_sizey ) ),
-    };
-
-    dot =
-    {
-      mX,
-      sizes.ground_y_collision,
-    };
-
-    float distanceToBarn    = sqrt( pow( dotBarn.x - mX, 2 ) + pow( dotBarn.y - mY, 2 ) );
-    float distanceToGround  = sqrt( pow( dot.x - mX, 2 )     + pow( dot.y - mY, 2 ) );
-
-    if ( distanceToBarn < distanceToGround )
-      return dotBarn;
-
-    return dot;
-  }
-
-//  dot.x = pilot->x;
-//  dot.y = sizes.ground_y_pilot_collision;
-
-  // Distance to barn rescue X points
-  dot =
-  {
-    std::max( (float) sizes.barn_x_pilot_left_collision,
-              std::min( pilot.mX, (float) sizes.barn_x_pilot_right_collision ) ),
-    std::max( sizes.ground_y_pilot_collision,
-              std::min( pilot.mY, sizes.ground_y_pilot_collision ) ),
+    std::max( (float) sizes.barn_x_collision,
+              std::min( mX, sizes.barn_x_collision + sizes.barn_sizex * 0.95f ) ),
+    std::max( (float) sizes.barn_y_collision,
+              std::min( mY, sizes.barn_y_collision + (float) sizes.barn_sizey ) ),
   };
+
+  const SDL_Point dot =
+  {
+    mX,
+    sizes.ground_y_collision,
+  };
+
+  float distanceToBarn    = sqrt( pow( dotBarn.x - mX, 2 ) + pow( dotBarn.y - mY, 2 ) );
+  float distanceToGround  = sqrt( pow( dot.x - mX, 2 )     + pow( dot.y - mY, 2 ) );
+
+  if ( distanceToBarn < distanceToGround )
+    return dotBarn;
 
   return dot;
 }
@@ -1146,7 +1102,7 @@ float
 Plane::getSpeed() const
 {
   if ( mHasJumped == false )
-    return mSpeed;
+    return mSpeed / sizes.plane_max_speed_def;
 
   const float pilotSpeedX = pilot.mSpeed * sin( pilot.mDir * M_PI / 180.0f );
 
@@ -1168,78 +1124,108 @@ Plane::getAngleRelative(
   return relativeAngle;
 }
 
-void
-Plane::assignDataset(
-  std::vector <float>& inputs ) const
+std::vector <float>
+Plane::aiState() const
 {
+  std::vector <float> inputs {};
+
   const auto& opponentPlane =
     planes.at(static_cast <PLANE_TYPE> (!mType));
 
 
-  Bullet bullet = bullets.GetClosestBullet(mX, mY, mType);
+  const bool canAccelerate =
+    isDead() == false &&
+    mHasJumped == false &&
+    mDir != 0.0f;
 
-  const bool bulletPresent =
-    bullet.firedBy() == mType
-    ? false : true;
+  const bool canDecelerate =
+    isDead() == false &&
+    mHasJumped == false &&
+    (mIsOnGround == false || mIsTakingOff == true);
 
+
+  const auto damage =
+    float(sizes.plane_hp_max - mHp) / sizes.plane_hp_max;
+
+  const float fireCooldown =
+    (mIsOnGround == false && mHasJumped == false) *
+    (sizes.plane_fire_cooldown_time - mFireCooldown.remainderTime()) /
+    sizes.plane_fire_cooldown_time;
+
+  const float protectionCooldown =
+    (mHasJumped == false) *
+    mProtection.remainderTime() / sizes.plane_spawn_protection_time;
+
+  const float deadCooldown =
+    (sizes.plane_dead_cooldown_time - opponentPlane.mDeadCooldown.remainderTime()) /
+    sizes.plane_dead_cooldown_time;
+
+  inputs.push_back(canAccelerate);
+  inputs.push_back(canDecelerate);
+  inputs.push_back(canTurn());
+  inputs.push_back(canShoot());
+  inputs.push_back(canJump());
+
+  inputs.push_back(isDead());
 
   if ( isDead() == true )
+    inputs.resize(inputs.size() + 7);
+  else
   {
-    inputs.push_back(3.0f); //  fly / jump / run / dead
-    inputs.push_back(0.0f); //  hp
-    inputs.push_back(0.0f); //  chute state
+//    OnGround
+    inputs.push_back(
+      mIsOnGround == true &&
+      mIsTakingOff == false &&
+      mHasJumped == false );
 
-    inputs.push_back(0.0f); //  protection
-    inputs.push_back(0.0f); //  fire cooldown
+//    TakingOff
+    inputs.push_back(
+      mIsTakingOff == true &&
+      mHasJumped == false );
 
-    inputs.push_back(0.0f); //  speed
-    inputs.push_back(0.0f); //  speed dir
-    inputs.push_back(0.0f); //  dir
+//    Airborne
+    inputs.push_back(
+      mIsOnGround == false &&
+      mIsTakingOff == false &&
+      mHasJumped == false );
 
-    inputs.push_back(0.0f); //  on ground
-    inputs.push_back(0.0f); //  distance to collision
-    inputs.push_back(0.0f); //  angle to collision
+//    Ejected
+    inputs.push_back(
+      mHasJumped == true &&
+      pilot.mIsChuteOpen == false &&
+      pilot.mChuteState != CHUTE_DESTROYED &&
+      pilot.mIsRunning == false );
 
-    inputs.push_back(0.0f); //  distance to opponent
-    inputs.push_back(0.0f); //  angle to opponent
+//    ChuteOpen
+    inputs.push_back(
+      mHasJumped == true &&
+      pilot.mIsChuteOpen == true &&
+      pilot.mChuteState != CHUTE_DESTROYED &&
+      pilot.mIsRunning == false );
 
-    inputs.push_back(0.0f); //  bullet present
-    inputs.push_back(0.0f); //  distance to bullet
-    inputs.push_back(0.0f); //  dir to bullet
-    inputs.push_back(0.0f); //  bullet dir to plane
+//    ChuteDestroyed
+    inputs.push_back(
+      mHasJumped == true &&
+      pilot.mIsRunning == false &&
+      pilot.mChuteState == CHUTE_DESTROYED );
 
-    inputs.push_back( mDeadCooldown.remainderTime() );
-
-    return;
+//    Running
+    inputs.push_back(
+      pilot.mIsRunning == true );
   }
 
-  if ( mHasJumped == true && pilot.mIsRunning == true )
-    inputs.push_back(2.0f);
+  inputs.push_back(damage);
 
-  else if ( mHasJumped == true && pilot.mIsRunning == false )
-    inputs.push_back(1.0f);
-
-  else if ( mHasJumped == false && pilot.mIsRunning == false )
-    inputs.push_back(0.0f);
-
-
-//  Info about both planes
-  inputs.push_back(mHp);
-
-  if ( pilot.mIsChuteOpen == true )
-    inputs.push_back(1.0f);
-
-  else if ( pilot.mChuteState == CHUTE_STATE::CHUTE_DESTROYED )
-    inputs.push_back(2.0f);
-
-  else
-    inputs.push_back(0.0f);
-
-  inputs.push_back( mProtection.remainderTime() );
-  inputs.push_back( mFireCooldown.remainderTime() );
+  inputs.push_back(fireCooldown);
+  inputs.push_back(protectionCooldown);
+  inputs.push_back(deadCooldown); // put only opponent's
 
   inputs.push_back( getSpeed() );
   inputs.push_back( getSpeedDir() );
+
+
+//  TODO: dirToOpponentDirect
+//  TODO: dirToOpponentIndirect
 
   const auto opponent =
     opponentPlane.mHasJumped == false
@@ -1258,12 +1244,10 @@ Plane::assignDataset(
     inputs.push_back( getSpeedDir() );
   }
 
-  inputs.push_back( opponentPlane.mDeadCooldown.remainderTime() );
-
   SDL_Point closestCollision = getClosestCollision();
 
+
 //  Data about AI plane
-  inputs.push_back( mIsOnGround );
 
   inputs.push_back( getDistanceToPoint( closestCollision ) );
   inputs.push_back( getAngleToPoint( { mX, mY }, closestCollision ) );  // todo: make relative to speedDir ???
@@ -1281,7 +1265,14 @@ Plane::assignDataset(
     inputs.push_back( getAngleRelative( getSpeedDir(), dirToOpponent ) );
   }
 
+
 //  Data about closest bullet
+
+  Bullet bullet = bullets.GetClosestBullet(mX, mY, mType);
+
+  const bool bulletPresent =
+    bullet.firedBy() == mType
+    ? false : true;
 
   inputs.push_back( bulletPresent );
 
@@ -1294,13 +1285,10 @@ Plane::assignDataset(
 
     const float bulletDirToAI = getAngleToPoint( { bullet.x(), bullet.y() }, { mX, mY } );
     inputs.push_back( getAngleRelative( bullet.dir(), bulletDirToAI ) );
-
-    return;
   }
+  else
+    inputs.resize(inputs.size() + 3);
 
-  inputs.push_back(0.0f);
-  inputs.push_back(0.0f);
-  inputs.push_back(0.0f);
 
-  return;
+  return inputs;
 }

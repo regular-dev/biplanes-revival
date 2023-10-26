@@ -112,6 +112,8 @@ public:
 
   bool isSpecifyingVar( const MENU_SPECIFY ) const;
   bool isDefiningKey() const;
+
+  ROOMS currentRoom() const;
 };
 
 extern class Menu menu;

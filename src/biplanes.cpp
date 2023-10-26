@@ -34,6 +34,7 @@
 #include <include/zeppelin.hpp>
 #include <include/controls.hpp>
 #include <include/matchmake.hpp>
+#include <include/effects.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/stats.hpp>
@@ -90,6 +91,7 @@ std::map <PLANE_TYPE, Plane> planes
 Controls controls_local {};
 Controls controls_opponent {};
 
+Effects effects {};
 BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
@@ -150,9 +152,12 @@ main(
   auto timePrevious = TimeUtils::Now();
   auto tickPrevious = timePrevious + tickInterval;
 
+  const auto& game = gameState();
+
   log_message( "\nLOG: Reached main menu loop!\n\n" );
 
-  while ( gameState().isExiting == false )
+
+  while ( game.isExiting == false )
   {
     TimeUtils::SleepUntil(tickPrevious + tickInterval);
 
@@ -161,6 +166,12 @@ main(
     timePrevious = currentTime;
 
     network.matchmaker->Update();
+
+    while ( SDL_PollEvent(&windowEvent) != 0 )
+    {
+      menu.ResizeWindow();
+      menu.UpdateControls();
+    }
 
     uint32_t ticks = 0;
 
@@ -171,18 +182,23 @@ main(
 //    Fixed time step
     deltaTime = ticks * tickInterval;
 
-//    TODO: test 'while'
-    if ( SDL_PollEvent(&windowEvent) != 0 )
-    {
-      menu.ResizeWindow();
-      menu.UpdateControls();
-    }
 
+//    TODO: split logic & rendering
     if ( ticks == 0 )
       continue;
 
 
-//    TODO: split logic & rendering
+    if (  menu.currentRoom() == ROOMS::GAME ||
+          menu.currentRoom() == ROOMS::MENU_PAUSE )
+    {
+      if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
+        game_loop_mp();
+      else
+        game_loop_sp();
+    }
+
+
+    game_draw();
     menu.DrawMenu();
 
     display_update();
@@ -230,6 +246,8 @@ game_reset()
 
   for ( auto& cloud : clouds )
     cloud.Respawn();
+
+  effects.Clear();
 }
 
 bool
@@ -331,7 +349,7 @@ void
 game_loop_sp()
 {
   if ( gameState().isPaused == true )
-    return game_draw();
+    return;
 
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
@@ -356,6 +374,7 @@ game_loop_sp()
   {
     if ( plane.isBot() == true )
     {
+      const auto inputs = plane.aiState();
 //      TODO: train/process bot
     }
   }
@@ -366,8 +385,7 @@ game_loop_sp()
 
   zeppelin.Update();
   bullets.Update();
-
-  game_draw();
+  effects.Update();
 }
 
 void
@@ -445,7 +463,6 @@ game_loop_mp()
 //  GET PACKET
   uint8_t packet[sizeof(Packet)] {};
 
-//  TODO: test 'while'
   while ( connection->ReceivePacket( packet, sizeof(packet) ) > 0 )
   {
     if (  network.connectionChanged == false &&
@@ -505,6 +522,7 @@ game_loop_mp()
 
   zeppelin.Update();
   bullets.Update();
+  effects.Update();
 
 
 //  SEND PACKET
@@ -528,8 +546,6 @@ game_loop_mp()
 
   if ( network.sendCoordsTimer.isReady() == true )
     network.sendCoordsTimer.Start();
-
-  game_draw();
 }
 
 
@@ -543,27 +559,33 @@ game_draw()
   bullets.Draw();
 
 
-  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
-  auto& planeRed = planes.at(PLANE_TYPE::RED);
+  const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  const auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  auto& localPlane =
-    planeBlue.isLocal() == true
+  const auto& playerPlane =
+    planeBlue.isLocal() == true && planeBlue.isBot() == false
     ? planeBlue
     : planeRed;
 
-  auto& remotePlane =
-    planeBlue.isLocal() == false
-    ? planeBlue
-    : planeRed;
+  const auto& opponentPlane =
+    &planeBlue == &playerPlane
+    ? planeRed
+    : planeBlue;
 
 
   if ( networkState().isOpponentConnected == true )
-    remotePlane.AnimationsUpdate();
+  {
+    opponentPlane.Draw();
+    opponentPlane.pilot.Draw();
+  }
 
-  localPlane.AnimationsUpdate();
+  playerPlane.Draw();
+  playerPlane.pilot.Draw();
 
 
   draw_barn();
+
+  effects.Draw();
 
   for ( auto& cloud : clouds )
   {

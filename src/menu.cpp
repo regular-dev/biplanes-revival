@@ -119,7 +119,7 @@ Menu::AnimateButton()
 {
   if ( sizes.button_dir == MENU_BUTTON_DIR::RIGHT )
   {
-    if ( sizes.button_x < 127 - deltaTime * sizes.screen_width * 0.075 )
+    if ( sizes.button_x < sizes.button_width - deltaTime * sizes.screen_width * 0.075 )
       sizes.button_x += deltaTime * sizes.screen_width * 0.075;
     else
       sizes.button_dir = MENU_BUTTON_DIR::LEFT;
@@ -146,6 +146,12 @@ Menu::isDefiningKey() const
   return mIsDefiningKey;
 }
 
+ROOMS
+Menu::currentRoom() const
+{
+  return mCurrentRoom;
+}
+
 
 void
 Menu::DrawMenu()
@@ -155,18 +161,7 @@ Menu::DrawMenu()
 
   const auto& game = gameState();
 
-  if ( game.isPaused == true )
-  {
-    if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
-      game_loop_mp();
-
-    else
-    {
-      deltaTime = 0.0;
-      game_loop_sp();
-    }
-  }
-  else
+  if ( game.isPaused == false )
     mConnectedMessageTimer.Update();
 
 
@@ -393,16 +388,6 @@ Menu::DrawMenu()
       break;
     }
 
-    case ROOMS::GAME:
-    {
-      if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
-        game_loop_mp();
-      else
-        game_loop_sp();
-
-      break;
-    }
-
     default:
       break;
   }
@@ -579,7 +564,7 @@ Menu::DrawButton()
   const SDL_Rect srcRect
   {
     sizes.button_x, 0,
-    127, 12,
+    sizes.button_width, 12,
   };
 
   const SDL_Rect buttonRect

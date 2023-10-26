@@ -59,6 +59,9 @@ target_sources(${TARGET} PRIVATE
   src/controls.cpp
   include/controls.hpp
 
+  src/effects.cpp
+  include/effects.hpp
+
   src/init_vars.cpp
   include/init_vars.hpp
 

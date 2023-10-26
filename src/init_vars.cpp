@@ -49,14 +49,7 @@ init_sizes()
   sizes.plane_max_speed_def = sizes.screen_width * 0.303f;
   sizes.plane_max_speed_acc = sizes.screen_width * 0.43478f;
 
-  sizes.plane_incr_spd = sizes.screen_height * 0.5f;
-  sizes.plane_incr_rot = 22.5f;
-
-  sizes.plane_dead_cooldown_time = 3.0f;
-  sizes.plane_spawn_protection_time = 2.0f;
-
-  sizes.plane_pitch_cooldown_time = 0.1f;
-  sizes.plane_fire_cooldown_time = 0.65f;
+  sizes.plane_incr_speed = sizes.screen_height * 0.5f;
 
   sizes.plane_blue_landx = sizes.screen_width * 0.0625f;
   sizes.plane_red_landx = sizes.screen_width * 0.9375f;
@@ -64,20 +57,13 @@ init_sizes()
 
 
 //  Smoke animation
-  sizes.smk_frame_time = 0.1f;
-  sizes.smk_anim_period = 1.0f;
   sizes.smk_sizex = sizes.screen_width * 0.05f;
   sizes.smk_sizey = sizes.screen_height * 0.0625f;
-
-
-//  Fire animation
-  sizes.fire_frame_time = 0.075f;
 
 
 //  Explosion animation
   sizes.expl_sizex = sizes.screen_width * 0.15625f;
   sizes.expl_sizey = sizes.screen_height * 0.1923f;
-  sizes.expl_frame_time = 0.075f;
 
 
 //  Bullet
@@ -85,11 +71,10 @@ init_sizes()
   sizes.bullet_sizey = sizes.screen_height * 0.0144f;
   sizes.bullet_speed = sizes.screen_width * 0.77f;
 
-  sizes.hit_sizex = sizes.screen_width * 0.035f;
-  sizes.hit_sizey = sizes.screen_height * 0.038f;
+  sizes.bullet_hit_sizex = sizes.screen_width * 0.035f;
+  sizes.bullet_hit_sizey = sizes.screen_height * 0.038f;
 
   sizes.bullet_ground_collision = sizes.screen_height * 0.895f;
-  sizes.bullet_hit_frame_time = 0.08f;
 
 
 //  Pilot
@@ -99,9 +84,6 @@ init_sizes()
   sizes.pilot_chute_gravity = sizes.screen_height * 0.2f;
   sizes.pilot_chute_speed = sizes.screen_width * 0.04f;
   sizes.pilot_run_speed = sizes.screen_width * 0.1f;
-  sizes.pilot_run_frame_time = 0.075f;
-  sizes.pilot_fall_frame_time = 0.1f;
-  sizes.chute_frame_time = 0.25f;
 
   sizes.pilot_sizex = sizes.screen_width * 0.0273f;
   sizes.pilot_sizey = sizes.screen_height * 0.03365f;
@@ -113,7 +95,6 @@ init_sizes()
 
 
 //  Pilot death animation
-  sizes.angel_frame_time = 0.138f;
   sizes.angel_ascent_speed = sizes.screen_height * 0.035f;
   sizes.angel_sizex = sizes.screen_width * 0.0273f;
   sizes.angel_sizey = sizes.screen_width * 0.0273f;

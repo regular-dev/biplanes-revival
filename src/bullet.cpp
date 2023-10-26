@@ -24,6 +24,7 @@
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/plane.hpp>
+#include <include/effects.hpp>
 #include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
@@ -33,27 +34,18 @@ Bullet::Bullet(
   const float planeX,
   const float planeY,
   const float planeDir,
-  const PLANE_TYPE planeType )
+  const PLANE_TYPE firedBy )
   : mX{planeX}
   , mY{planeY}
   , mDir{planeDir}
-  , mFiredBy{planeType}
-  , mHitAnim{sizes.bullet_hit_frame_time}
+  , mFiredBy{firedBy}
 {
 }
 
 void
 Bullet::Update()
 {
-  UpdateCoordinates();
-  HitAnimUpdate();
-  mHitAnim.Update();
-}
-
-void
-Bullet::UpdateCoordinates()
-{
-  if ( mIsMoving == false )
+  if ( mIsDead == true )
     return;
 
 
@@ -81,7 +73,12 @@ Bullet::UpdateCoordinates()
   };
 
   if ( collidesWithSurface == true )
-    return HitSurface();
+  {
+    playSound(sounds.hitMiss, -1, false);
+    effects.Spawn(new BulletImpact{mX, mY});
+
+    return Destroy();
+  }
 
   const auto& game = gameState();
 
@@ -128,84 +125,38 @@ Bullet::UpdateCoordinates()
 }
 
 void
-Bullet::Draw()
+Bullet::Draw() const
 {
-  if ( mIsMoving == true )
-  {
-    const SDL_Rect bulletRect
-    {
-      mX - sizes.bullet_sizex / 2.0f,
-      mY - sizes.bullet_sizey / 2.0f,
-      sizes.bullet_sizex,
-      sizes.bullet_sizey,
-    };
-
-    SDL_RenderCopy(
-      gRenderer,
-      textures.texture_bullet,
-      nullptr,
-      &bulletRect );
-
-    return;
-  }
-
-  if ( mHitFrame <= 0 || mHitFrame >= 6 )
+  if ( mIsDead == true )
     return;
 
-  const SDL_Rect textureRect
+
+  const SDL_Rect bulletRect
   {
-    mX - sizes.hit_sizex / 2.0f,
-    mY - sizes.hit_sizey / 2.0f,
-    sizes.hit_sizex,
-    sizes.hit_sizey,
+    mX - sizes.bullet_sizex / 2.0f,
+    mY - sizes.bullet_sizey / 2.0f,
+    sizes.bullet_sizex,
+    sizes.bullet_sizey,
   };
 
   SDL_RenderCopy(
     gRenderer,
-    textures.anim_hit,
-    &textures.anim_hit_rect[mHitFrame - 1],
-    &textureRect );
-}
-
-void
-Bullet::HitAnimUpdate()
-{
-  if (  mIsMoving == true ||
-        mHitFrame <= 0 ||
-        mHitFrame >= 6 ||
-        mHitAnim.isReady() == false )
-    return;
-
-  mHitAnim.Start();
-  ++mHitFrame;
-}
-
-void
-Bullet::HitSurface()
-{
-  playSound(sounds.hitMiss, -1, false);
-  mIsMoving = false;
-  mHitFrame = 1;
+    textures.texture_bullet,
+    nullptr,
+    &bulletRect );
 }
 
 void
 Bullet::Destroy()
 {
-  mIsMoving = false;
-  mHitFrame = 6;
+  mIsDead = true;
 }
 
-
-bool
-Bullet::isMoving() const
-{
-  return mIsMoving;
-}
 
 bool
 Bullet::isDead() const
 {
-  return mIsMoving == false && mHitFrame == 6;
+  return mIsDead;
 }
 
 float
@@ -235,16 +186,16 @@ Bullet::firedBy() const
 
 void
 BulletSpawner::SpawnBullet(
-  const float planeX,
-  const float planeY,
-  const float planeDir,
-  const PLANE_TYPE planeType )
+  const float x,
+  const float y,
+  const float dir,
+  const PLANE_TYPE firedBy )
 {
   mInstances.push_back(
   {
-    planeX, planeY,
-    planeDir,
-    planeType,
+    x, y,
+    dir,
+    firedBy,
   });
 }
 
@@ -274,7 +225,7 @@ BulletSpawner::Clear()
 }
 
 void
-BulletSpawner::Draw()
+BulletSpawner::Draw() const
 {
   for ( auto& bullet : mInstances )
     bullet.Draw();
@@ -282,43 +233,29 @@ BulletSpawner::Draw()
 
   if ( gameState().debug.aiInputs == true )
   {
-    const auto& planeRed = planes.at(PLANE_TYPE::RED);
-    const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+    for ( const auto& [planeType, plane] : planes )
+    {
+      Bullet bullet = GetClosestBullet(
+        plane.x(),
+        plane.y(),
+        plane.type() );
 
-    Bullet bullet = GetClosestBullet(
-      planeRed.x(),
-      planeRed.y(),
-      planeRed.type() );
-
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawLine(
-      gRenderer,
-      planeRed.x(),
-      planeRed.y(),
-      bullet.x(),
-      bullet.y() );
-
-
-    bullet = GetClosestBullet(
-      planeBlue.x(),
-      planeBlue.y(),
-      planeBlue.type() );
-
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawLine(
-      gRenderer,
-      planeBlue.x(),
-      planeBlue.y(),
-      bullet.x(),
-      bullet.y() );
+      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+      SDL_RenderDrawLine(
+        gRenderer,
+        plane.x(),
+        plane.y(),
+        bullet.x(),
+        bullet.y() );
+    }
   }
 }
 
 Bullet
 BulletSpawner::GetClosestBullet(
-  const float planeX,
-  const float planeY,
-  const PLANE_TYPE planeType ) const
+  const float x,
+  const float y,
+  const PLANE_TYPE notFiredBy ) const
 {
   std::pair <uint32_t, float> minDistance {};
   bool minDistanceInitialized = false;
@@ -326,13 +263,12 @@ BulletSpawner::GetClosestBullet(
 
   for ( size_t index = 0; index < mInstances.size(); ++index )
   {
-    if (  mInstances[index].isMoving() == false ||
-          mInstances[index].firedBy() == planeType )
+    if ( mInstances[index].firedBy() == notFiredBy )
       continue;
 
     const float distance = sqrt(
-      pow( mInstances[index].x() - planeX, 2 ) +
-      pow( mInstances[index].y() - planeY, 2 ) );
+      pow( mInstances[index].x() - x, 2 ) +
+      pow( mInstances[index].y() - y, 2 ) );
 
     if ( minDistanceInitialized == false )
     {
@@ -347,7 +283,7 @@ BulletSpawner::GetClosestBullet(
   }
 
   if ( minDistanceInitialized == false )
-    return {0.0f, 0.0f, 0.0f, planeType};
+    return {0.0f, 0.0f, 0.0f, notFiredBy};
 
   return mInstances[minDistance.first];
 }

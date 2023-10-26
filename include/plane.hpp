@@ -59,18 +59,12 @@ class Plane
   bool mIsTakingOff {};
   bool mHasJumped {};
 
-  std::array <int8_t, 5> mSmokeFrame {};
-  std::array <SDL_Rect, 5> mSmokeDestRect {};
-
+  uint8_t mSmokeFrame {};
   Timer mSmokeAnim {0.0f};
   Timer mSmokePeriod {0.0f};
-  int8_t mSmokeRect;
 
   int8_t mFireFrame {};
   Timer mFireAnim {0.0f};
-
-  int8_t mExplosionFrame {};
-  Timer mExplosionAnim {0.0f};
 
   SDL_Rect mHitbox {};
 
@@ -86,6 +80,9 @@ public:
   void Jump();
 
   void Update();
+  void Draw() const;
+  void DrawFire() const;
+
   void SpeedUpdate();
   void CoordinatesUpdate();
   void CollisionsUpdate();
@@ -95,7 +92,6 @@ public:
   void AnimationsReset();
   void SmokeUpdate();
   void FireUpdate();
-  void ExplosionUpdate();
   void HitboxUpdate();
 
   void TakeOffStart();
@@ -125,7 +121,7 @@ public:
 
 
 //  Utility methods for AI
-  void assignDataset( std::vector <float>& ) const;
+  std::vector <float> aiState() const;
   SDL_Point getClosestCollision() const;
   float getDistanceToPoint( const SDL_Point& ) const;
   float getAngleToPoint( const SDL_Point&, const SDL_Point& ) const;
@@ -141,6 +137,9 @@ public:
 
   bool isHit( const float, const float ) const;
   bool isDead() const;
+  bool hasJumped() const;
+
+  bool canTurn() const;
 
   bool canShoot() const;
   bool canJump() const;
@@ -217,6 +216,8 @@ public:
     void ChuteUnlock();
 
     void Update();
+    void Draw() const;
+
     void FallUpdate();
     void RunUpdate();
     void DeathUpdate();
@@ -224,8 +225,6 @@ public:
     void AnimationsReset();
     void FallAnimUpdate();
     void ChuteAnimUpdate();
-    void RunAnimUpdate();
-    void DeathAnimUpdate();
     void HitboxUpdate();
     void ChuteHitboxUpdate();
 
@@ -241,6 +240,8 @@ public:
     bool isDead() const;
     bool isHit( const float, const float ) const;
     bool ChuteIsHit( const float, const float ) const;
+
+    SDL_Point getClosestCollision() const;
 
     float x() const;
     float y() const;
