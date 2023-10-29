@@ -21,8 +21,8 @@
 #include <include/zeppelin.hpp>
 #include <include/sdl.hpp>
 #include <include/time.hpp>
+#include <include/constants.hpp>
 #include <include/plane.hpp>
-#include <include/sizes.hpp>
 #include <include/textures.hpp>
 
 
@@ -34,42 +34,49 @@ Zeppelin::Zeppelin()
 void
 Zeppelin::Update()
 {
-  mX += sizes.zeppelin_speed * deltaTime;
+  namespace zeppelin = constants::zeppelin;
 
-  if ( mX <= sizes.screen_width + sizes.zeppelin_sizex / 2.0f )
+
+  mX += zeppelin::speed * deltaTime;
+
+  if ( mX <= 1.0f + 0.5f * zeppelin::sizeX )
     return;
 
 
-  mX = -sizes.zeppelin_sizex / 2.0f;
+  mX = -0.5f * zeppelin::sizeX;
 
   if ( mIsAscending == true )
   {
-    mY -= sizes.zeppelin_sizey / 2.0f;
+    mY -= 0.5f * zeppelin::sizeY;
 
-    if ( mY < sizes.zeppelin_highest_y )
+    if ( mY < zeppelin::maxHeight )
       mIsAscending = false;
 
     return;
   }
 
-  mY += sizes.zeppelin_sizey / 2.0f;
+  mY += 0.5f * zeppelin::sizeY;
 
-  if ( mY > sizes.zeppelin_lowest_y )
+  if ( mY > zeppelin::minHeight )
     mIsAscending = true;
 }
 
 void
 Zeppelin::Draw()
 {
-  const SDL_Rect zeppelinRect
+  namespace zeppelin = constants::zeppelin;
+  namespace score = zeppelin::score;
+
+
+  const SDL_FRect zeppelinRect
   {
-    mX - sizes.zeppelin_sizex / 2.0f,
-    mY - sizes.zeppelin_sizey / 2.0f,
-    sizes.zeppelin_sizex,
-    sizes.zeppelin_sizey,
+    toWindowSpaceX(mX - 0.5f * zeppelin::sizeX),
+    toWindowSpaceY(mY - 0.5f * zeppelin::sizeY),
+    scaleToScreenX(zeppelin::sizeX),
+    scaleToScreenY(zeppelin::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.texture_zeppelin,
     nullptr,
@@ -79,25 +86,25 @@ Zeppelin::Draw()
   const auto& planeRed = planes.at(PLANE_TYPE::RED);
   const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
 
-  SDL_Rect scoreRect
+  SDL_FRect scoreRect
   {
-    mX - sizes.zeppelin_score_sizex * 2.1f,
-    mY - sizes.zeppelin_score_sizey * 0.95f,
-    sizes.zeppelin_score_sizex,
-    sizes.zeppelin_score_sizey,
+    toWindowSpaceX(mX - score::numOffsetBlue1X),
+    toWindowSpaceY(mY - score::numOffsetY),
+    scaleToScreenX(score::sizeX),
+    scaleToScreenY(score::sizeY),
   };
 
 
 //  Blue score
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.font_zeppelin_score,
     &textures.zeppelin_score_rect[planeBlue.score() / 10],
     &scoreRect );
 
-  scoreRect.x = mX - sizes.zeppelin_score_sizex * 1.1f;
+  scoreRect.x = toWindowSpaceX(mX - score::numOffsetBlue2X);
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.font_zeppelin_score,
     &textures.zeppelin_score_rect[planeBlue.score() % 10],
@@ -105,17 +112,17 @@ Zeppelin::Draw()
 
 
 //  Red score
-  scoreRect.x = mX + sizes.zeppelin_score_sizex * 1.75f;
+  scoreRect.x = toWindowSpaceX(mX + score::numOffsetRed1X);
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.font_zeppelin_score,
     &textures.zeppelin_score_rect[10 + planeRed.score() % 10],
     &scoreRect );
 
-  scoreRect.x = mX + sizes.zeppelin_score_sizex * 0.75f;
+  scoreRect.x = toWindowSpaceX(mX + score::numOffsetRed2X);
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.font_zeppelin_score,
     &textures.zeppelin_score_rect[10 + planeRed.score() / 10],
@@ -125,6 +132,8 @@ Zeppelin::Draw()
 void
 Zeppelin::Respawn()
 {
-  mX = sizes.zeppelin_spawn_x;
-  mY = sizes.zeppelin_lowest_y - sizes.zeppelin_highest_y + sizes.zeppelin_sizey;
+  namespace zeppelin = constants::zeppelin;
+
+  mX = zeppelin::spawnX;
+  mY = zeppelin::minHeight - zeppelin::maxHeight + zeppelin::sizeX;
 }

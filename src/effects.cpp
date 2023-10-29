@@ -20,10 +20,8 @@
 
 #include <include/effects.hpp>
 #include <include/sdl.hpp>
-#include <include/sizes.hpp>
+#include <include/constants.hpp>
 #include <include/textures.hpp>
-
-#include <SDL_rect.h>
 
 
 Effect::Effect(
@@ -124,22 +122,25 @@ Effects::Draw() const
 SmokePuff::SmokePuff(
   const float x,
   const float y )
-  : Effect {x, y, sizes.smk_frame_time, sizes.smk_frame_count}
+  : Effect {x, y, constants::smoke::frameTime, constants::smoke::frameCount}
 {
 }
 
 void
 SmokePuff::DrawImpl() const
 {
-  const SDL_Rect smokeRect
+  namespace smoke = constants::smoke;
+
+
+  const SDL_FRect smokeRect
   {
-    mX - sizes.smk_sizex / 2.0f,
-    mY - sizes.smk_sizey / 2.0f,
-    sizes.smk_sizex,
-    sizes.smk_sizey,
+    toWindowSpaceX(mX - 0.5f * smoke::sizeX),
+    toWindowSpaceY(mY - 0.5f * smoke::sizeY),
+    scaleToScreenX(smoke::sizeX),
+    scaleToScreenY(smoke::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.anim_smk,
     &textures.anim_smk_rect[mFrame],
@@ -157,15 +158,18 @@ Explosion::Explosion(
 void
 Explosion::DrawImpl() const
 {
-  const SDL_Rect explosionRect
+  namespace explosion = constants::explosion;
+
+
+  const SDL_FRect explosionRect
   {
-    mX - sizes.expl_sizex / 2.0f,
-    mY - sizes.expl_sizey / 2.0f,
-    sizes.expl_sizex,
-    sizes.expl_sizey,
+    toWindowSpaceX(mX - 0.5f * explosion::sizeX),
+    toWindowSpaceY(mY - 0.5f * explosion::sizeY),
+    scaleToScreenX(explosion::sizeX),
+    scaleToScreenY(explosion::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.anim_expl,
     &textures.anim_expl_rect[mFrame],
@@ -183,15 +187,18 @@ BulletImpact::BulletImpact(
 void
 BulletImpact::DrawImpl() const
 {
-  const SDL_Rect impactRect
+  namespace hit = constants::bullet::hit;
+
+
+  const SDL_FRect impactRect
   {
-    mX - sizes.bullet_hit_sizex / 2.0f,
-    mY - sizes.bullet_hit_sizey / 2.0f,
-    sizes.bullet_hit_sizex,
-    sizes.bullet_hit_sizey,
+    toWindowSpaceX(mX - 0.5f * hit::sizeX),
+    toWindowSpaceY(mY - 0.5f * hit::sizeY),
+    scaleToScreenX(hit::sizeX),
+    scaleToScreenY(hit::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.anim_hit,
     &textures.anim_hit_rect[mFrame],

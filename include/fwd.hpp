@@ -39,6 +39,7 @@ class FlowControl;
 
 class Timer;
 
+struct Color;
 struct Controls;
 struct Sizes;
 struct Sounds;

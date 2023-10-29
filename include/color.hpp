@@ -20,41 +20,12 @@
 
 #pragma once
 
-#include <SDL_rect.h>
-
 #include <cstdint>
-#include <vector>
 
-
-class Cloud
+struct Color
 {
-  float mX {};
-  float mY {};
-  bool mDir {};
-
-  uint8_t mId {};
-  bool mIsOpaque {};
-  SDL_FRect mCollisionBox {};
-
-
-public:
-  Cloud() = default;
-  Cloud( const bool dir, const uint8_t id );
-
-
-  void Update();
-  void UpdateCoordinates();
-  void UpdateHeight();
-  void UpdateCollisionBox();
-
-
-  void Draw();
-  void setTransparent();
-  void setOpaque();
-  void Respawn();
-
-
-  bool isHit( const float x, const float y ) const;
+  uint8_t r {};
+  uint8_t g {};
+  uint8_t b {};
+  uint8_t a {};
 };
-
-extern std::vector <Cloud> clouds;

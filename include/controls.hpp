@@ -43,7 +43,6 @@ extern Controls controls_opponent;
 
 
 void readLocalInput();
-void readOpponentInput();
 void processLocalControls( Plane&, const Controls& );
 
 

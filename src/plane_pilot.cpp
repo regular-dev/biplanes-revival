@@ -23,10 +23,10 @@
 #include <include/enums.hpp>
 #include <include/time.hpp>
 #include <include/timer.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/cloud.hpp>
-#include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 #include <include/utility.hpp>
@@ -59,21 +59,27 @@ Plane::Pilot::Update()
 void
 Plane::Pilot::Draw() const
 {
+  namespace pilot = constants::pilot;
+  namespace chute = pilot::chute;
+  namespace angel = pilot::angel;
+  namespace colors = constants::colors;
+
+
   if ( plane->hasJumped() == false )
     return;
 
 
   if ( mIsDead == true )
   {
-    const SDL_Rect angelRect
+    const SDL_FRect angelRect
     {
-      mX - sizes.angel_sizex / 2.0f,
-      mY - sizes.angel_sizey / 2.0f,
-      sizes.angel_sizex,
-      sizes.angel_sizey,
+      toWindowSpaceX(mX - 0.5f * angel::sizeX),
+      toWindowSpaceY(mY - 0.5f * angel::sizeY),
+      scaleToScreenX(angel::sizeX),
+      scaleToScreenY(angel::sizeY),
     };
 
-    SDL_RenderCopy(
+    SDL_RenderCopyF(
       gRenderer,
       textures.anim_pilot_angel,
       &textures.anim_pilot_angel_rect[mAngelFrame],
@@ -85,21 +91,29 @@ Plane::Pilot::Draw() const
 
   if ( mIsChuteOpen == true )
   {
-    const SDL_Rect chuteRect
+    const SDL_FRect chuteRect
     {
-      mX - sizes.chute_sizex / 2.0f,
-      mY - sizes.chute_sizey * 1.375f,
-      sizes.chute_sizex,
-      sizes.chute_sizey,
+      toWindowSpaceX(mX - 0.5f * chute::sizeX),
+      toWindowSpaceY(mY - chute::offsetY),
+      scaleToScreenX(chute::sizeX),
+      scaleToScreenY(chute::sizeY),
     };
 
-    SDL_RenderCopy(
+    SDL_RenderCopyF(
       gRenderer,
       textures.anim_chute,
       &textures.anim_chute_rect[mChuteState],
       &chuteRect );
   }
 
+
+  const SDL_FRect pilotRect
+  {
+    toWindowSpaceX(mX - 0.5f * pilot::sizeX),
+    toWindowSpaceY(mY - 0.5f * pilot::sizeY),
+    scaleToScreenX(pilot::sizeX),
+    scaleToScreenY(pilot::sizeY),
+  };
 
   if ( mIsRunning == true )
   {
@@ -108,17 +122,9 @@ Plane::Pilot::Draw() const
       ? textures.anim_pilot_run_r
       : textures.anim_pilot_run_b;
 
-    const SDL_Rect pilotRect
-    {
-      mX - sizes.pilot_sizex / 2.0f,
-      mY - sizes.pilot_sizey / 2.0f,
-      sizes.pilot_sizex,
-      sizes.pilot_sizey,
-    };
-
     if ( mDir == 270 )
     {
-      SDL_RenderCopy(
+      SDL_RenderCopyF(
         gRenderer,
         pilotTexture,
         &textures.anim_pilot_run_rect[mRunFrame],
@@ -126,7 +132,7 @@ Plane::Pilot::Draw() const
     }
     else
     {
-      SDL_RenderCopyEx(
+      SDL_RenderCopyExF(
         gRenderer,
         pilotTexture,
         &textures.anim_pilot_run_rect[mRunFrame],
@@ -143,15 +149,7 @@ Plane::Pilot::Draw() const
       ? textures.anim_pilot_fall_r
       : textures.anim_pilot_fall_b;
 
-    const SDL_Rect pilotRect
-    {
-      mX - sizes.pilot_sizex / 2.0f,
-      mY - sizes.pilot_sizey / 2.0f,
-      sizes.pilot_sizex,
-      sizes.pilot_sizey,
-    };
-
-    SDL_RenderCopy(
+    SDL_RenderCopyF(
       gRenderer,
       pilotTexture,
       &textures.anim_pilot_fall_rect[mFallFrame],
@@ -161,22 +159,41 @@ Plane::Pilot::Draw() const
 
   if ( gameState().debug.collisions == true )
   {
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &mChuteHitbox );
+    const SDL_FRect chuteHitbox
+    {
+      toWindowSpaceX(mChuteHitbox.x),
+      toWindowSpaceY(mChuteHitbox.y),
+      scaleToScreenX(mChuteHitbox.w),
+      scaleToScreenY(mChuteHitbox.h),
+    };
 
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &mHitbox );
+    setRenderColor(colors::bulletHitbox);
+    SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
+
+    const SDL_FRect hitbox
+    {
+      toWindowSpaceX(mHitbox.x),
+      toWindowSpaceY(mHitbox.y),
+      scaleToScreenX(mHitbox.w),
+      scaleToScreenY(mHitbox.h),
+    };
+
+    setRenderColor(colors::bulletHitbox);
+    SDL_RenderDrawRectF( gRenderer, &hitbox );
   }
 
   if ( gameState().debug.aiInputs == true )
   {
     SDL_Point dot = getClosestCollision();
-    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
 
+//    TODO: choose more suitable color
+    setRenderColor(colors::bulletHitbox);
     SDL_RenderDrawLine(
       gRenderer,
-      mX, mY,
-      dot.x, dot.y );
+      toWindowSpaceX(mX),
+      toWindowSpaceY(mY),
+      toWindowSpaceX(dot.x),
+      toWindowSpaceY(dot.y) );
   }
 }
 
@@ -184,6 +201,10 @@ void
 Plane::Pilot::Move(
   const PLANE_PITCH inputDir )
 {
+  namespace pilot = constants::pilot;
+  namespace chute = pilot::chute;
+
+
   const auto moveDir =
     inputDir == PLANE_PITCH::PITCH_LEFT
     ? -1.0f : 1.0f;
@@ -191,7 +212,7 @@ Plane::Pilot::Move(
   if ( mIsChuteOpen == true )
   {
     mChuteState = static_cast <CHUTE_STATE> (inputDir);
-    mX += moveDir * sizes.pilot_chute_speed * deltaTime;
+    mX += moveDir * chute::speed * deltaTime;
 
     return;
   }
@@ -200,7 +221,7 @@ Plane::Pilot::Move(
     return;
 
   mDir = moveDir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
-  mX += moveDir * sizes.pilot_run_speed * deltaTime;
+  mX += moveDir * pilot::runSpeed * deltaTime;
 
   if ( mRunAnim.isReady() == false )
     return;
@@ -234,6 +255,9 @@ Plane::Pilot::Bail(
   const float planeY,
   const float bailDir )
 {
+  namespace pilot = constants::pilot;
+
+
   mX = planeX;
   mY = planeY;
   mDir = bailDir;
@@ -243,8 +267,8 @@ Plane::Pilot::Bail(
   else if ( mDir >= 360 )
     mDir -= 360;
 
-  mGravity = sizes.pilot_gravity;
-  mSpeed = sizes.pilot_eject_speed;
+  mGravity = pilot::gravity;
+  mSpeed = pilot::ejectSpeed;
   mVSpeed = mSpeed * cos( mDir * M_PI / 180.0 );
 
 
@@ -269,7 +293,7 @@ Plane::Pilot::OpenChute()
 
 
   mIsChuteOpen = true;
-  mGravity = sizes.pilot_chute_gravity;
+  mGravity = constants::pilot::chute::gravity;
 
 
   if ( plane->mIsLocal == true )
@@ -288,6 +312,9 @@ Plane::Pilot::ChuteUnlock()
 void
 Plane::Pilot::FallUpdate()
 {
+  namespace pilot = constants::pilot;
+
+
   if ( mIsDead == true || mIsRunning == true )
     return;
 
@@ -296,6 +323,8 @@ Plane::Pilot::FallUpdate()
     mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
 
 
+//  TODO: do something with this magic mess
+
   if ( mIsChuteOpen == true )
   {
     playSound(sounds.chute, plane->type(), true);
@@ -303,19 +332,19 @@ Plane::Pilot::FallUpdate()
     if ( mVSpeed > 0.0f )
       mVSpeed = -mGravity * 0.4f;
 
-    else if ( mVSpeed < -sizes.screen_height * 0.08f )
+    else if ( mVSpeed < -0.08f )
     {
-      mVSpeed += sizes.screen_height * 0.5f * deltaTime; // 0.375 ?
+      mVSpeed += 0.5f * deltaTime; // 0.375 ?
 
-      if ( mVSpeed > -sizes.screen_height * 0.08f )
-        mVSpeed = -sizes.screen_height * 0.08f;
+      if ( mVSpeed > -0.08f )
+        mVSpeed = -0.08f;
     }
 
-    else if ( mVSpeed > -sizes.screen_height * 0.08f )
-      mVSpeed -= sizes.screen_height * 0.5f * deltaTime;
+    else if ( mVSpeed > -0.08f )
+      mVSpeed -= 0.5f * deltaTime;
 
     if ( mSpeed > 0.0f )
-      mSpeed -= mSpeed * 2.0f * deltaTime;
+      mSpeed -= 2.0f * mSpeed * deltaTime;
   }
   else
   {
@@ -327,7 +356,7 @@ Plane::Pilot::FallUpdate()
       mVSpeed -= mGravity * deltaTime;
 
       if ( mVSpeed < 0.0f )
-        mGravity = sizes.screen_height * 0.24f; //!!
+        mGravity = 0.24f; //!!
     }
     else
     {
@@ -339,7 +368,7 @@ Plane::Pilot::FallUpdate()
   mY -= mVSpeed * deltaTime;
 
 
-  if ( mSpeed > sizes.screen_width * 0.008f )
+  if ( mSpeed > pilot::maxFallSpeedX )
     mSpeed -= mSpeed * deltaTime;
   else
     mSpeed = 0.0f;
@@ -350,8 +379,8 @@ Plane::Pilot::FallUpdate()
 
 
   if ( mX < 0.0f )
-    mX = sizes.screen_width;
-  else if ( mX > sizes.screen_width )
+    mX = 1.0f;
+  else if ( mX > 1.0f )
     mX = 0.0f;
 
 
@@ -378,14 +407,17 @@ Plane::Pilot::FallUpdate()
 void
 Plane::Pilot::RunUpdate()
 {
+  namespace barn = constants::barn;
+
+
   if ( mIsRunning == false || mIsDead == true )
     return;
 
 
   if ( mX < 0.0f )
-    mX = sizes.screen_width;
+    mX = 1.0f;
 
-  else if ( mX > sizes.screen_width )
+  else if ( mX > 1.0f )
     mX = 0.0f;
 
 
@@ -393,8 +425,8 @@ Plane::Pilot::RunUpdate()
     return;
 
 
-  if (  mX <= sizes.barn_x_pilot_left_collision ||
-        mX >= sizes.barn_x_pilot_right_collision )
+  if (  mX <= barn::pilotCollisionLeftX ||
+        mX >= barn::pilotCollisionRightX )
     return;
 
   Rescue();
@@ -403,11 +435,14 @@ Plane::Pilot::RunUpdate()
 void
 Plane::Pilot::DeathUpdate()
 {
+  namespace angel = constants::pilot::angel;
+
+
   if ( mIsDead == false )
     return;
 
 
-  mY -= sizes.angel_ascent_speed * deltaTime;
+  mY -= angel::ascentRate * deltaTime;
 
   if ( mAngelAnim.isReady() == false )
     return;
@@ -415,7 +450,7 @@ Plane::Pilot::DeathUpdate()
 
   mAngelAnim.Start();
 
-  if ( mAngelFrame == sizes.angel_frame_count - 1 )
+  if ( mAngelFrame == angel::framePastLoopId )
   {
     if ( plane->mIsLocal == true )
     {
@@ -429,11 +464,11 @@ Plane::Pilot::DeathUpdate()
 
   ++mAngelFrame;
 
-  if ( mAngelFrame != sizes.angel_frame_count - 1 )
+  if ( mAngelFrame != angel::framePastLoopId )
     return;
 
 
-  if ( mAngelLoop < sizes.angel_loop_count )
+  if ( mAngelLoop < angel::loopCount )
   {
     ++mAngelLoop;
     mAngelFrame = 0;
@@ -464,6 +499,11 @@ Plane::Pilot::AnimationsUpdate()
 void
 Plane::Pilot::AnimationsReset()
 {
+  namespace pilot = constants::pilot;
+  namespace chute = pilot::chute;
+  namespace angel = pilot::angel;
+
+
   mFallAnim.Stop();
   mFallFrame = 0;
 
@@ -477,10 +517,10 @@ Plane::Pilot::AnimationsReset()
   mAngelFrame = 0;
   mAngelLoop = 0;
 
-  mFallAnim.SetNewTimeout( sizes.pilot_fall_frame_time );
-  mChuteAnim.SetNewTimeout( sizes.chute_frame_time );
-  mRunAnim.SetNewTimeout( sizes.pilot_run_frame_time );
-  mAngelAnim.SetNewTimeout( sizes.angel_frame_time );
+  mFallAnim.SetNewTimeout( pilot::fallFrameTime );
+  mChuteAnim.SetNewTimeout( chute::frameTime );
+  mRunAnim.SetNewTimeout( pilot::runFrameTime );
+  mAngelAnim.SetNewTimeout( angel::frameTime );
 }
 
 void
@@ -514,32 +554,38 @@ Plane::Pilot::ChuteAnimUpdate()
 void
 Plane::Pilot::HitboxUpdate()
 {
+  namespace pilot = constants::pilot;
+
+
   if ( mIsDead == true )
     return;
 
 
   mHitbox =
   {
-    mX - sizes.pilot_sizex / 2.0f,
-    mY - sizes.pilot_sizey / 2.0f,
-    sizes.pilot_sizex,
-    sizes.pilot_sizey,
+    toWindowSpaceX(mX - 0.5f * pilot::sizeX),
+    toWindowSpaceY(mY - 0.5f * pilot::sizeY),
+    scaleToScreenX(pilot::sizeX),
+    scaleToScreenY(pilot::sizeY),
   };
 }
 
 void
 Plane::Pilot::ChuteHitboxUpdate()
 {
+  namespace chute = constants::pilot::chute;
+
+
   if ( mIsDead == true || mIsChuteOpen == false )
     return;
 
 
   mChuteHitbox =
   {
-    mX - sizes.chute_sizex / 2.0f,
-    mY - sizes.chute_sizey * 1.375f,
-    sizes.chute_sizex,
-    sizes.chute_sizey,
+    toWindowSpaceX(mX - 0.5f * chute::sizeX),
+    toWindowSpaceY(mY - chute::offsetY),
+    scaleToScreenX(chute::sizeX),
+    scaleToScreenY(chute::sizeY),
   };
 }
 
@@ -637,13 +683,17 @@ Plane::Pilot::Kill(
 void
 Plane::Pilot::HitGroundCheck()
 {
-  if (  mY <= sizes.ground_y_pilot_collision ||
+  namespace pilot = constants::pilot;
+  namespace chute = pilot::chute;
+
+
+  if (  mY <= pilot::groundCollision ||
         plane->mIsLocal == false )
     return;
 
 
 //  SURVIVE LANDING
-  if ( mVSpeed >= -sizes.pilot_chute_gravity )
+  if ( mVSpeed >= -chute::gravity )
   {
     FallSurvive();
     eventPush(EVENTS::PILOT_LAND);
@@ -673,7 +723,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  mY = sizes.ground_y_pilot_collision;
+  mY = constants::pilot::groundCollision;
 
   mIsRunning = true;
   mIsChuteOpen = false;
@@ -740,12 +790,15 @@ Plane::Pilot::isHit(
 SDL_Point
 Plane::Pilot::getClosestCollision() const
 {
-//  Distance to barn rescue X points
+  namespace barn = constants::barn;
+  namespace pilot = constants::pilot;
+
+//  Distance to barn | ground
   return
   {
-    std::max( (float) sizes.barn_x_pilot_left_collision,
-              std::min( mX, (float) sizes.barn_x_pilot_right_collision ) ),
-    std::max( sizes.ground_y_pilot_collision,
-              std::min( mY, sizes.ground_y_pilot_collision ) ),
+    std::max( barn::pilotCollisionLeftX,
+              std::min( mX, barn::pilotCollisionRightX ) ),
+    std::max( pilot::groundCollision,
+              std::min( mY, pilot::groundCollision ) ),
   };
 }

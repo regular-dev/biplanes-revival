@@ -35,7 +35,7 @@
 #include <include/controls.hpp>
 #include <include/matchmake.hpp>
 #include <include/effects.hpp>
-#include <include/sizes.hpp>
+#include <include/canvas.hpp>
 #include <include/sounds.hpp>
 #include <include/stats.hpp>
 #include <include/textures.hpp>
@@ -75,7 +75,7 @@ const static int32_t ProtocolId {0x11223344};
 const static float ConnectionTimeout {10.0f};
 
 
-Sizes sizes {};
+Canvas canvas {};
 Textures textures {};
 Sounds sounds {};
 
@@ -169,7 +169,7 @@ main(
 
     while ( SDL_PollEvent(&windowEvent) != 0 )
     {
-      menu.ResizeWindow();
+      queryWindowSize();
       menu.UpdateControls();
     }
 
@@ -183,7 +183,7 @@ main(
     deltaTime = ticks * tickInterval;
 
 
-//    TODO: split logic & rendering
+//    TODO: independent render frequency
     if ( ticks == 0 )
       continue;
 
@@ -198,8 +198,9 @@ main(
     }
 
 
-    game_draw();
+    draw_game();
     menu.DrawMenu();
+    draw_window_letterbox();
 
     display_update();
   }
@@ -255,8 +256,6 @@ game_init_sp()
 {
   auto& network = networkState();
 
-  SDL_SetWindowResizable( gWindow, SDL_FALSE );
-
   network.nodeType = SRV_CLI::SERVER;
 
   gameState().isRoundFinished = false;
@@ -276,9 +275,6 @@ game_init_mp()
 {
   auto& network = networkState();
   const auto connection = network.connection;
-
-
-  SDL_SetWindowResizable( gWindow, SDL_FALSE );
 
 
   net::Address address {};
@@ -369,7 +365,6 @@ game_loop_sp()
     processLocalControls(*playerPlane, controls_local);
   }
 
-//  TODO: skip if game is paused
   for ( auto& [planeType, plane] : planes )
   {
     if ( plane.isBot() == true )
@@ -379,6 +374,9 @@ game_loop_sp()
     }
   }
 
+
+  for ( auto& cloud : clouds )
+    cloud.Update();
 
   for ( auto& [planeType, plane] : planes )
     plane.Update();
@@ -490,6 +488,9 @@ game_loop_mp()
     opponentData.disconnect = false;
   }
 
+  for ( auto& cloud : clouds )
+    cloud.Update();
+
 
 //  INPUT
   if ( game.isPaused == false )
@@ -513,10 +514,10 @@ game_loop_mp()
 
   if ( network.isOpponentConnected == true )
   {
-    readOpponentInput();
+    controls_opponent.pitch = opponentData.pitch;
+    controls_opponent.throttle = opponentData.throttle;
 
     processLocalControls(remotePlane, controls_opponent);
-
     remotePlane.Update();
   }
 
@@ -551,7 +552,7 @@ game_loop_mp()
 
 // Rendering
 void
-game_draw()
+draw_game()
 {
   draw_background();
 
@@ -588,10 +589,8 @@ game_draw()
   effects.Draw();
 
   for ( auto& cloud : clouds )
-  {
-    cloud.Update();
     cloud.Draw();
-  }
+
 
   if ( networkState().isOpponentConnected == false )
     return;

@@ -21,36 +21,24 @@
 #include <include/menu.hpp>
 #include <include/sdl.hpp>
 #include <include/render.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
-#include <include/sizes.hpp>
 #include <include/textures.hpp>
 
 
 void
 Menu::screen_sp()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  namespace button = constants::button;
+
+
+  setRenderColor(constants::colors::background);
   SDL_RenderClear( gRenderer );
 
   draw_background();
   draw_barn();
 
-
-  const SDL_Rect menuRect
-  {
-    0,
-    sizes.screen_height * 0.3,
-    sizes.screen_width,
-    sizes.screen_height * 0.288
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.menu_box,
-    nullptr,
-    &menuRect );
-
-
+  draw_menu_rect();
   DrawButton();
 
 
@@ -91,69 +79,53 @@ Menu::screen_sp()
   }
 
 
-  draw_text( "CHOOSE OPPONENT   ", sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
-  draw_text( "Setup Game        ", sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Game mode:        ", sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( gameMode.c_str(),     sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "AI difficulty:    ", sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( aiDifficulty.c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Back              ", sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "CHOOSE OPPONENT", 0.025f, 0.2855f );
+  draw_text( "Setup Game     ", 0.040f, 0.2855f + 0.0721f );
+  draw_text( "Game mode:     ", 0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( gameMode,          0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "AI difficulty: ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( aiDifficulty,      0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Back           ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
 }
 
 void
 Menu::screen_sp_setup()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  namespace button = constants::button;
+
+
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
   draw_background();
   draw_barn();
+
+  draw_menu_rect();
+  DrawButton();
 
 
   const std::string hardcore =
     gameState().isHardcoreEnabled == true
     ? "On" : "Off";
 
-
-  const SDL_Rect menuRect
-  {
-    0,
-    sizes.screen_height * 0.3,
-    sizes.screen_width,
-    sizes.screen_height * 0.288
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.menu_box,
-    nullptr,
-    &menuRect );
-
-
-  DrawButton();
-
-
-  draw_text( "SETUP GAME        ",     sizes.screen_width * 0.025, sizes.screen_height * 0.2855 );
-  draw_text( "Start Game        ",     sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Score to win:     ",     sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( mInputScoreToWin.c_str(), sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Hardcore mode:    ",     sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( hardcore.c_str(),         sizes.screen_width * 0.500, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Back              ",     sizes.screen_width * 0.040, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "SETUP GAME    ",  0.025f, 0.2855f );
+  draw_text( "Start Game    ",  0.040f, 0.2855f + 0.0721f );
+  draw_text( "Score to win: ",  0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputScoreToWin,  0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Hardcore mode:",  0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( hardcore,          0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Back          ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::WIN_SCORE) == true )
   {
-    draw_text( "Press [RETURN] to finish", sizes.screen_width * 0.250, sizes.screen_height * 0.600 );
-    draw_text( "specifying win score... ", sizes.screen_width * 0.250, sizes.screen_height * 0.650 );
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
+    draw_text( "specifying win score... ", 0.250f, 0.650f );
 
     return;
   }
 
 
   if ( mSelectedButton == MENU_SP_SETUP::WIN_SCORE )
-  {
-    draw_text( "Press [RETURN] to specify win score",
-      sizes.screen_width * 0.005, sizes.screen_height * 0.650 );
-  }
+    draw_text( "Press [RETURN] to specify win score", 0.005f, 0.650f );
 }

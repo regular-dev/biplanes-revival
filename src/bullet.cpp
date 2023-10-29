@@ -21,11 +21,11 @@
 #include <include/bullet.hpp>
 #include <include/sdl.hpp>
 #include <include/time.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/plane.hpp>
 #include <include/effects.hpp>
-#include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 
@@ -45,19 +45,23 @@ Bullet::Bullet(
 void
 Bullet::Update()
 {
+  namespace barn = constants::barn;
+  namespace bullet = constants::bullet;
+
+
   if ( mIsDead == true )
     return;
 
 
-  mX += sizes.bullet_speed * sin( mDir * M_PI / 180.0f ) * deltaTime;
-  mY -= sizes.bullet_speed * cos( mDir * M_PI / 180.0f ) * deltaTime;
+  mX += bullet::speed * sin( mDir * M_PI / 180.0f ) * deltaTime;
+  mY -= bullet::speed * cos( mDir * M_PI / 180.0f ) * deltaTime;
 
 
   const bool collidesWithScreenBorder
   {
-    mX > sizes.screen_width ||
+    mX > 1.0f ||
     mX < 0.0f ||
-    mY < 0.0f - sizes.bullet_sizey / 2.0f
+    mY < -0.5f * bullet::sizeY
   };
 
   if ( collidesWithScreenBorder == true )
@@ -66,10 +70,10 @@ Bullet::Update()
 
   const bool collidesWithSurface
   {
-    ( mX > sizes.barn_x_bullet_collision &&
-      mX < sizes.barn_x_bullet_collision + sizes.barn_sizex * 0.95f &&
-      mY > sizes.barn_y_bullet_collision ) ||
-      mY > sizes.bullet_ground_collision
+    ( mX > barn::bulletCollisionX &&
+      mX < barn::bulletCollisionX + barn::bulletCollisionSizeX &&
+      mY > barn::bulletCollisionY ) ||
+      mY > bullet::groundCollision
   };
 
   if ( collidesWithSurface == true )
@@ -127,19 +131,22 @@ Bullet::Update()
 void
 Bullet::Draw() const
 {
+  namespace bullet = constants::bullet;
+
+
   if ( mIsDead == true )
     return;
 
 
-  const SDL_Rect bulletRect
+  const SDL_FRect bulletRect
   {
-    mX - sizes.bullet_sizex / 2.0f,
-    mY - sizes.bullet_sizey / 2.0f,
-    sizes.bullet_sizex,
-    sizes.bullet_sizey,
+    toWindowSpaceX(mX - 0.5f * bullet::sizeX),
+    toWindowSpaceY(mY - 0.5f * bullet::sizeY),
+    scaleToScreenX(bullet::sizeX),
+    scaleToScreenY(bullet::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.texture_bullet,
     nullptr,
@@ -151,7 +158,6 @@ Bullet::Destroy()
 {
   mIsDead = true;
 }
-
 
 bool
 Bullet::isDead() const
@@ -240,13 +246,13 @@ BulletSpawner::Draw() const
         plane.y(),
         plane.type() );
 
-      SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
+      setRenderColor(constants::colors::bulletHitbox);
       SDL_RenderDrawLine(
         gRenderer,
-        plane.x(),
-        plane.y(),
-        bullet.x(),
-        bullet.y() );
+        toWindowSpaceX(plane.x()),
+        toWindowSpaceY(plane.y()),
+        toWindowSpaceX(bullet.x()),
+        toWindowSpaceY(bullet.y()) );
     }
   }
 }

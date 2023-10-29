@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <include/fwd.hpp>
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -27,8 +29,6 @@
 #include <string>
 
 
-extern int SCREEN_HEIGHT;
-extern int SCREEN_WIDTH;
 extern int DISPLAY_INDEX;
 
 extern SDL_Window* gWindow;
@@ -50,3 +50,16 @@ void playSound(
   Mix_Chunk* sound,
   const uint8_t channel,
   const bool repeating );
+
+
+void setRenderColor( const Color& );
+void queryWindowSize();
+void recalculateVirtualScreen();
+
+SDL_FPoint toWindowSpace( const SDL_FPoint& );
+float toWindowSpaceX( const float );
+float toWindowSpaceY( const float );
+
+SDL_FPoint scaleToScreen( const SDL_FPoint& );
+float scaleToScreenX( const float );
+float scaleToScreenY( const float );

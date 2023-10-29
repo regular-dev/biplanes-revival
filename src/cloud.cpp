@@ -21,8 +21,8 @@
 #include <include/cloud.hpp>
 #include <include/sdl.hpp>
 #include <include/time.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
-#include <include/sizes.hpp>
 #include <include/textures.hpp>
 
 
@@ -46,32 +46,30 @@ Cloud::Update()
 void
 Cloud::UpdateCoordinates()
 {
+  namespace cloud = constants::cloud;
+
   const float moveDir =
     mDir == true
     ? 1.0f
     : -1.0f;
 
-  const float speedMin = sizes.cloud_speed * 0.5f;
-  const float speedMax = sizes.cloud_speed * 1.5f;
-  const float speedDif = speedMax - speedMin;
-
-  mX += ( speedMin + speedDif * mId / clouds.size() )
+  mX += ( cloud::minSpeed + mId * cloud::speedRange / clouds.size() )
         * moveDir * deltaTime;
 
   if ( mDir == true )
   {
-    if ( mX - sizes.cloud_sizex / 2.0f > sizes.screen_width )
+    if ( mX - 0.5f * cloud::sizeX > 1.0f )
     {
-      mX = -sizes.cloud_sizex / 2.0f;
+      mX = -0.5f * cloud::sizeX;
       UpdateHeight();
     }
 
     return;
   }
 
-  if ( mX + sizes.cloud_sizex / 2.0f < 0.0f )
+  if ( mX + 0.5f * cloud::sizeX < 0.0f )
   {
-    mX = sizes.screen_width + sizes.cloud_sizex / 2.0f;
+    mX = 1.0f + 0.5f * cloud::sizeX;
     UpdateHeight();
   }
 }
@@ -79,33 +77,35 @@ Cloud::UpdateCoordinates()
 void
 Cloud::UpdateHeight()
 {
-  float cloudHeight = sizes.cloud_lowest_y - sizes.cloud_highest_y;
+  namespace cloud = constants::cloud;
 
-  if ( mDir == true )
-  {
-    mY += sizes.cloud_sizex / 2.0f;
 
-    if ( mY > sizes.cloud_lowest_y )
-      mY = sizes.cloud_highest_y + mId * cloudHeight / clouds.size();
+  const float dir =
+    mDir == true
+    ? 1.0f : -1.0f;
 
-    return;
-  }
 
-  mY -= sizes.cloud_sizex / 2.0f;
+  mY += dir * 0.5f * cloud::sizeX;
 
-  if ( mY < sizes.cloud_highest_y )
-    mY = sizes.cloud_lowest_y - mId * cloudHeight / clouds.size();
+
+  if ( mY > cloud::minHeight )
+    mY = cloud::maxHeight + dir * mId * cloud::heightRange / clouds.size();
+
+  if ( mY < cloud::maxHeight )
+    mY = cloud::minHeight + dir * mId * cloud::heightRange / clouds.size();
 }
 
 void
 Cloud::UpdateCollisionBox()
 {
+  namespace cloud = constants::cloud;
+
   mCollisionBox =
   {
-    mX - sizes.cloud_sizex / 2.0f,
-    mY - sizes.cloud_sizey / 2.0f,
-    sizes.cloud_sizex,
-    sizes.cloud_sizey,
+    mX - 0.5f * cloud::sizeX,
+    mY - 0.5f * cloud::sizeY,
+    cloud::sizeX,
+    cloud::sizeY,
   };
 }
 
@@ -114,16 +114,17 @@ Cloud::isHit(
   const float x,
   const float y ) const
 {
-  return
-    x > mCollisionBox.x &&
-    x < mCollisionBox.x + mCollisionBox.w &&
-    y > mCollisionBox.y &&
-    y < mCollisionBox.y + mCollisionBox.h;
+  const SDL_FPoint point {x, y};
+
+  return SDL_PointInFRect(&point, &mCollisionBox);
 }
 
 void
 Cloud::Draw()
 {
+  namespace cloud = constants::cloud;
+
+
   const auto& game = gameState();
 
   if ( game.isHardcoreEnabled == false && mId >= 2 )
@@ -135,15 +136,15 @@ Cloud::Draw()
     ? textures.texture_cloud_opaque
     : textures.texture_cloud;
 
-  const SDL_Rect cloudRect
+  const SDL_FRect cloudRect
   {
-    mX - sizes.cloud_sizex / 2.0f,
-    mY - sizes.cloud_sizey / 2.0f,
-    sizes.cloud_sizex,
-    sizes.cloud_sizey,
+    toWindowSpaceX(mX - 0.5f * cloud::sizeX),
+    toWindowSpaceY(mY - 0.5f * cloud::sizeY),
+    scaleToScreenX(cloud::sizeX),
+    scaleToScreenY(cloud::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     cloudTexture,
     nullptr,
@@ -152,8 +153,16 @@ Cloud::Draw()
 
   if ( game.debug.collisions == true )
   {
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &mCollisionBox );
+    const SDL_FRect cloudHitbox
+    {
+      toWindowSpaceX(mCollisionBox.x),
+      toWindowSpaceY(mCollisionBox.y),
+      scaleToScreenX(mCollisionBox.w),
+      scaleToScreenY(mCollisionBox.h),
+    };
+
+    setRenderColor(constants::colors::planeHitbox);
+    SDL_RenderDrawRectF( gRenderer, &cloudHitbox );
   }
 }
 
@@ -172,16 +181,19 @@ Cloud::setOpaque()
 void
 Cloud::Respawn()
 {
+  namespace cloud = constants::cloud;
+
+
   if ( mDir == true )
-    mX = sizes.cloud_right_spawn_x + (clouds.size() - mId) * sizes.cloud_sizey;
+    mX = cloud::spawnRightX + (clouds.size() - mId) * cloud::sizeY;
   else
-    mX = sizes.cloud_left_spawn_x + (clouds.size() - mId) * sizes.cloud_sizey;
+    mX = cloud::spawnLeftX + (clouds.size() - mId) * cloud::sizeY;
 
 
   if ( mId % 2 )
-    mY = sizes.cloud_highest_y + (clouds.size() + mId) / (float) clouds.size() * sizes.cloud_sizey;
+    mY = cloud::maxHeight + (clouds.size() + mId) / (float) clouds.size() * cloud::sizeY;
   else
-    mY = sizes.cloud_lowest_y - (clouds.size() + mId) / (float) clouds.size() * sizes.cloud_sizey;
+    mY = cloud::minHeight - (clouds.size() + mId) / (float) clouds.size() * cloud::sizeY;
 
 
   mIsOpaque = true;

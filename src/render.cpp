@@ -20,9 +20,10 @@
 
 #include <include/render.hpp>
 #include <include/sdl.hpp>
+#include <include/canvas.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/plane.hpp>
-#include <include/sizes.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 
@@ -32,40 +33,58 @@
 void
 draw_text(
   const char text[],
-  const int x, const int y )
+  const float x, const float y )
 {
+  namespace Text = constants::text;
+
+
   for ( size_t i = 0; i < strlen(text); i++ )
   {
     const SDL_Rect textRect
     {
-      x + sizes.text_sizex * i,
-      y,
-      sizes.text_sizex,
-      sizes.text_sizey,
+      toWindowSpaceX(x + Text::sizeX * i),
+      toWindowSpaceY(y),
+      scaleToScreenX(Text::sizeX),
+      scaleToScreenY(Text::sizeY),
     };
 
     SDL_RenderCopy(
       gRenderer,
       textures.main_font,
       &textures.font_rect[text[i] - 32],
-      &textRect  );
+      &textRect );
   }
+}
+
+void
+draw_text(
+  const std::string& text,
+  const float x, const float y )
+{
+  return draw_text(text.c_str(), x, y);
 }
 
 void
 draw_background()
 {
+  namespace plane = constants::plane;
+  namespace bullet = constants::bullet;
+  namespace colors = constants::colors;
+
+
+  setRenderColor(colors::background);
   SDL_RenderClear(gRenderer);
 
 
-  const SDL_Rect backgroundRect
+  const SDL_FRect backgroundRect
   {
-    0, 0,
-    sizes.screen_width,
-    sizes.screen_height,
+    toWindowSpaceX(0.0f),
+    toWindowSpaceY(0.0f),
+    scaleToScreenX(1.0f),
+    scaleToScreenY(1.0f),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.texture_background,
     nullptr,
@@ -74,36 +93,41 @@ draw_background()
 
   if ( gameState().debug.collisions == true )
   {
-    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
-    SDL_RenderDrawLine(
+    setRenderColor(colors::planeHitbox);
+    SDL_RenderDrawLineF(
       gRenderer,
-      0,
-      sizes.ground_y_collision,
-      sizes.screen_width,
-      sizes.ground_y_collision );
+      toWindowSpaceX(0.0f),
+      toWindowSpaceY(plane::groundCollision),
+      toWindowSpaceX(1.0f),
+      toWindowSpaceY(plane::groundCollision) );
 
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawLine(
+    setRenderColor(colors::bulletHitbox);
+    SDL_RenderDrawLineF(
       gRenderer,
-      0,
-      sizes.bullet_ground_collision,
-      sizes.screen_width,
-      sizes.bullet_ground_collision );
+      toWindowSpaceX(0.0f),
+      toWindowSpaceY(bullet::groundCollision),
+      toWindowSpaceX(1.0f),
+      toWindowSpaceY(bullet::groundCollision) );
   }
 }
 
 void
 draw_barn()
 {
-  const SDL_Rect barnRect
+  namespace barn = constants::barn;
+  namespace pilot = constants::pilot;
+  namespace colors = constants::colors;
+
+
+  const SDL_FRect barnRect
   {
-    sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5,
-    sizes.screen_height * 0.808,
-    sizes.barn_sizex,
-    sizes.barn_sizey,
+    toWindowSpaceX(barn::posX),
+    toWindowSpaceY(barn::posY),
+    scaleToScreenX(barn::sizeX),
+    scaleToScreenY(barn::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.texture_barn,
     nullptr,
@@ -112,29 +136,29 @@ draw_barn()
 
   if ( gameState().debug.collisions == true )
   {
-    SDL_Rect barnHitbox
+    SDL_FRect barnHitbox
     {
-      sizes.barn_x_bullet_collision,
-      sizes.barn_y_bullet_collision,
-      sizes.barn_sizex * 0.95f,
-      sizes.barn_sizey,
+      toWindowSpaceX(barn::bulletCollisionX),
+      toWindowSpaceY(barn::bulletCollisionY),
+      scaleToScreenX(barn::bulletCollisionSizeX),
+      scaleToScreenY(barn::sizeY),
     };
 
-    SDL_SetRenderDrawColor( gRenderer, 255, 0, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+    setRenderColor(colors::bulletHitbox);
+    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 
-    barnHitbox.x = sizes.barn_x_collision;
-    barnHitbox.y = sizes.barn_y_collision;
+    barnHitbox.x = toWindowSpaceX(barn::planeCollisionX);
+    barnHitbox.y = toWindowSpaceY(barn::planeCollisionY);
 
-    SDL_SetRenderDrawColor( gRenderer, 255, 255, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+    setRenderColor(colors::planeHitbox);
+    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 
-    barnHitbox.y = sizes.ground_y_pilot_collision;
-    barnHitbox.x = sizes.barn_x_pilot_left_collision;
-    barnHitbox.w = sizes.barn_x_pilot_right_collision - sizes.barn_x_pilot_left_collision;
+    barnHitbox.x = toWindowSpaceX(barn::pilotCollisionLeftX);
+    barnHitbox.y = toWindowSpaceY(pilot::groundCollision);
+    barnHitbox.w = scaleToScreenX(barn::pilotCollisionRightX - barn::pilotCollisionLeftX);
 
-    SDL_SetRenderDrawColor( gRenderer, 0, 255, 0, 1 );
-    SDL_RenderDrawRect( gRenderer, &barnHitbox );
+    setRenderColor(colors::pilotHitbox);
+    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
   }
 }
 
@@ -144,15 +168,90 @@ draw_score()
   const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   const auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  char text [5];
+  const auto text =
+    std::to_string(planeBlue.score()) + "-" +
+    std::to_string(planeRed.score());
 
-  sprintf( text, "%u-%u", planeBlue.score(), planeRed.score() );
-  draw_text( text, sizes.screen_width * 0.45, sizes.screen_height * 0.5 );
+  draw_text( text, 0.45f, 0.5f );
+}
+
+void
+draw_menu_rect()
+{
+  namespace menu = constants::menu;
+
+
+  const SDL_FRect menuRect
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(menu::sizeX),
+    scaleToScreenY(menu::sizeY),
+  };
+
+  SDL_RenderCopyF(
+    gRenderer,
+    textures.menu_box,
+    nullptr,
+    &menuRect );
+}
+
+void
+draw_window_letterbox()
+{
+  const SDL_FRect rectLeft
+  {
+    0.0f,
+    0.0f,
+    toWindowSpaceX(0.0f),
+    canvas.windowHeight,
+  };
+
+  const SDL_FRect rectRight
+  {
+    toWindowSpaceX(1.0f),
+    0.0f,
+    canvas.windowWidth - toWindowSpaceX(1.0f),
+    canvas.windowHeight,
+  };
+
+  const SDL_FRect rectTop
+  {
+    0.0f,
+    0.0f,
+    canvas.windowWidth,
+    toWindowSpaceY(0.0f),
+  };
+
+  const SDL_FRect rectBottom
+  {
+    0.0f,
+    toWindowSpaceY(1.0f),
+    canvas.windowWidth,
+    canvas.windowHeight - toWindowSpaceY(1.0f),
+  };
+
+  setRenderColor(constants::colors::letterbox);
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &rectLeft );
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &rectRight );
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &rectTop );
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &rectBottom );
 }
 
 void
 display_update()
 {
   SDL_RenderPresent(gRenderer);
-//  SDL_UpdateWindowSurface(gWindow);
 }

@@ -19,13 +19,12 @@
 */
 
 #include <include/sdl.hpp>
-#include <include/sizes.hpp>
+#include <include/canvas.hpp>
+#include <include/constants.hpp>
 #include <include/sounds.hpp>
 #include <include/utility.hpp>
 
 
-int32_t SCREEN_HEIGHT {};
-int32_t SCREEN_WIDTH {};
 int32_t DISPLAY_INDEX {};
 
 SDL_Window* gWindow {};
@@ -60,26 +59,36 @@ SDL_init()
   }
 
 
-//  Disable Always-on-Top
-//  if ( SDL_SetHint( SDL_HINT_ALLOW_TOPMOST, "0" ) == false )
-//    log_message( "Warning: Failed to disable Always-On-Top hint!\n" );
-
 //  Get screen resolution
-  SDL_DisplayMode dm;
+  SDL_DisplayMode dm {};
   SDL_GetDesktopDisplayMode( DISPLAY_INDEX, &dm );
-  SCREEN_HEIGHT = dm.h;
-  SCREEN_WIDTH = dm.w;
 
-  sizes.screen_height = SCREEN_HEIGHT * 0.75f;
-  sizes.screen_width = sizes.screen_height * 1.23f;
+//  dm.w = 1000;
+//  dm.h = 1000;
 
-  sizes.screen_height_new = sizes.screen_height;
-  sizes.screen_width_new = sizes.screen_width;
+  canvas.windowWidth = std::min(dm.w * 0.75f, dm.h * 0.75f);
+  canvas.windowHeight = canvas.windowWidth / constants::aspectRatio;
+
+  canvas.windowWidthNew = canvas.windowWidth;
+  canvas.windowHeightNew = canvas.windowHeight;
+
+  log_message(
+    "screen size: " + std::to_string(canvas.windowWidth) +
+    "x" + std::to_string(canvas.windowHeight) + "\n" );
+
+  recalculateVirtualScreen();
 
 
 //  Create window
   log_message( "SDL Startup: Creating SDL window..." );
-  gWindow = SDL_CreateWindow( "Biplanes Revival v" BIPLANES_VERSION, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, sizes.screen_width, sizes.screen_height, SDL_WINDOW_RESIZABLE );
+
+  gWindow = SDL_CreateWindow(
+    "Biplanes Revival v" BIPLANES_VERSION,
+    SDL_WINDOWPOS_UNDEFINED,
+    SDL_WINDOWPOS_UNDEFINED,
+    canvas.windowWidth,
+    canvas.windowHeight,
+    SDL_WINDOW_RESIZABLE );
 
   if ( gWindow == nullptr )
   {
@@ -89,21 +98,33 @@ SDL_init()
     return 1;
   }
 
-  log_message( "Done!\n" );
+  SDL_SetWindowPosition(
+    gWindow,
+    dm.w * 0.5f - canvas.windowWidth * 0.5f,
+    dm.h * 0.5f - canvas.windowHeight * 0.5f );
 
-  SDL_SetWindowPosition( gWindow, SCREEN_WIDTH * 0.5f - sizes.screen_width * 0.5f, SCREEN_HEIGHT * 0.1 );
-  SDL_SetWindowMinimumSize( gWindow, SCREEN_HEIGHT * 1.23 * 0.2, SCREEN_HEIGHT * 0.2 );
-  SDL_SetWindowMaximumSize( gWindow, SCREEN_HEIGHT * 1.23, SCREEN_HEIGHT );
+  SDL_SetWindowMinimumSize(
+    gWindow,
+    dm.w * 0.2f,
+    dm.h * 0.2f );
+
+  log_message( "Done!\n" );
 
 
 //  Create renderer for window
   log_message( "SDL Startup: Creating SDL renderer for window..." );
-  gRenderer = SDL_CreateRenderer( gWindow, DISPLAY_INDEX, SDL_RENDERER_ACCELERATED );
+
+  gRenderer = SDL_CreateRenderer(
+    gWindow, -1,
+    SDL_RENDERER_ACCELERATED );
 
   if ( gRenderer == nullptr )
   {
     log_message( "\nSDL Startup: Failed to create renderer in accelerated mode! SDL Error: ", SDL_GetError(), "\n\nCreating SDL renderer in software mode..." );
-    gRenderer = SDL_CreateRenderer( gWindow, 0, SDL_RENDERER_SOFTWARE );
+
+    gRenderer = SDL_CreateRenderer(
+      gWindow, -1,
+      SDL_RENDERER_SOFTWARE );
 
     if ( gRenderer == nullptr )
     {
@@ -114,11 +135,21 @@ SDL_init()
     }
   }
 
+//  {
+//    if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, "1" ) == false )
+//      log_message( "Warning: Failed to enable V-Sync!\n" );
+
+//    if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, "1" ) == false )
+//      log_message( "Warning: Failed to enable dynamic V-Sync!\n" );
+
+//    SDL_RenderSetVSync(gRenderer, true);
+//  }
+
   log_message( "Done!\n" );
 
 
 //  Initialize renderer color
-  SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0x00 );
+  SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 0 );
 
 
 //  Initialize PNG loading
@@ -280,4 +311,110 @@ playSound(
   }
 
   Mix_PlayChannel(-1, sound, 0);
+}
+
+
+void
+setRenderColor(
+  const Color& color )
+{
+  SDL_SetRenderDrawColor(
+    gRenderer,
+    color.r,
+    color.g,
+    color.b,
+    color.a );
+}
+
+void
+queryWindowSize()
+{
+  if ( windowEvent.type != SDL_WINDOWEVENT )
+    return;
+
+  if (  windowEvent.window.event != SDL_WINDOWEVENT_RESIZED &&
+        windowEvent.window.event != SDL_WINDOWEVENT_SIZE_CHANGED &&
+        windowEvent.window.event != SDL_WINDOWEVENT_MOVED )
+    return;
+
+
+  SDL_GetRendererOutputSize(
+    gRenderer,
+    &canvas.windowWidthNew,
+    &canvas.windowHeightNew );
+
+  if (  canvas.windowWidthNew == canvas.windowWidth &&
+        canvas.windowHeightNew == canvas.windowHeight &&
+        SDL_GetWindowDisplayIndex(gWindow) == DISPLAY_INDEX )
+    return;
+
+  canvas.windowWidth = canvas.windowWidthNew;
+  canvas.windowHeight = canvas.windowHeightNew;
+
+  recalculateVirtualScreen();
+
+  SDL_RenderClear(gRenderer);
+}
+
+void
+recalculateVirtualScreen()
+{
+  const float ratio = std::min(
+    canvas.windowWidth / constants::aspectRatio, (float) canvas.windowHeight );
+
+  canvas.width = constants::aspectRatio * ratio;
+  canvas.height = ratio;
+  canvas.originX = (canvas.windowWidth - constants::aspectRatio * ratio) * 0.5f;
+  canvas.originY = (canvas.windowHeight - ratio) * 0.5f;
+}
+
+
+SDL_FPoint
+toWindowSpace(
+  const SDL_FPoint& point )
+{
+  return
+  {
+    toWindowSpaceX(point.x),
+    toWindowSpaceY(point.y),
+  };
+}
+
+float
+toWindowSpaceX(
+  const float x )
+{
+  return canvas.originX + scaleToScreenX(x);
+}
+
+float
+toWindowSpaceY(
+  const float y )
+{
+  return canvas.originY + scaleToScreenY(y);
+}
+
+SDL_FPoint
+scaleToScreen(
+  const SDL_FPoint& point )
+{
+  return
+  {
+    scaleToScreenX(point.x),
+    scaleToScreenY(point.y),
+  };
+}
+
+float
+scaleToScreenX(
+  const float x )
+{
+  return x * canvas.width;
+}
+
+float
+scaleToScreenY(
+  const float y )
+{
+  return y * canvas.height;
 }

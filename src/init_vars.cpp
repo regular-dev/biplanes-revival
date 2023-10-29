@@ -22,7 +22,6 @@
 #include <include/sdl.hpp>
 #include <include/cloud.hpp>
 #include <include/plane.hpp>
-#include <include/sizes.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 #include <include/utility.hpp>
@@ -31,90 +30,10 @@
 void
 init_sizes()
 {
-  sizes.text_sizex = sizes.screen_width / 32;
-  sizes.text_sizey = sizes.screen_height / 26;
-
-  sizes.button_sizex = sizes.screen_width * 0.984f;
-  sizes.button_sizey = sizes.screen_height * 0.0577f;
-
-
-//  Plane
   for ( auto& [planeType, plane] : planes )
     plane.AnimationsReset();
 
-  sizes.ground_y_collision = sizes.screen_height * 0.875f;
-  sizes.plane_sizex = sizes.screen_width * 0.0935f;
-  sizes.plane_sizey = sizes.screen_height * 0.11538f;
 
-  sizes.plane_max_speed_def = sizes.screen_width * 0.303f;
-  sizes.plane_max_speed_acc = sizes.screen_width * 0.43478f;
-
-  sizes.plane_incr_speed = sizes.screen_height * 0.5f;
-
-  sizes.plane_blue_landx = sizes.screen_width * 0.0625f;
-  sizes.plane_red_landx = sizes.screen_width * 0.9375f;
-  sizes.plane_landy = sizes.screen_height * 0.8675f;
-
-
-//  Smoke animation
-  sizes.smk_sizex = sizes.screen_width * 0.05f;
-  sizes.smk_sizey = sizes.screen_height * 0.0625f;
-
-
-//  Explosion animation
-  sizes.expl_sizex = sizes.screen_width * 0.15625f;
-  sizes.expl_sizey = sizes.screen_height * 0.1923f;
-
-
-//  Bullet
-  sizes.bullet_sizex = sizes.screen_width * 0.0117f;
-  sizes.bullet_sizey = sizes.screen_height * 0.0144f;
-  sizes.bullet_speed = sizes.screen_width * 0.77f;
-
-  sizes.bullet_hit_sizex = sizes.screen_width * 0.035f;
-  sizes.bullet_hit_sizey = sizes.screen_height * 0.038f;
-
-  sizes.bullet_ground_collision = sizes.screen_height * 0.895f;
-
-
-//  Pilot
-  sizes.ground_y_pilot_collision = sizes.screen_height * 0.8925f;
-  sizes.pilot_eject_speed = sizes.screen_height * 0.45f;
-  sizes.pilot_gravity = sizes.screen_height * 0.2;
-  sizes.pilot_chute_gravity = sizes.screen_height * 0.2f;
-  sizes.pilot_chute_speed = sizes.screen_width * 0.04f;
-  sizes.pilot_run_speed = sizes.screen_width * 0.1f;
-
-  sizes.pilot_sizex = sizes.screen_width * 0.0273f;
-  sizes.pilot_sizey = sizes.screen_height * 0.03365f;
-
-
-//  Pilot parachute
-  sizes.chute_sizex = sizes.screen_width * 0.078;
-  sizes.chute_sizey = sizes.screen_height * 0.057;
-
-
-//  Pilot death animation
-  sizes.angel_ascent_speed = sizes.screen_height * 0.035f;
-  sizes.angel_sizex = sizes.screen_width * 0.0273f;
-  sizes.angel_sizey = sizes.screen_width * 0.0273f;
-
-
-//  Barn
-  sizes.barn_sizex = sizes.screen_width * 0.1367f;
-  sizes.barn_sizey = sizes.screen_height * 0.105769f;
-
-  sizes.barn_x_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.5f;
-  sizes.barn_y_collision = sizes.screen_height * 0.788f;
-
-  sizes.barn_x_pilot_left_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.4f;
-  sizes.barn_x_pilot_right_collision = sizes.screen_width * 0.5f + sizes.barn_sizex * 0.4f;
-
-  sizes.barn_x_bullet_collision = sizes.screen_width * 0.5f - sizes.barn_sizex * 0.475f;
-  sizes.barn_y_bullet_collision = sizes.screen_height * 0.81f;
-
-
-//  Clouds
   if ( clouds.empty() == true )
   {
     clouds.resize(8);
@@ -122,27 +41,6 @@ init_sizes()
     for ( size_t i = 0; i < clouds.size(); i++ )
       clouds[i] = {i % 2, i};
   }
-
-  sizes.cloud_sizex = sizes.screen_width * 0.2695f;
-  sizes.cloud_sizey = sizes.screen_height * 0.1538f;
-  sizes.cloud_speed = sizes.screen_width * 0.09765625f;
-  sizes.cloud_left_spawn_x = sizes.screen_width * 0.1f;
-  sizes.cloud_right_spawn_x = sizes.screen_width * 0.6f;
-  sizes.cloud_highest_y = sizes.screen_height * 0.05f;
-  sizes.cloud_lowest_y = sizes.screen_height * 0.35;
-
-
-//  Zeppelin
-  sizes.zeppelin_sizex = sizes.screen_width * 0.199f;
-  sizes.zeppelin_sizey = sizes.screen_height * 0.13f;
-  sizes.zeppelin_speed = sizes.screen_width * 0.014f;
-
-  sizes.zeppelin_spawn_x = sizes.screen_width * 0.5f;
-  sizes.zeppelin_highest_y = sizes.screen_height * 0.1f;
-  sizes.zeppelin_lowest_y = sizes.screen_height * 0.35f;
-
-  sizes.zeppelin_score_sizex = sizes.screen_width * 0.0195f;
-  sizes.zeppelin_score_sizey = sizes.screen_height * 0.0288f;
 }
 
 void
@@ -150,18 +48,6 @@ textures_load()
 {
   log_message( "RESOURCES: Loading textures..." );
 
-
-  SDL_GetRendererOutputSize(
-    gRenderer,
-    &sizes.screen_width,
-    &sizes.screen_height );
-
-  sizes.screen_width = sizes.screen_height * 1.23;
-
-  SDL_SetWindowSize(
-    gWindow,
-    sizes.screen_width,
-    sizes.screen_height );
 
   textures.main_font = loadTexture( "assets/menu/font.png" );
 

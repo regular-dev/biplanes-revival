@@ -20,7 +20,6 @@
 
 #include <include/controls.hpp>
 #include <include/plane.hpp>
-#include <include/network_data.hpp>
 
 #include <SDL_keyboard.h>
 
@@ -81,14 +80,6 @@ readLocalInput()
     controls_local.jump = true;
   else
     controls_local.jump = false;
-}
-
-
-void
-readOpponentInput()
-{
-  controls_opponent.throttle = opponentData.throttle;
-  controls_opponent.pitch    = opponentData.pitch;
 }
 
 

@@ -22,6 +22,7 @@
 #include <include/sdl.hpp>
 #include <include/time.hpp>
 #include <include/timer.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/network_state.hpp>
 #include <include/render.hpp>
@@ -30,7 +31,6 @@
 #include <include/init_vars.hpp>
 #include <include/controls.hpp>
 #include <include/plane.hpp>
-#include <include/sizes.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
@@ -81,30 +81,6 @@ Menu::Menu()
 }
 
 void
-Menu::ResizeWindow()
-{
-  if ( windowEvent.type != SDL_WINDOWEVENT )
-    return;
-
-  if (  windowEvent.window.event != SDL_WINDOWEVENT_RESIZED &&
-        windowEvent.window.event != SDL_WINDOWEVENT_SIZE_CHANGED &&
-        windowEvent.window.event != SDL_WINDOWEVENT_MOVED )
-    return;
-
-
-  if ( mCurrentRoom != ROOMS::GAME && gameState().isPaused == false )
-    SDL_GetRendererOutputSize(
-      gRenderer,
-      &sizes.screen_width_new,
-      &sizes.screen_height_new );
-
-  if (  sizes.screen_height_new != sizes.screen_height ||
-        sizes.screen_width_new != sizes.screen_width ||
-        SDL_GetWindowDisplayIndex(gWindow) != DISPLAY_INDEX )
-    window_resize();
-}
-
-void
 Menu::setMessage(
   const MESSAGE_TYPE message_type )
 {
@@ -117,20 +93,18 @@ Menu::setMessage(
 void
 Menu::AnimateButton()
 {
-  if ( sizes.button_dir == MENU_BUTTON_DIR::RIGHT )
+  mButtonX += mButtonDir * constants::button::speed * deltaTime;
+
+  if ( mButtonX >= 1.0f )
   {
-    if ( sizes.button_x < sizes.button_width - deltaTime * sizes.screen_width * 0.075 )
-      sizes.button_x += deltaTime * sizes.screen_width * 0.075;
-    else
-      sizes.button_dir = MENU_BUTTON_DIR::LEFT;
-
-    return;
+    mButtonX = 2.0f - mButtonX;
+    mButtonDir = MENU_BUTTON_DIR::LEFT;
   }
-
-  if ( sizes.button_x > deltaTime * sizes.screen_width * 0.075 )
-    sizes.button_x -= deltaTime * sizes.screen_width * 0.075;
-  else
-    sizes.button_dir = MENU_BUTTON_DIR::RIGHT;
+  else if ( mButtonX <= 0.0f )
+  {
+    mButtonX = -mButtonX;
+    mButtonDir = MENU_BUTTON_DIR::RIGHT;
+  }
 }
 
 bool
@@ -470,13 +444,13 @@ Menu::DrawMenu()
           ? planeRed : planeBlue;
 
 //        TODO: move away magic number
-        const float textSizeFactor =
+        const float offsetInLetters =
           playerPlane.type() == PLANE_TYPE::BLUE
           ? 1.0f : 7.0f;
 
         draw_text( "It's You!",
-          playerPlane.x() - sizes.text_sizex * textSizeFactor,
-          playerPlane.y() - sizes.screen_height * 0.1 );
+          playerPlane.x() - offsetInLetters * constants::text::sizeX,
+          playerPlane.y() - 0.1f ); // TODO: move to constants
       }
 
       if ( game.gameMode != GAME_MODE::HUMAN_VS_HUMAN )
@@ -561,21 +535,25 @@ Menu::DrawMenu()
 void
 Menu::DrawButton()
 {
+  namespace button = constants::button;
+
   const SDL_Rect srcRect
   {
-    sizes.button_x, 0,
-    sizes.button_width, 12,
+    mButtonX * 0.5f * button::width,
+    0,
+    0.5f * button::width,
+    button::height,
   };
 
-  const SDL_Rect buttonRect
+  const SDL_FRect buttonRect
   {
-    sizes.screen_width * 0.008,
-    sizes.screen_height * 0.34755 + mSelectedButton * sizes.button_sizey,
-    sizes.button_sizex,
-    sizes.button_sizey,
+    toWindowSpaceX(button::originX),
+    toWindowSpaceY(button::originY + mSelectedButton * button::sizeY),
+    scaleToScreenX(button::sizeX),
+    scaleToScreenY(button::sizeY),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.menu_moving_button,
     &srcRect,
@@ -586,41 +564,28 @@ Menu::DrawButton()
 void
 Menu::screen_main()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  namespace button = constants::button;
+
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
   draw_background();
   draw_barn();
 
-
-  const SDL_Rect menuRect
-  {
-    0,
-    sizes.screen_height * 0.3,
-    sizes.screen_width,
-    sizes.screen_height * 0.288
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.menu_box,
-    nullptr,
-    &menuRect );
-
-
+  draw_menu_rect();
   DrawButton();
 
 
-  draw_text( "BIPLANES REVIVAL", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
-  draw_text( "One Player Game ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Two Player Game ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Controls        ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Help            ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
-  draw_text( "Quit            ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
+  draw_text( "BIPLANES REVIVAL", 0.250f, 0.2855f );
+  draw_text( "One Player Game ", 0.255f, 0.2855f + 0.0721f );
+  draw_text( "Two Player Game ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Controls        ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Help            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Quit            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
 
-  draw_text( "Navigate menu using arrow keys  ", sizes.screen_width * 0.005, sizes.screen_height * 0.65 );
-  draw_text( " Press[RETURN] to enter submenu ", sizes.screen_width * 0.005, sizes.screen_height * 0.70 );
-  draw_text( "  Press [F1] to see your stats  ", sizes.screen_width * 0.005, sizes.screen_height * 0.75 );
+  draw_text( "Navigate menu using arrow keys  ", 0.005f, 0.65f );
+  draw_text( " Press[RETURN] to enter submenu ", 0.005f, 0.70f );
+  draw_text( "  Press [F1] to see your stats  ", 0.005f, 0.75f );
 }
 
 void
@@ -628,7 +593,7 @@ Menu::screen_settings()
 {
   if ( gameState().isPaused == false )
   {
-    SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+    setRenderColor(constants::colors::background);
     SDL_RenderClear(gRenderer);
 
     draw_background();
@@ -636,15 +601,16 @@ Menu::screen_settings()
   }
 
 
-  const SDL_Rect settingsRect
+  const SDL_FRect settingsRect
   {
-    0,
-    sizes.screen_height * 0.3,
-    sizes.screen_width,
-    sizes.screen_height * 0.288 + sizes.screen_height * 0.05775 * 3.0
+    toWindowSpaceX(constants::menu::originX),
+    toWindowSpaceY(constants::menu::originY),
+    scaleToScreenX(constants::menu::sizeX),
+//    TODO: move to constants
+    scaleToScreenY(constants::menu::sizeY + 0.05775 * 3.0),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.menu_settings_controls_box,
     nullptr,
@@ -654,143 +620,90 @@ Menu::screen_settings()
   DrawButton();
 
 
-  draw_text( "Controls            ",          sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
-  draw_text( "Accelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( SDL_GetKeyName( THROTTLE_UP ),   sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Decelerate          ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( SDL_GetKeyName( THROTTLE_DOWN ), sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Turn Anti-Clockwise ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( SDL_GetKeyName( TURN_LEFT ),     sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Turn Clockwise      ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
-  draw_text( SDL_GetKeyName( TURN_RIGHT ),    sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
-  draw_text( "Fire                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
-  draw_text( SDL_GetKeyName( FIRE ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 4.0 );
-  draw_text( "Eject               ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
-  draw_text( SDL_GetKeyName( JUMP ),          sizes.screen_width * 0.700, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 5.0 );
-  draw_text( "Back                ",          sizes.screen_width * 0.025, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 6.0 );
+  draw_text( "Controls            ",        0.250f, 0.2855f );
+  draw_text( "Accelerate          ",        0.025f, 0.2855f + 0.0721f );
+  draw_text( SDL_GetKeyName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
+  draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY );
+  draw_text( SDL_GetKeyName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + constants::button::sizeY );
+  draw_text( "Turn Anti-Clockwise ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 2.f );
+  draw_text( SDL_GetKeyName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 2.f );
+  draw_text( "Turn Clockwise      ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 3.f );
+  draw_text( SDL_GetKeyName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 3.f );
+  draw_text( "Fire                ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 4.f );
+  draw_text( SDL_GetKeyName(FIRE),          0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 4.f );
+  draw_text( "Eject               ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 5.f );
+  draw_text( SDL_GetKeyName(JUMP),          0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 5.f );
+  draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 6.f );
 
   if ( menu.isDefiningKey() == true )
   {
-    draw_text( "     Press the key you wish    ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 );
-    draw_text( "  to assign to this function.  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 2.0 );
-    draw_text( "     Press [ESC] to cancel.    ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.5 );
+    draw_text( "     Press the key you wish    ", 0.025f, 0.05f );
+    draw_text( "  to assign to this function.  ", 0.025f, 0.05f * 2.0f );
+    draw_text( "     Press [ESC] to cancel.    ", 0.025f, 0.05f * 3.5f );
   }
   else
   {
-    draw_text( "Press[RETURN] to remap selected", sizes.screen_width * 0.025, sizes.screen_height * 0.025 );
-    draw_text( "          key binding.         ", sizes.screen_width * 0.025, sizes.screen_height * 0.075 );
-    draw_text( "  Press [DELETE]  to reset it  ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 3.0 );
-    draw_text( "       to default value.       ", sizes.screen_width * 0.025, sizes.screen_height * 0.05 * 4.0 );
+    draw_text( "Press[RETURN] to remap selected", 0.025f, 0.025f );
+    draw_text( "          key binding.         ", 0.025f, 0.075f );
+    draw_text( "  Press [DELETE]  to reset it  ", 0.025f, 0.05f * 3.f );
+    draw_text( "       to default value.       ", 0.025f, 0.05f * 4.f );
   }
 }
 
 void
 Menu::screen_pause()
 {
-  const SDL_Rect menuRect
-  {
-    0,
-    sizes.screen_height * 0.3,
-    sizes.screen_width,
-    sizes.screen_height * 0.288
-  };
-
-  SDL_RenderCopy(
-    gRenderer,
-    textures.menu_box,
-    nullptr,
-    &menuRect );
+  namespace button = constants::button;
 
 
+  draw_menu_rect();
   DrawButton();
 
-
-  draw_text( "GAME PAUSED       ", sizes.screen_width * 0.250, sizes.screen_height * 0.2855 );
-  draw_text( "On With the Show! ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 );
-  draw_text( "Controls          ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey );
-  draw_text( "Help              ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 2.0 );
-  draw_text( "Bail Out!         ", sizes.screen_width * 0.255, sizes.screen_height * 0.2855 + sizes.screen_height * 0.0721 + sizes.button_sizey * 3.0 );
+  draw_text( "GAME PAUSED       ", 0.250f, 0.2855f );
+  draw_text( "On With the Show! ", 0.255f, 0.2855f + 0.0721f );
+  draw_text( "Controls          ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Help              ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Bail Out!         ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
 }
 
 void
 Menu::screen_copyright()
 {
-  SDL_SetRenderDrawColor(gRenderer, 0, 154, 239, 255);
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
-  draw_text( "      'Bluetooth Biplanes'      ", 0, sizes.screen_height * 0.350 );
-  draw_text( "      @ Morpheme Ltd. 2004      ", 0, sizes.screen_height * 0.400 );
-  draw_text( "       All Rights Reserved      ", 0, sizes.screen_height * 0.450 );
-  draw_text( "       www.morpheme.co.uk       ", 0, sizes.screen_height * 0.500 );
+  draw_text( "      'Bluetooth Biplanes'      ", 0, 0.350f );
+  draw_text( "      @ Morpheme Ltd. 2004      ", 0, 0.400f );
+  draw_text( "       All Rights Reserved      ", 0, 0.450f );
+  draw_text( "       www.morpheme.co.uk       ", 0, 0.500f );
 
-  draw_text( "  Brought to PC on 01.04.20 by  ", 0, sizes.screen_height * 0.650 );
-  draw_text( "       casqade & xion  at       ", 0, sizes.screen_height * 0.700 );
-  draw_text( "     github.com/regular-dev     ", 0, sizes.screen_height * 0.750 );
-  draw_text( "         regular-dev.org        ", 0, sizes.screen_height * 0.800 );
+  draw_text( "  Brought to PC on 01.04.20 by  ", 0, 0.650f );
+  draw_text( "       casqade & xion  at       ", 0, 0.700f );
+  draw_text( "     github.com/regular-dev     ", 0, 0.750f );
+  draw_text( "         regular-dev.org        ", 0, 0.800f );
 
-  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, sizes.screen_height * 0.900 );
+  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, 0.900f );
 }
 
 void
 Menu::screen_splash()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
-
-  const SDL_Rect logoRect
+  const SDL_FRect logoRect
   {
-    sizes.screen_width * 0.5f - sizes.screen_height * 0.5f,
-    0,
-    sizes.screen_height,
-    sizes.screen_height
+    toWindowSpaceX(0.5f - 0.5f / constants::aspectRatio),
+    toWindowSpaceY(0.0f),
+    scaleToScreenX(1.0f / constants::aspectRatio),
+    scaleToScreenY(1.0f),
   };
 
-  SDL_RenderCopy(
+  SDL_RenderCopyF(
     gRenderer,
     textures.menu_logo,
     nullptr,
     &logoRect );
 
-  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, sizes.screen_height * 0.900f );
-}
-
-void
-window_resize()
-{
-  if ( SDL_GetWindowDisplayIndex(gWindow) != DISPLAY_INDEX )
-  {
-    DISPLAY_INDEX = SDL_GetWindowDisplayIndex(gWindow);
-
-    SDL_DisplayMode dm;
-
-    SDL_GetDesktopDisplayMode(
-      SDL_GetWindowDisplayIndex(gWindow),
-      &dm );
-
-    SCREEN_WIDTH = dm.w;
-    SCREEN_HEIGHT = dm.h;
-
-    SDL_SetWindowMinimumSize(
-      gWindow,
-      SCREEN_HEIGHT * 1.23 * 0.2,
-      SCREEN_HEIGHT * 0.2 );
-
-    SDL_SetWindowMaximumSize(
-      gWindow,
-      SCREEN_HEIGHT * 1.23,
-      SCREEN_HEIGHT );
-  }
-
-  sizes.screen_height = sizes.screen_height_new;
-  sizes.screen_width = sizes.screen_height * 1.23f;
-  sizes.screen_width_new = sizes.screen_width;
-
-  SDL_SetWindowSize(
-    gWindow,
-    sizes.screen_width,
-    sizes.screen_height );
-
-  init_sizes();
-  SDL_RenderClear(gRenderer);
+  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, 0.900f );
 }

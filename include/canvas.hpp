@@ -20,41 +20,28 @@
 
 #pragma once
 
-#include <SDL_rect.h>
-
 #include <cstdint>
-#include <vector>
 
 
-class Cloud
+struct Canvas
 {
-  float mX {};
-  float mY {};
-  bool mDir {};
+//  Virtual screen
+  int32_t width {};
+  int32_t height {};
 
-  uint8_t mId {};
-  bool mIsOpaque {};
-  SDL_FRect mCollisionBox {};
-
-
-public:
-  Cloud() = default;
-  Cloud( const bool dir, const uint8_t id );
+  int32_t originX {};
+  int32_t originY {};
 
 
-  void Update();
-  void UpdateCoordinates();
-  void UpdateHeight();
-  void UpdateCollisionBox();
+//  SDL window
+  int32_t windowWidth {};
+  int32_t windowHeight {};
+
+  int32_t windowWidthNew {};
+  int32_t windowHeightNew {};
 
 
-  void Draw();
-  void setTransparent();
-  void setOpaque();
-  void Respawn();
-
-
-  bool isHit( const float x, const float y ) const;
+  Canvas() = default;
 };
 
-extern std::vector <Cloud> clouds;
+extern Canvas canvas;

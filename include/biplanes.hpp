@@ -29,4 +29,4 @@ bool game_init_mp();
 void game_loop_sp();
 void game_loop_mp();
 
-void game_draw();
+void draw_game();

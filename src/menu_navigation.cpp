@@ -816,7 +816,6 @@ Menu::ReturnToMainMenu()
   gameState().isPaused = false;
   networkState().isOpponentConnected = false;
 
-  SDL_SetWindowResizable(gWindow, SDL_TRUE);
   ChangeRoom(ROOMS::MENU_MAIN);
 
   mButtonWasPressed = false;

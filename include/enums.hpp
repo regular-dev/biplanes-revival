@@ -29,10 +29,10 @@ enum class SRV_CLI : uint8_t
   CLIENT,
 };
 
-enum MENU_BUTTON_DIR : uint8_t
+enum MENU_BUTTON_DIR : int8_t
 {
-  LEFT,
-  RIGHT,
+  LEFT = -1,
+  RIGHT = 1,
 };
 
 enum GAME_MODE : uint8_t

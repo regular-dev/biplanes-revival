@@ -40,6 +40,9 @@ class Menu
   uint8_t mSelectedButton {};
   bool mButtonWasPressed {true};
 
+  float mButtonX {};
+  MENU_BUTTON_DIR mButtonDir {MENU_BUTTON_DIR::RIGHT};
+
   bool mSpecifyingVarState[4] {};
   bool mIsTyping {};
   MENU_SETTINGS_CONTROLS mKeyToDefine {};
@@ -58,7 +61,6 @@ class Menu
 public:
   Menu();
 
-  void ResizeWindow();
   void DrawMenu();
   void DrawButton();
   void setMessage( const MESSAGE_TYPE );
@@ -117,5 +119,3 @@ public:
 };
 
 extern class Menu menu;
-
-void window_resize();

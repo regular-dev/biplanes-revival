@@ -24,7 +24,6 @@
 #include <include/game_state.hpp>
 #include <include/network_data.hpp>
 #include <include/network_state.hpp>
-#include <include/sizes.hpp>
 #include <include/variables.hpp>
 
 #include <lib/Net.h>
@@ -147,11 +146,11 @@ packPlaneCoords()
     ? planeRed.getData()
     : planeBlue.getData();
 
-  localData.x       = data.x / sizes.screen_width;
-  localData.y       = data.y / sizes.screen_height;
+  localData.x       = data.x;
+  localData.y       = data.y;
   localData.dir     = data.dir;
-  localData.pilot_x = data.pilot_x / sizes.screen_width;
-  localData.pilot_y = data.pilot_y / sizes.screen_height;
+  localData.pilot_x = data.pilot_x;
+  localData.pilot_y = data.pilot_y;
 }
 
 void
@@ -160,8 +159,8 @@ processOpponentData()
   PlaneData data
   {
     .dir = opponentData.dir,
-    .pilot_x = opponentData.pilot_x * sizes.screen_width,
-    .pilot_y = opponentData.pilot_y * sizes.screen_height,
+    .pilot_x = opponentData.pilot_x,
+    .pilot_y = opponentData.pilot_y,
   };
 
   auto& planeRed = planes.at(PLANE_TYPE::RED);
@@ -204,53 +203,65 @@ processOpponentData()
       switch ( opponentData.events[i] )
       {
         case (uint8_t) EVENTS::NONE:
+        {
+          log_message("network event ", std::to_string(eventCounterRemote), ": NONE", "\n");
           continue;
+        }
 
         case (uint8_t) EVENTS::NO_HARDCORE:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": NO_HARDCORE", "\n");
           gameState().isHardcoreEnabled = false;
           continue;
         }
 
         case (uint8_t) EVENTS::SHOOT:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": SHOOT", "\n");
           planeRemote.input.Shoot();
           continue;
         }
 
         case (uint8_t) EVENTS::EJECT:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": EJECT", "\n");
           planeRemote.input.Jump();
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_PLANE:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": HIT_PLANE", "\n");
           planeRemote.Hit(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_CHUTE:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": HIT_CHUTE", "\n");
           planeRemote.pilot.ChuteHit(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_PILOT:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": HIT_PILOT", "\n");
           planeRemote.pilot.Kill(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::PLANE_DEATH:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": PLANE_DEATH", "\n");
           planeRemote.Crash();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_DEATH:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": PILOT_DEATH", "\n");
           planeRemote.pilot.Death();
+
           planeRemote.ScoreChange(-1);
           planeRemote.mStats.falls++;
           log_message("processOpponentData() planeRemote.mStats.falls++\n");
@@ -260,18 +271,21 @@ processOpponentData()
 
         case (uint8_t) EVENTS::PLANE_RESPAWN:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": PLANE_RESPAWN", "\n");
           planeRemote.Respawn();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_RESPAWN:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": PILOT_RESPAWN", "\n");
           planeRemote.pilot.Rescue();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_LAND:
         {
+          log_message("network event ", std::to_string(eventCounterRemote), ": PILOT_LAND", "\n");
           planeRemote.pilot.FallSurvive();
           continue;
         }
@@ -286,6 +300,27 @@ processOpponentData()
       }
     }
 
+    if ( eventNewIteration == false )
+    {
+      const auto& events = opponentData.events;
+
+      std::string str {events, events + sizeof(events)};
+
+      for ( size_t i = 0; i < str.size(); ++i )
+      {
+        if ( str[i] >= 'A' )
+          continue;
+
+        const auto eventId = std::to_string(str[i]);
+
+        str.erase(i, 1);
+        str.insert(i, eventId);
+        i += eventId.size() - 1;
+      }
+
+      log_message("events: '", str, "'\n");
+    }
+
     if ( ++eventCounterRemote >= 64 )
       eventCounterRemote = 0;
   }
@@ -296,8 +331,8 @@ processOpponentData()
     return;
 
 
-  data.x = opponentData.x * sizes.screen_width;
-  data.y = opponentData.y * sizes.screen_height;
+  data.x = opponentData.x;
+  data.y = opponentData.y;
 
   planeRemote.setCoords(data);
 }

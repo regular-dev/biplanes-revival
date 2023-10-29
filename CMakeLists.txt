@@ -34,11 +34,13 @@ target_sources(${TARGET} PRIVATE
 
   include/fwd.hpp
   include/enums.hpp
+  include/constants.hpp
 
   include/game_state.hpp
   include/network_data.hpp
   include/network_state.hpp
-  include/sizes.hpp
+  include/canvas.hpp
+  include/color.hpp
   include/stats.hpp
   include/sounds.hpp
   include/textures.hpp

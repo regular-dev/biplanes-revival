@@ -47,8 +47,8 @@ class Plane
   float mSpeed {};
   float mMaxSpeedVar {};
 
-  Timer mFireCooldown {0.0f};
   Timer mPitchCooldown {0.0f};
+  Timer mShootCooldown {0.0f};
 
   uint8_t mHp {};
   bool mIsDead {};
@@ -61,12 +61,12 @@ class Plane
 
   uint8_t mSmokeFrame {};
   Timer mSmokeAnim {0.0f};
-  Timer mSmokePeriod {0.0f};
+  Timer mSmokeCooldown {0.0f};
 
   int8_t mFireFrame {};
   Timer mFireAnim {0.0f};
 
-  SDL_Rect mHitbox {};
+  SDL_FRect mHitbox {};
 
 
 public:

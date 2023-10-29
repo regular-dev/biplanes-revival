@@ -22,9 +22,9 @@
 #include <include/sdl.hpp>
 #include <include/render.hpp>
 #include <include/plane.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/stats.hpp>
-#include <include/sizes.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
 
@@ -32,7 +32,7 @@
 void
 Menu::screen_stats_recent()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
 
@@ -40,117 +40,159 @@ Menu::screen_stats_recent()
   const auto& redStats = recentStats.at(PLANE_TYPE::RED);
   const auto& blueStats = recentStats.at(PLANE_TYPE::BLUE);
 
+  char textbuf[40];
 
   draw_text(        "Last dogfight stats (blue / red)", 0, 0 );
-  char textbuf[40];
+
   sprintf( textbuf, "  shots: %u / %u", blueStats.shots, redStats.shots );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.050 );
+  draw_text( textbuf, 0.025f, 0.050f );
+
   sprintf( textbuf, "  plane hits: %u / %u", blueStats.plane_hits, redStats.plane_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  draw_text( textbuf, 0.025f, 0.100f );
+
   sprintf( textbuf, "  chute hits: %u / %u", blueStats.chute_hits, redStats.chute_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  draw_text( textbuf, 0.025f, 0.150f );
+
   sprintf( textbuf, "  pilot hits: %u / %u", blueStats.pilot_hits, redStats.pilot_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  draw_text( textbuf, 0.025f, 0.200f );
+
   sprintf( textbuf, "  misses: %u / %u", blueStats.misses, redStats.misses );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  draw_text( textbuf, 0.025f, 0.250f );
+
   sprintf( textbuf, "Accuracy: %.2f%% / %.2f%%", blueStats.accuracy, redStats.accuracy );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  draw_text( textbuf, 0, 0.300f );
+
   sprintf( textbuf, "Average shots per kill: %.2f / %.2f", blueStats.avgBulletsPerKill, redStats.avgBulletsPerKill );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+  draw_text( textbuf, 0, 0.350f );
+
 
   sprintf( textbuf, "  jumps: %u / %u", blueStats.jumps, redStats.jumps );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  draw_text( textbuf, 0.025f, 0.450f );
+
   sprintf( textbuf, "  crashes: %u / %u", blueStats.crashes, redStats.crashes );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  draw_text( textbuf, 0.025f, 0.500f );
+
   sprintf( textbuf, "  fall deaths: %u / %u", blueStats.falls, redStats.falls );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
+  draw_text( textbuf, 0.025f, 0.550f );
+
   sprintf( textbuf, "  successful jumps: %u / %u", blueStats.rescues, redStats.rescues );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
+  draw_text( textbuf, 0.025f, 0.600f );
+
   sprintf( textbuf, "Self-preservation: %.2f%% / %.2f%%", blueStats.selfPreservation, redStats.selfPreservation );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.650 );
+  draw_text( textbuf, 0, 0.650f );
+
 
   sprintf( textbuf, "  plane kills: %u / %u", blueStats.plane_kills, redStats.plane_kills );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.750 );
+  draw_text( textbuf, 0.025f, 0.750f );
+
   sprintf( textbuf, "  total kills: %u / %u", blueStats.totalKills, redStats.totalKills );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.800 );
+  draw_text( textbuf, 0.025f, 0.800f );
+
   sprintf( textbuf, "  total deaths: %u / %u", blueStats.deaths, redStats.deaths );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.850 );
+  draw_text( textbuf, 0.025f, 0.850f );
+
   sprintf( textbuf, "K-D ratio: %.2f / %.2f", blueStats.kdRatio, redStats.kdRatio );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.900 );
+  draw_text( textbuf, 0, 0.900f );
+
   sprintf( textbuf, "Survivability: %.2f%% / %.2f%%", blueStats.survivability, redStats.survivability );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.950 );
+  draw_text( textbuf, 0, 0.950f );
 }
 
 void
 Menu::screen_stats_total_page1()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
   const auto& stats = gameState().stats.total;
 
-  draw_text(        "          Total stats:          ", 0, 0 );
   char textbuf[40];
+
+  draw_text(        "          Total stats:          ", 0, 0 );
+
   sprintf( textbuf, "  %d shots", stats.shots );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.050 );
+  draw_text( textbuf, 0.025f, 0.050f );
+
   sprintf( textbuf, "  %d plane hits", stats.plane_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  draw_text( textbuf, 0.025f, 0.100f );
+
   sprintf( textbuf, "  %d chute hits", stats.chute_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  draw_text( textbuf, 0.025f, 0.150f );
+
   sprintf( textbuf, "  %d pilot hits", stats.pilot_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  draw_text( textbuf, 0.025f, 0.200f );
+
   sprintf( textbuf, "  %d misses", stats.misses );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  draw_text( textbuf, 0.025f, 0.250f );
+
   sprintf( textbuf, "Accuracy: %.2f%%", stats.accuracy );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  draw_text( textbuf, 0, 0.300f );
+
   sprintf( textbuf, "Average shots per kill: %.2f", stats.avgBulletsPerKill );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+  draw_text( textbuf, 0, 0.350f );
+
 
   sprintf( textbuf, "  %d jumps", stats.jumps );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  draw_text( textbuf, 0.025f, 0.450f );
+
   sprintf( textbuf, "  %d crashes", stats.crashes );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  draw_text( textbuf, 0.025f, 0.500f );
+
   sprintf( textbuf, "  %d fall deaths", stats.falls );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.550 );
+  draw_text( textbuf, 0.025f, 0.550f );
+
   sprintf( textbuf, "  %d successful jumps", stats.rescues );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.600 );
+  draw_text( textbuf, 0.025f, 0.600f );
+
   sprintf( textbuf, "Self-preservation: %.2f%%", stats.selfPreservation );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.650 );
+  draw_text( textbuf, 0, 0.650f );
 }
 
 void
 Menu::screen_stats_total_page2()
 {
-  SDL_SetRenderDrawColor( gRenderer, 0, 154, 239, 255 );
+  setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
 
   const auto& stats = gameState().stats.total;
 
 
-  const float winLose = std::isnan( (float) stats.wins / stats.losses )
-                      ? 0.0f : stats.wins * 100.0f / stats.losses;
+  const float winLose =
+    std::isnan( (float) stats.wins / stats.losses )
+    ? 0.0f
+    : stats.wins * 100.0f / stats.losses;
+
+  char textbuf[40];
 
   draw_text(        "          Total stats:          ", 0, 0 );
-  char textbuf[40];
+
   sprintf( textbuf, "  %d plane kills", stats.plane_kills );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.100 );
+  draw_text( textbuf, 0.025f, 0.100f );
+
   sprintf( textbuf, "  %d pilot kills", stats.pilot_hits );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.150 );
+  draw_text( textbuf, 0.025f, 0.150f );
+
   sprintf( textbuf, "  %d total kills", stats.totalKills );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.200 );
+  draw_text( textbuf, 0.025f, 0.200f );
+
   sprintf( textbuf, "  %d total deaths", stats.deaths );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.250 );
+  draw_text( textbuf, 0.025f, 0.250f );
+
   sprintf( textbuf, "K-D ratio: %.2f", stats.kdRatio );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.300 );
+  draw_text( textbuf, 0, 0.300f );
+
   sprintf( textbuf, "Survivability: %.2f%%", stats.survivability );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.350 );
+  draw_text( textbuf, 0, 0.350f );
+
 
   sprintf( textbuf, "  %d wins", stats.wins );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.450 );
+  draw_text( textbuf, 0.025f, 0.450f );
+
   sprintf( textbuf, "  %d losses", stats.losses );
-  draw_text( textbuf, sizes.screen_width * 0.025, sizes.screen_height * 0.500 );
+  draw_text( textbuf, 0.025f, 0.500f );
+
   sprintf( textbuf, "Win/Lose: %.2f%%", winLose );
-  draw_text( textbuf, 0,                          sizes.screen_height * 0.550 );
+  draw_text( textbuf, 0, 0.550f );
 }
 
 
