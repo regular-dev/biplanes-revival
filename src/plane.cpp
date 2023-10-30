@@ -33,7 +33,6 @@
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
-#include <include/utility.hpp>
 
 #include <cmath>
 
@@ -324,10 +323,7 @@ Plane::Shoot()
     eventPush(EVENTS::SHOOT);
 
   if ( gameState().isRoundFinished == false )
-  {
     mStats.shots++;
-    log_message("Plane::Shoot() mStats.shots++\n");
-  }
 }
 
 void
@@ -692,10 +688,7 @@ Plane::Hit(
   }
 
   if ( gameState().isRoundFinished == false )
-  {
     attacker.mStats.plane_hits++;
-    log_message("Plane::Hit() attacker.mStats.plane_hits++\n");
-  }
 
 
   if ( gameState().isHardcoreEnabled == true )
@@ -730,8 +723,6 @@ Plane::Hit(
   {
     mStats.deaths++;
     attacker.mStats.plane_kills++;
-    log_message("Plane::Hit() mStats.deaths++\n");
-    log_message("Plane::Hit() attacker.mStats.plane_kills++\n");
   }
 }
 
@@ -774,10 +765,7 @@ Plane::Crash()
 
 
   if ( gameState().isRoundFinished == false )
-  {
     mStats.crashes++;
-    log_message("Plane::Crash() mStats.crashes++\n");
-  }
 }
 
 void
@@ -897,8 +885,6 @@ Plane::ScoreChange(
 
   mStats.wins++;
   opponentPlane.mStats.losses++;
-  log_message("Plane::ScoreChange() mStats.wins++\n");
-  log_message("Plane::ScoreChange() opponentPlane.mStats.losses++\n");
 
   game.isRoundFinished = true;
 
@@ -912,7 +898,6 @@ void
 Plane::ResetStats()
 {
   mStats = {};
-  log_message("Plane::ResetStats()\n");
 }
 
 const Statistics&

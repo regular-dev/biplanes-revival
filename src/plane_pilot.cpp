@@ -29,7 +29,6 @@
 #include <include/cloud.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
-#include <include/utility.hpp>
 
 #include <cmath>
 
@@ -281,10 +280,7 @@ Plane::Pilot::Bail(
 
 
   if ( gameState().isRoundFinished == false )
-  {
     plane->mStats.jumps++;
-    log_message("Pilot::Bail() plane->mStats.jumps++\n");
-  }
 
   if ( plane->mIsLocal == true )
     eventPush(EVENTS::EJECT);
@@ -652,10 +648,7 @@ Plane::Pilot::ChuteHit(
 
 
   if ( gameState().isRoundFinished == false )
-  {
     attacker.mStats.chute_hits++;
-    log_message("Pilot::ChuteHit() attacker.mStats.chute_hits++\n");
-  }
 }
 
 void
@@ -683,10 +676,7 @@ Plane::Pilot::Kill(
 
 
   if ( gameState().isRoundFinished == false )
-  {
     killedBy.mStats.pilot_hits++;
-    log_message("Pilot::Kill() killedBy.mStats.pilot_hits++\n");
-  }
 }
 
 void
@@ -721,10 +711,7 @@ Plane::Pilot::HitGroundCheck()
 
 
   if ( gameState().isRoundFinished == false )
-  {
     plane->mStats.falls++;
-    log_message("Pilot::HitGroundCheck() plane->mStats.falls++\n");
-  }
 
   eventPush(EVENTS::PILOT_DEATH);
 }
@@ -751,10 +738,7 @@ Plane::Pilot::Rescue()
   plane->Respawn();
 
   if ( gameState().isRoundFinished  == false )
-  {
     plane->mStats.rescues++;
-    log_message("Pilot::Rescue() plane->mStats.rescues++\n");
-  }
 
   if ( plane->mIsLocal == true )
     eventPush(EVENTS::PILOT_RESPAWN);
