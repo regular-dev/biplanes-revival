@@ -59,6 +59,10 @@ settingsWrite()
   jsonAutoFill["SERVER_IP"]       = picojson::value( SERVER_IP );
   jsonAutoFill["MMAKE_PASSWORD"]  = picojson::value( MMAKE_PASSWORD );
 
+  picojson::object jsonConfig;
+  jsonConfig["EnableSound"]     = picojson::value( game.isSoundEnabled );
+  jsonConfig["EnableVSync"]     = picojson::value( game.isVSyncEnabled );
+
   picojson::object jsonControls;
   jsonControls["FIRE"]            = picojson::value( (double) FIRE );
   jsonControls["JUMP"]            = picojson::value( (double) JUMP );
@@ -75,6 +79,7 @@ settingsWrite()
 
   picojson::object jsonSettings;
   jsonSettings["AutoFill"]        = picojson::value( jsonAutoFill );
+  jsonSettings["Config"]         = picojson::value( jsonConfig );
   jsonSettings["Controls"]        = picojson::value( jsonControls );
   jsonSettings["Utility"]         = picojson::value( jsonUtility );
 
@@ -137,6 +142,18 @@ settingsParse(
 
     if ( checkPass(MMAKE_PASSWORD) == false )
       MMAKE_PASSWORD = "";
+  }
+  catch ( std::out_of_range &e ) {};
+
+  try
+  {
+    picojson::value::object& jsonConfig  = jsonValue["Config"].get <picojson::object> ();
+
+    try { game.isSoundEnabled = jsonConfig.at( "EnableSound" ).get <bool> (); }
+    catch ( std::out_of_range &e ) {};
+
+    try { game.isVSyncEnabled = jsonConfig.at( "EnableVSync" ).get <bool> (); }
+    catch ( std::out_of_range &e ) {};
   }
   catch ( std::out_of_range &e ) {};
 

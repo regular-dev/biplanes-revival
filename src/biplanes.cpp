@@ -136,8 +136,9 @@ main(
 {
   logVersionAndReadSettings();
 
+  const auto& game = gameState();
 
-  if ( SDL_init() != 0 )
+  if ( SDL_init(game.isVSyncEnabled, game.isSoundEnabled) != 0 )
   {
     log_message( "\n\nSDL Startup: SDL startup failed!\n" );
 
@@ -166,7 +167,6 @@ main(
   auto timePrevious = TimeUtils::Now();
   auto tickPrevious = timePrevious + tickInterval;
 
-  const auto& game = gameState();
   const auto connection = network.connection;
 
   log_message( "\nLOG: Reached main menu loop!\n\n" );

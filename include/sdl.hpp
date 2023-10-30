@@ -36,7 +36,7 @@ extern SDL_Renderer* gRenderer;
 extern SDL_Event windowEvent;
 
 
-bool SDL_init();
+bool SDL_init( const bool enableVSync, const bool enableSound );
 void SDL_close();
 
 void show_warning(

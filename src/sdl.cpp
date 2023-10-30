@@ -35,7 +35,9 @@ static bool soundInitialized {};
 
 
 bool
-SDL_init()
+SDL_init(
+  const bool enableVSync,
+  const bool enableSound )
 {
 //  Setup SDL
   log_message( "SDL Startup: Initializing SDL..." );
@@ -135,15 +137,17 @@ SDL_init()
     }
   }
 
-//  {
-//    if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, "1" ) == false )
-//      log_message( "Warning: Failed to enable V-Sync!\n" );
+  if ( enableVSync == true )
+  {
+    if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, "1" ) == false )
+      log_message( "Warning: Failed to enable V-Sync!\n" );
 
-//    if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, "1" ) == false )
-//      log_message( "Warning: Failed to enable dynamic V-Sync!\n" );
+    if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, "1" ) == false )
+      log_message( "Warning: Failed to enable dynamic V-Sync!\n" );
 
-//    SDL_RenderSetVSync(gRenderer, true);
-//  }
+    if ( SDL_RenderSetVSync(gRenderer, true) != 0 )
+      log_message( "Warning: Failed to enable renderer V-Sync!\n");
+  }
 
   log_message( "Done!\n" );
 
@@ -168,25 +172,28 @@ SDL_init()
   log_message( "Done!\n" );
 
 
-//  Initialize SDL_Mixer
-  log_message( "SDL Startup: Initializing audio..." );
-
-  if ( SDL_InitSubSystem( SDL_INIT_AUDIO ) != 0 )
+  if ( enableSound == true )
   {
-    log_message( "\nSDL Startup: SDL audio subsystem failed to initialize! SDL Error: ", SDL_GetError() );
-    show_warning( "SDL: Failed to initialize audio subsystem!", SDL_GetError() );
+//    Initialize SDL_Mixer
+    log_message( "SDL Startup: Initializing audio..." );
+
+    if ( SDL_InitSubSystem( SDL_INIT_AUDIO ) != 0 )
+    {
+      log_message( "\nSDL Startup: SDL audio subsystem failed to initialize! SDL Error: ", SDL_GetError() );
+      show_warning( "SDL: Failed to initialize audio subsystem!", SDL_GetError() );
+    }
+
+    else if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) != 0 )
+      log_message( "\nSDL Startup: SDL_Mixer failed to initialize! SDL_Mixer Error: %s", Mix_GetError() );
+
+    else
+    {
+      Mix_ReserveChannels(2);
+      soundInitialized = true;
+    }
+
+    log_message( "Done!\n" );
   }
-
-  else if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) != 0 )
-    log_message( "\nSDL Startup: SDL_Mixer failed to initialize! SDL_Mixer Error: %s", Mix_GetError() );
-
-  else
-  {
-    Mix_ReserveChannels(2);
-    soundInitialized = true;
-  }
-
-  log_message( "Done!\n" );
 
 
   log_message( "\n\nSDL Startup: SDL startup finished!\n\n" );

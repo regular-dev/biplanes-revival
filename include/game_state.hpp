@@ -65,6 +65,9 @@ public:
   bool isRoundFinished {};
   bool isHardcoreEnabled {};
 
+  bool isVSyncEnabled {true};
+  bool isSoundEnabled {true};
+
   GAME_MODE gameMode {};
   DIFFICULTY botDifficulty {DIFFICULTY::MEDIUM};
   uint8_t winScore {10};
