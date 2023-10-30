@@ -63,11 +63,21 @@ Bullet::Update()
   {
     mX > 1.0f ||
     mX < 0.0f ||
-    mY < -0.5f * bullet::sizeY
+    mY < 0.0f
   };
 
   if ( collidesWithScreenBorder == true )
+  {
+    if ( mX > 1.0f )
+      mX = 1.0f;
+    else if ( mX < 0.0f )
+      mX = 0.0f;
+
+    if ( mY < 0.0f )
+      mY = 0.0f;
+
     return Destroy();
+  }
 
 
   const bool collidesWithSurface
