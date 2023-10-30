@@ -38,7 +38,12 @@ Timer::Update()
 
 
   if ( mCounter > 0.0f )
+  {
     mCounter -= deltaTime;
+
+    if ( mCounter < 0.0f )
+      mCounter = 0.0f;
+  }
   else
     Stop();
 }
