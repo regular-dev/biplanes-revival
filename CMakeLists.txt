@@ -64,9 +64,6 @@ target_sources(${TARGET} PRIVATE
   src/effects.cpp
   include/effects.hpp
 
-  src/init_vars.cpp
-  include/init_vars.hpp
-
   src/matchmake.cpp
   include/matchmake.hpp
 
@@ -89,6 +86,9 @@ target_sources(${TARGET} PRIVATE
 
   src/render.cpp
   include/render.hpp
+
+  src/resources.cpp
+  include/resources.hpp
 
   src/sdl.cpp
   include/sdl.hpp

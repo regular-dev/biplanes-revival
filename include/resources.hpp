@@ -21,7 +21,5 @@
 #pragma once
 
 
-void init_sizes();
-
 void textures_load();
 void sounds_load();

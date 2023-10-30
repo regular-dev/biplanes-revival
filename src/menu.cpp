@@ -28,7 +28,6 @@
 #include <include/render.hpp>
 #include <include/biplanes.hpp>
 #include <include/matchmake.hpp>
-#include <include/init_vars.hpp>
 #include <include/controls.hpp>
 #include <include/plane.hpp>
 #include <include/textures.hpp>

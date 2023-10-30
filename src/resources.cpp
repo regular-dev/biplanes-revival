@@ -18,30 +18,12 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <include/init_vars.hpp>
+#include <include/resources.hpp>
 #include <include/sdl.hpp>
-#include <include/cloud.hpp>
-#include <include/plane.hpp>
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 #include <include/utility.hpp>
 
-
-void
-init_sizes()
-{
-  for ( auto& [planeType, plane] : planes )
-    plane.AnimationsReset();
-
-
-  if ( clouds.empty() == true )
-  {
-    clouds.resize(8);
-
-    for ( size_t i = 0; i < clouds.size(); i++ )
-      clouds[i] = {i % 2, i};
-  }
-}
 
 void
 textures_load()

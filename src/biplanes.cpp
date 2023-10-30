@@ -19,9 +19,9 @@
 */
 
 #include <include/biplanes.hpp>
-#include <include/init_vars.hpp>
 #include <include/sdl.hpp>
 #include <include/time.hpp>
+#include <include/resources.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/network_data.hpp>
@@ -159,7 +159,6 @@ main(
 
   textures_load();
   sounds_load();
-  init_sizes();
 
 
   const auto tickInterval = 1.0 / TICK_RATE;
@@ -241,7 +240,13 @@ main(
 void
 game_reset()
 {
-  init_sizes();
+  if ( clouds.empty() == true )
+  {
+    clouds.resize(8);
+
+    for ( size_t i = 0; i < clouds.size(); i++ )
+      clouds[i] = {i % 2, i};
+  }
 
   erasePacket(localData);
   erasePacket(opponentData);
