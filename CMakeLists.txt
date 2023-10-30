@@ -116,7 +116,7 @@ add_subdirectory(lib/tiny-dnn)
 include(FetchContent)
 
 FetchContent_Declare(TimeUtils
-  GIT_REPOSITORY git@github.com:Casqade/TimeUtils
+  GIT_REPOSITORY https://github.com/Casqade/TimeUtils
   GIT_TAG        main
   GIT_SHALLOW    TRUE
 )
