@@ -78,7 +78,7 @@ public:
   void Update();
   void Draw() const;
 
-  Bullet GetClosestBullet(
+  std::vector <Bullet> GetClosestBullets(
     const float x,
     const float y,
     const PLANE_TYPE ) const;

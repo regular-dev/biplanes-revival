@@ -49,6 +49,9 @@ Plane::Pilot::setPlane(
 void
 Plane::Pilot::Update()
 {
+  mPrevX = mX;
+  mPrevY = mY;
+
   FallUpdate();
   RunUpdate();
   HitboxUpdate();
@@ -260,6 +263,8 @@ Plane::Pilot::Bail(
 
   mX = planeX;
   mY = planeY;
+  mPrevX = mX;
+  mPrevY = mY;
   mDir = bailDir;
 
   if ( mDir < 0 )

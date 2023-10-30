@@ -56,6 +56,9 @@ Plane::Update()
     eventPush(EVENTS::PLANE_RESPAWN);
   }
 
+  mPrevX = mX;
+  mPrevY = mY;
+
   SpeedUpdate();
   CoordinatesUpdate();
   CollisionsUpdate();
@@ -800,6 +803,9 @@ Plane::Respawn()
     ? plane::spawnRotationBlue
     : plane::spawnRotationRed;
 
+  mPrevX = mX;
+  mPrevY = mY;
+
   mHasJumped = false;
 
   pilot.Respawn();
@@ -1094,13 +1100,14 @@ Plane::getDistanceToPoint(
 }
 
 float
-Plane::getAngleToPoint(
+getAngleToPoint(
   const SDL_Point& source,
-  const SDL_Point& target ) const
+  const SDL_Point& target )
 {
-  float angle = atan2( target.y - source.y, target.x - source.x ) + M_PI / 2;
-
-  angle *= 180.0 / M_PI;
+  float angle = atan2(
+    target.y - source.y,
+    target.x - source.x )
+    * 180.0 / M_PI;
 
   if ( angle < 0.0f )
     angle += 360.0f;
@@ -1158,9 +1165,9 @@ Plane::getSpeed() const
 }
 
 float
-Plane::getAngleRelative(
+getAngleRelative(
   const float angleSource,
-  const float angleTarget ) const
+  const float angleTarget )
 {
   float relativeAngle = angleTarget - angleSource;
 
@@ -1184,162 +1191,140 @@ Plane::aiState() const
     planes.at(static_cast <PLANE_TYPE> (!mType));
 
 
-  const bool canAccelerate =
-    isDead() == false &&
-    mHasJumped == false &&
-    mDir != 0.0f;
+  const auto getPlaneState =
+  [&inputs] ( const Plane& plane )
+  {
+    const bool canAccelerate =
+      plane.isDead() == false &&
+      plane.mHasJumped == false &&
+      plane.mDir != 0.0f;
 
-  const bool canDecelerate =
-    isDead() == false &&
-    mHasJumped == false &&
-    (mIsOnGround == false || mIsTakingOff == true);
+    const bool canDecelerate =
+      plane.isDead() == false &&
+      plane.mHasJumped == false &&
+      (plane.mIsOnGround == false || plane.mIsTakingOff == true);
 
 
-  const auto damage =
-    float(plane::maxHp - mHp) / plane::maxHp;
+    const auto damage =
+      float(plane::maxHp - plane.mHp) / plane::maxHp;
 
-  const float shootCooldown =
-    (mIsOnGround == false && mHasJumped == false) *
-    (plane::shootCooldown - mShootCooldown.remainderTime()) /
-    plane::shootCooldown;
+    const float shootCooldown =
+      (plane.mIsOnGround == false && plane.mHasJumped == false) *
+      (plane::shootCooldown - plane.mShootCooldown.remainderTime()) /
+      plane::shootCooldown;
 
-  const float protectionCooldown =
-    (mHasJumped == false) *
-    mProtection.remainderTime() / plane::spawnProtectionCooldown;
+    const float protectionCooldown =
+      (plane.mHasJumped == false) *
+      plane.mProtection.remainderTime() / plane::spawnProtectionCooldown;
+
+    inputs.push_back(canAccelerate);
+    inputs.push_back(canDecelerate);
+    inputs.push_back(plane.canTurn());
+    inputs.push_back(plane.canShoot());
+    inputs.push_back(plane.canJump());
+
+    inputs.push_back(plane.isDead());
+
+    if ( plane.isDead() == true )
+    {
+      inputs.resize(inputs.size() + 15);
+      return;
+    }
+
+//    OnGround
+    inputs.push_back(
+      plane.mIsOnGround == true &&
+      plane.mIsTakingOff == false &&
+      plane.mHasJumped == false );
+
+//    TakingOff
+    inputs.push_back(
+      plane.mIsTakingOff == true &&
+      plane.mHasJumped == false );
+
+//    Airborne
+    inputs.push_back(
+      plane.mIsOnGround == false &&
+      plane.mIsTakingOff == false &&
+      plane.mHasJumped == false );
+
+//    Ejected
+    inputs.push_back(
+      plane.mHasJumped == true &&
+      plane.pilot.mIsChuteOpen == false &&
+      plane.pilot.mChuteState != CHUTE_DESTROYED &&
+      plane.pilot.mIsRunning == false );
+
+//    ChuteOpen
+    inputs.push_back(
+      plane.mHasJumped == true &&
+      plane.pilot.mIsChuteOpen == true &&
+      plane.pilot.mChuteState != CHUTE_DESTROYED &&
+      plane.pilot.mIsRunning == false );
+
+//    ChuteDestroyed
+    inputs.push_back(
+      plane.mHasJumped == true &&
+      plane.pilot.mIsRunning == false &&
+      plane.pilot.mChuteState == CHUTE_DESTROYED );
+
+//    Running
+    inputs.push_back(
+      plane.pilot.mIsRunning == true );
+
+
+    inputs.push_back(damage);
+
+    inputs.push_back(shootCooldown);
+    inputs.push_back(protectionCooldown);
+
+    if ( plane.mHasJumped == false )
+    {
+      inputs.push_back(plane.mX);
+      inputs.push_back(plane.mY);
+      inputs.push_back(plane.mPrevX);
+      inputs.push_back(plane.mPrevY);
+      inputs.push_back(plane.mDir / 360.0f);
+    }
+    else
+    {
+      const auto pilotDir = getAngleToPoint(
+        {plane.pilot.mPrevX, plane.pilot.mPrevY},
+        {plane.pilot.mX, plane.pilot.mY} );
+
+      inputs.push_back(plane.pilot.mX);
+      inputs.push_back(plane.pilot.mPrevX);
+      inputs.push_back((1.0f + plane.pilot.mY) / 2.0f);
+      inputs.push_back((1.0f + plane.pilot.mPrevY) / 2.0f);
+      inputs.push_back(pilotDir);
+    }
+  };
+
+  getPlaneState(*this);
+  getPlaneState(opponentPlane);
 
   const float deadCooldown =
     (plane::deadCooldown - opponentPlane.mDeadCooldown.remainderTime()) /
     plane::deadCooldown;
 
-  inputs.push_back(canAccelerate);
-  inputs.push_back(canDecelerate);
-  inputs.push_back(canTurn());
-  inputs.push_back(canShoot());
-  inputs.push_back(canJump());
+  inputs.push_back(deadCooldown);
 
-  inputs.push_back(isDead());
+  const size_t maxBullets {3};
+  const auto targetSize = inputs.size() + maxBullets * 3;
 
-  if ( isDead() == true )
-    inputs.resize(inputs.size() + 7);
-  else
+  size_t serializedBullets {};
+
+  for ( const auto& bullet : bullets.GetClosestBullets(mX, mY, mType) )
   {
-//    OnGround
-    inputs.push_back(
-      mIsOnGround == true &&
-      mIsTakingOff == false &&
-      mHasJumped == false );
+    if ( ++serializedBullets > maxBullets )
+      break;
 
-//    TakingOff
-    inputs.push_back(
-      mIsTakingOff == true &&
-      mHasJumped == false );
-
-//    Airborne
-    inputs.push_back(
-      mIsOnGround == false &&
-      mIsTakingOff == false &&
-      mHasJumped == false );
-
-//    Ejected
-    inputs.push_back(
-      mHasJumped == true &&
-      pilot.mIsChuteOpen == false &&
-      pilot.mChuteState != CHUTE_DESTROYED &&
-      pilot.mIsRunning == false );
-
-//    ChuteOpen
-    inputs.push_back(
-      mHasJumped == true &&
-      pilot.mIsChuteOpen == true &&
-      pilot.mChuteState != CHUTE_DESTROYED &&
-      pilot.mIsRunning == false );
-
-//    ChuteDestroyed
-    inputs.push_back(
-      mHasJumped == true &&
-      pilot.mIsRunning == false &&
-      pilot.mChuteState == CHUTE_DESTROYED );
-
-//    Running
-    inputs.push_back(
-      pilot.mIsRunning == true );
+    inputs.push_back(bullet.x());
+    inputs.push_back(bullet.y());
+    inputs.push_back(bullet.dir() / 360.0f);
   }
 
-  inputs.push_back(damage);
-
-  inputs.push_back(shootCooldown);
-  inputs.push_back(protectionCooldown);
-  inputs.push_back(deadCooldown); // put only opponent's
-
-  inputs.push_back( getSpeed() );
-  inputs.push_back( getSpeedDir() );
-
-
-//  TODO: dirToOpponentDirect
-//  TODO: dirToOpponentIndirect
-
-  const auto opponent =
-    opponentPlane.mHasJumped == false
-    ? SDL_Point { opponentPlane.x(), opponentPlane.y() }
-    : SDL_Point { opponentPlane.pilot.x(), opponentPlane.pilot.y() };
-
-
-  if ( mHasJumped == false )
-  {
-    const float opponentDirToAI = getAngleToPoint( { mX, mY }, opponent );
-    inputs.push_back( getAngleRelative( mDir, opponentDirToAI ) );
-  }
-  else
-  {
-//    TODO: PILOT DIR
-    inputs.push_back( getSpeedDir() );
-  }
-
-  SDL_Point closestCollision = getClosestCollision();
-
-
-//  Data about AI plane
-
-  inputs.push_back( getDistanceToPoint( closestCollision ) );
-  inputs.push_back( getAngleToPoint( { mX, mY }, closestCollision ) );  // todo: make relative to speedDir ???
-
-  inputs.push_back( getDistanceToPoint( opponent ) );
-
-  if ( mHasJumped == false )
-  {
-    const float dirToOpponent = getAngleToPoint( { mX, mY }, opponent );
-    inputs.push_back( getAngleRelative( mDir, dirToOpponent ) );
-  }
-  else
-  {
-    const float dirToOpponent = getAngleToPoint( { pilot.mX, pilot.mY }, opponent );
-    inputs.push_back( getAngleRelative( getSpeedDir(), dirToOpponent ) );
-  }
-
-
-//  Data about closest bullet
-
-  Bullet bullet = bullets.GetClosestBullet(mX, mY, mType);
-
-  const bool bulletPresent =
-    bullet.firedBy() == mType
-    ? false : true;
-
-  inputs.push_back( bulletPresent );
-
-  if ( bulletPresent == true )
-  {
-    inputs.push_back( getDistanceToPoint( { bullet.x(), bullet.y() } ) );
-
-    const float aiDirToBullet = getAngleToPoint( { mX, mY }, { bullet.x(), bullet.y() } );
-    inputs.push_back( getAngleRelative( mDir, aiDirToBullet ) );
-
-    const float bulletDirToAI = getAngleToPoint( { bullet.x(), bullet.y() }, { mX, mY } );
-    inputs.push_back( getAngleRelative( bullet.dir(), bulletDirToAI ) );
-  }
-  else
-    inputs.resize(inputs.size() + 3);
-
+  inputs.resize(targetSize);
 
   return inputs;
 }

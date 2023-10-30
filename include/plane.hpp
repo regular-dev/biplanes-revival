@@ -42,6 +42,8 @@ class Plane
 
   float mX {};
   float mY {};
+  float mPrevX {};
+  float mPrevY {};
   float mDir {};
 
   float mSpeed {};
@@ -124,7 +126,6 @@ public:
   std::vector <float> aiState() const;
   SDL_Point getClosestCollision() const;
   float getDistanceToPoint( const SDL_Point& ) const;
-  float getAngleToPoint( const SDL_Point&, const SDL_Point& ) const;
   float getSpeedDir() const;
   float getSpeed() const;
   float getAngleRelative( const float, const float ) const;
@@ -182,6 +183,8 @@ public:
 
     float mX {};
     float mY {};
+    float mPrevX {};
+    float mPrevY {};
     int16_t mDir {};
 
     float mSpeed {};

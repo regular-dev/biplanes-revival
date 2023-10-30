@@ -29,6 +29,8 @@
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 
+#include <algorithm>
+
 
 Bullet::Bullet(
   const float planeX,
@@ -241,55 +243,53 @@ BulletSpawner::Draw() const
   {
     for ( const auto& [planeType, plane] : planes )
     {
-      Bullet bullet = GetClosestBullet(
+      setRenderColor(constants::colors::bulletHitbox);
+
+      const auto closestBullets = GetClosestBullets(
         plane.x(),
         plane.y(),
         plane.type() );
 
-      setRenderColor(constants::colors::bulletHitbox);
-      SDL_RenderDrawLine(
-        gRenderer,
-        toWindowSpaceX(plane.x()),
-        toWindowSpaceY(plane.y()),
-        toWindowSpaceX(bullet.x()),
-        toWindowSpaceY(bullet.y()) );
+      for ( const auto& bullet : closestBullets )
+      {
+        SDL_RenderDrawLine(
+          gRenderer,
+          toWindowSpaceX(plane.x()),
+          toWindowSpaceY(plane.y()),
+          toWindowSpaceX(bullet.x()),
+          toWindowSpaceY(bullet.y()) );
+      }
     }
   }
 }
 
-Bullet
-BulletSpawner::GetClosestBullet(
+std::vector <Bullet>
+BulletSpawner::GetClosestBullets(
   const float x,
   const float y,
   const PLANE_TYPE notFiredBy ) const
 {
-  std::pair <uint32_t, float> minDistance {};
-  bool minDistanceInitialized = false;
+  std::vector <Bullet> result {};
 
-
-  for ( size_t index = 0; index < mInstances.size(); ++index )
+  for ( const auto& bullet : mInstances )
   {
-    if ( mInstances[index].firedBy() == notFiredBy )
-      continue;
-
-    const float distance = sqrt(
-      pow( mInstances[index].x() - x, 2 ) +
-      pow( mInstances[index].y() - y, 2 ) );
-
-    if ( minDistanceInitialized == false )
-    {
-      minDistance = { index, distance };
-      minDistanceInitialized = true;
-
-      continue;
-    }
-
-    if ( distance < minDistance.second )
-      minDistance = { index, distance };
+    if ( bullet.firedBy() != notFiredBy )
+      result.push_back(bullet);
   }
 
-  if ( minDistanceInitialized == false )
-    return {0.0f, 0.0f, 0.0f, notFiredBy};
+  std::sort(result.begin(), result.end(),
+  [x, y] ( const Bullet& lhs, const Bullet& rhs )
+  {
+    const float distanceToLhs = sqrt(
+      pow( lhs.x() - x, 2 ) +
+      pow( lhs.y() - y, 2 ) );
 
-  return mInstances[minDistance.first];
+    const float distanceToRhs = sqrt(
+      pow( rhs.x() - x, 2 ) +
+      pow( rhs.y() - y, 2 ) );
+
+    return distanceToLhs < distanceToRhs;
+  });
+
+  return result;
 }
