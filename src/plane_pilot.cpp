@@ -217,6 +217,7 @@ Plane::Pilot::Move(
     mChuteState = static_cast <CHUTE_STATE> (inputDir);
     mX += moveDir * chute::speed * deltaTime;
 
+    CoordinatesClamp();
     return;
   }
 
@@ -225,6 +226,8 @@ Plane::Pilot::Move(
 
   mDir = moveDir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
   mX += moveDir * pilot::runSpeed * deltaTime;
+
+  CoordinatesClamp();
 
   if ( mRunAnim.isReady() == false )
     return;
@@ -315,6 +318,15 @@ Plane::Pilot::ChuteUnlock()
 }
 
 void
+Plane::Pilot::CoordinatesClamp()
+{
+  if ( mX < 0.0f )
+    mX += 1.0f;
+  else if ( mX > 1.0f )
+    mX -= 1.0f;
+}
+
+void
 Plane::Pilot::FallUpdate()
 {
   namespace pilot = constants::pilot;
@@ -382,11 +394,7 @@ Plane::Pilot::FallUpdate()
   if ( mSpeed < 0.0f )
     mSpeed = 0.0f;
 
-
-  if ( mX < 0.0f )
-    mX = 1.0f;
-  else if ( mX > 1.0f )
-    mX = 0.0f;
+  CoordinatesClamp();
 
 
 //  THINK: autoland remote pilot ?

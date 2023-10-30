@@ -445,11 +445,16 @@ Plane::CoordinatesUpdate()
       mY += ( mMaxSpeedVar - mSpeed ) * deltaTime;
   }
 
-//  Screen borders teleport
+  CoordinatesClamp();
+}
+
+void
+Plane::CoordinatesClamp()
+{
   if ( mX > 1.0f )
-    mX = 0.0f;
+    mX -= 1.0f;
   else if ( mX < 0.0f )
-    mX = 1.0f;
+    mX += 1.0f;
 
 
   if ( mY < 0.0f )
@@ -1009,6 +1014,25 @@ Plane::hasJumped() const
 }
 
 bool
+Plane::canAccelerate() const
+{
+  return
+    isDead() == false &&
+    mHasJumped == false &&
+    mDir != 0.0f &&
+    mSpeed < mMaxSpeedVar;
+}
+
+bool
+Plane::canDecelerate() const
+{
+  return
+    isDead() == false &&
+    mHasJumped == false &&
+    (mIsOnGround == false || mIsTakingOff == true);
+}
+
+bool
 Plane::canTurn() const
 {
   return
@@ -1178,18 +1202,8 @@ Plane::aiState() const
   const auto getPlaneState =
   [&inputs] ( const Plane& plane )
   {
-    const bool canAccelerate =
-      plane.isDead() == false &&
-      plane.mHasJumped == false &&
-      plane.mDir != 0.0f;
-
-    const bool canDecelerate =
-      plane.isDead() == false &&
-      plane.mHasJumped == false &&
-      (plane.mIsOnGround == false || plane.mIsTakingOff == true);
-
-
     const auto damage =
+      (plane.isDead() == false && plane.mHasJumped == false) *
       float(plane::maxHp - plane.mHp) / plane::maxHp;
 
     const float shootCooldown =
@@ -1201,8 +1215,8 @@ Plane::aiState() const
       (plane.mHasJumped == false) *
       plane.mProtection.remainderTime() / plane::spawnProtectionCooldown;
 
-    inputs.push_back(canAccelerate);
-    inputs.push_back(canDecelerate);
+    inputs.push_back(plane.canAccelerate());
+    inputs.push_back(plane.canDecelerate());
     inputs.push_back(plane.canTurn());
     inputs.push_back(plane.canShoot());
     inputs.push_back(plane.canJump());
@@ -1265,17 +1279,21 @@ Plane::aiState() const
     if ( plane.mHasJumped == false )
     {
       inputs.push_back(plane.mX);
-      inputs.push_back(plane.mY);
+      inputs.push_back(plane.mY); // TODO: clamp to ground collision
+
       inputs.push_back(plane.mPrevX);
       inputs.push_back(plane.mPrevY);
-      inputs.push_back(plane.mDir / 360.0f);
+
+      inputs.push_back(plane.mDir / 337.5f); // TODO: or 360 ?
     }
     else
     {
       inputs.push_back(plane.pilot.mX);
+      inputs.push_back((0.5f + plane.pilot.mY) / 1.5f); // TODO: clamp to ground collision
+
       inputs.push_back(plane.pilot.mPrevX);
-      inputs.push_back((1.0f + plane.pilot.mY) / 2.0f);
       inputs.push_back((1.0f + plane.pilot.mPrevY) / 2.0f);
+
       inputs.push_back(0.0f);
     }
   };
@@ -1283,8 +1301,10 @@ Plane::aiState() const
   getPlaneState(*this);
   getPlaneState(opponentPlane);
 
+//  TODO: handle pilot death cooldown
   const float deadCooldown =
-    (plane::deadCooldown - opponentPlane.mDeadCooldown.remainderTime()) /
+    (opponentPlane.isDead() == true) *
+    opponentPlane.mDeadCooldown.remainderTime() /
     plane::deadCooldown;
 
   inputs.push_back(deadCooldown);
@@ -1301,7 +1321,7 @@ Plane::aiState() const
 
     inputs.push_back(bullet.x());
     inputs.push_back(bullet.y());
-    inputs.push_back(bullet.dir() / 360.0f);
+    inputs.push_back(bullet.dir() / 337.5f); // TODO: or 360 ?
   }
 
   inputs.resize(targetSize);

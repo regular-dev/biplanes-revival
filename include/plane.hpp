@@ -87,6 +87,7 @@ public:
 
   void SpeedUpdate();
   void CoordinatesUpdate();
+  void CoordinatesClamp();
   void CollisionsUpdate();
   void TakeOffUpdate();
   void AbandonedUpdate();
@@ -140,6 +141,8 @@ public:
   bool isDead() const;
   bool hasJumped() const;
 
+  bool canAccelerate() const;
+  bool canDecelerate() const;
   bool canTurn() const;
 
   bool canShoot() const;
@@ -224,6 +227,7 @@ public:
     void FallUpdate();
     void RunUpdate();
     void DeathUpdate();
+    void CoordinatesClamp();
     void AnimationsUpdate();
     void AnimationsReset();
     void FallAnimUpdate();
