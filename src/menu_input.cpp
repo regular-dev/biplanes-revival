@@ -20,6 +20,7 @@
 
 #include <include/menu.hpp>
 #include <include/sdl.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/controls.hpp>
 #include <include/variables.hpp>
@@ -172,16 +173,18 @@ Menu::EndTyping(
 
     case MENU_SPECIFY::WIN_SCORE:
     {
+      const auto defaultWinScore = constants::defaultWinScore;
+
       if ( mInputScoreToWin.empty() == true )
-        mInputScoreToWin = DEFAULT_WIN_SCORE;
+        mInputScoreToWin = defaultWinScore;
 
 
       if ( checkScoreToWin(mInputScoreToWin) == true )
         gameState().winScore = stoi(mInputScoreToWin);
       else
       {
-        gameState().winScore = DEFAULT_WIN_SCORE;
-        mInputScoreToWin = std::to_string(DEFAULT_WIN_SCORE);
+        gameState().winScore = defaultWinScore;
+        mInputScoreToWin = std::to_string(defaultWinScore);
       }
 
       break;

@@ -21,6 +21,7 @@
 #include <include/biplanes.hpp>
 #include <include/sdl.hpp>
 #include <include/time.hpp>
+#include <include/constants.hpp>
 #include <include/resources.hpp>
 #include <include/game_state.hpp>
 #include <include/network.hpp>
@@ -65,11 +66,6 @@ uint16_t REMOTE_PORT  = DEFAULT_REMOTE_PORT;
 std::string SERVER_IP = DEFAULT_SERVER_IP;
 std::string MMAKE_PASSWORD {};
 
-const uint8_t DEFAULT_WIN_SCORE = 10;
-
-
-const static uint32_t TICK_RATE {240};
-const static uint32_t PACKET_RATE {64};
 static Duration packetSendTime {};
 
 const static int32_t ProtocolId {0x11223344};
@@ -162,7 +158,7 @@ main(
   sounds_load();
 
 
-  const auto tickInterval = 1.0 / TICK_RATE;
+  const auto tickInterval = 1.0 / constants::tickRate;
 
   auto timePrevious = TimeUtils::Now();
   auto tickPrevious = timePrevious + tickInterval;
@@ -349,7 +345,7 @@ game_init_mp()
     menu.setMessage(MESSAGE_TYPE::HOST_LISTENING);
   }
 
-  gameState().winScore = DEFAULT_WIN_SCORE;
+  gameState().winScore = constants::defaultWinScore;
   gameState().isRoundFinished = false;
   network.connectionChanged = false;
   network.isOpponentConnected = false;
@@ -613,7 +609,7 @@ game_loop_mp()
 //  SEND PACKET
   packLocalData();
 
-  const Duration packetSendInterval = 1.0 / PACKET_RATE;
+  const Duration packetSendInterval = 1.0 / constants::packetSendRate;
 
   if ( packetSendTime >= packetSendInterval )
   {

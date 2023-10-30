@@ -33,5 +33,3 @@ extern uint16_t LOCAL_PORT;
 extern uint16_t REMOTE_PORT;
 extern std::string SERVER_IP;
 extern std::string MMAKE_PASSWORD;
-
-extern const uint8_t DEFAULT_WIN_SCORE;
