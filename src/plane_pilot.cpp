@@ -478,10 +478,6 @@ Plane::Pilot::DeathUpdate()
     ++mAngelLoop;
     mAngelFrame = 0;
   }
-  else
-  {
-//    TODO: if frame == 2 -> set frame to frame count
-  }
 }
 
 void

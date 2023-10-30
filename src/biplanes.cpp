@@ -40,6 +40,7 @@
 #include <include/stats.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
+#include <include/ai_backend.hpp>
 
 #include <lib/Net.h>
 #include <lib/picojson.h>
@@ -96,7 +97,21 @@ BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
 
+AI_Backend aiBackend {};
 
+struct AiDataset
+{
+  AI_Backend::InputBatch batch {};
+  AI_Backend::Labels labels {};
+
+  AiDataset() = default;
+};
+
+static std::map <PLANE_TYPE, AiDataset> aiDatasets
+{
+  {PLANE_TYPE::BLUE, {}},
+  {PLANE_TYPE::RED, {}},
+};
 
 
 GameState&
@@ -153,6 +168,7 @@ main(
   auto tickPrevious = timePrevious + tickInterval;
 
   const auto& game = gameState();
+  const auto connection = network.connection;
 
   log_message( "\nLOG: Reached main menu loop!\n\n" );
 
@@ -164,6 +180,9 @@ main(
     const auto currentTime = TimeUtils::Now();
     deltaTime = static_cast <double> (currentTime - timePrevious);
     timePrevious = currentTime;
+
+    if ( connection->IsRunning() == true )
+      connection->Update(deltaTime);
 
     network.matchmaker->Update();
 
@@ -204,8 +223,6 @@ main(
 
     display_update();
   }
-
-  const auto connection = network.connection;
 
   if ( connection->IsConnected() == true )
   {
@@ -370,7 +387,71 @@ game_loop_sp()
     if ( plane.isBot() == true )
     {
       const auto inputs = plane.aiState();
-//      TODO: train/process bot
+
+      const auto output = aiBackend.predictLabel(
+        {inputs.begin(), inputs.end()});
+
+      auto& dataset = aiDatasets[plane.type()];
+
+      dataset.labels.push_back(output);
+
+      dataset.batch.push_back(
+        {inputs.begin(), inputs.end()} );
+
+      Controls aiControls {};
+
+      switch (static_cast <AiAction> (output))
+      {
+        case AiAction::Idle:
+        {
+          log_message(std::to_string(plane.type()), ": idle", "\n");
+          break;
+        }
+
+        case AiAction::Accelerate:
+        {
+          log_message(std::to_string(plane.type()), ": fwd", "\n");
+          aiControls.throttle = THROTTLE_INCREASE;
+          break;
+        }
+
+        case AiAction::Decelerate:
+        {
+          log_message(std::to_string(plane.type()), ": back", "\n");
+          aiControls.throttle = THROTTLE_DECREASE;
+          break;
+        }
+
+        case AiAction::TurnLeft:
+        {
+          log_message(std::to_string(plane.type()), ": left", "\n");
+          aiControls.pitch = PITCH_LEFT;
+          break;
+        }
+
+        case AiAction::TurnRight:
+        {
+          log_message(std::to_string(plane.type()), ": right", "\n");
+          aiControls.pitch = PITCH_RIGHT;
+          break;
+        }
+
+        case AiAction::Shoot:
+        {
+          log_message(std::to_string(plane.type()), ": shoot", "\n");
+          aiControls.shoot = true;
+          break;
+        }
+
+        case AiAction::Jump:
+        {
+          log_message(std::to_string(plane.type()), ": jump", "\n");
+          aiControls.jump = true;
+          break;
+        }
+      }
+
+      processLocalControls(plane, aiControls);
     }
   }
 
@@ -392,8 +473,6 @@ game_loop_mp()
   auto& game = gameState();
   auto& network = networkState();
   const auto connection = network.connection;
-
-  connection->Update(deltaTime);
 
 
   if ( connection->ConnectHasErrors() == true )

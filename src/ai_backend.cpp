@@ -19,9 +19,10 @@
 */
 
 #include <include/ai_backend.hpp>
+#include <include/enums.hpp>
+#include <include/utility.hpp>
 
 #include <tiny_dnn/tiny_dnn.h>
-#include <include/utility.hpp>
 
 
 AI_Backend::AI_Backend()
@@ -78,13 +79,17 @@ void AI_Backend::init_net()
     using namespace tiny_dnn::layers;
     using namespace tiny_dnn;
 
+    const size_t inputSize = 52;
+    const auto outputSize = static_cast <size_t> (AiAction::EnumSize);
+
     // model
     m_mdl = std::make_shared< network< sequential > >();
 
-    *m_mdl << fc(2, 256) << relu()
-           << fc(256, 128) << relu()
-           << fc(128, 64) << relu()
-           << fc(64, 2) << softmax_layer(2);
+    *m_mdl  << fc(inputSize, 256) << relu()
+            << fc(256, 128) << relu()
+            << fc(128, 64) << relu()
+            << fc(64, outputSize)
+            << softmax_layer(outputSize);
 
     // optimizer
     m_opt = std::make_shared< RMSprop >();

@@ -30,7 +30,7 @@ struct Controls
 {
   PLANE_PITCH pitch {};
   PLANE_THROTTLE throttle {};
-  bool fire {};
+  bool shoot {};
   bool jump {};
 
 

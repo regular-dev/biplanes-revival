@@ -70,9 +70,9 @@ readLocalInput()
 
 //  SHOOT
   if ( keyboard_state[SDL_GetScancodeFromKey(FIRE)] == 1 )
-    controls_local.fire = true;
+    controls_local.shoot = true;
   else
-    controls_local.fire = false;
+    controls_local.shoot = false;
 
 
 //  EJECT
@@ -105,7 +105,7 @@ processLocalControls(
     plane.input.TurnIdle();
 
 
-  if ( controls.fire == true )
+  if ( controls.shoot == true )
     plane.input.Shoot();
 
   if ( controls.jump == true )

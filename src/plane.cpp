@@ -1100,22 +1100,6 @@ Plane::getDistanceToPoint(
 }
 
 float
-getAngleToPoint(
-  const SDL_Point& source,
-  const SDL_Point& target )
-{
-  float angle = atan2(
-    target.y - source.y,
-    target.x - source.x )
-    * 180.0 / M_PI;
-
-  if ( angle < 0.0f )
-    angle += 360.0f;
-
-  return angle;
-}
-
-float
 Plane::getSpeedDir() const
 {
   if ( mHasJumped == false )
@@ -1288,15 +1272,11 @@ Plane::aiState() const
     }
     else
     {
-      const auto pilotDir = getAngleToPoint(
-        {plane.pilot.mPrevX, plane.pilot.mPrevY},
-        {plane.pilot.mX, plane.pilot.mY} );
-
       inputs.push_back(plane.pilot.mX);
       inputs.push_back(plane.pilot.mPrevX);
       inputs.push_back((1.0f + plane.pilot.mY) / 2.0f);
       inputs.push_back((1.0f + plane.pilot.mPrevY) / 2.0f);
-      inputs.push_back(pilotDir);
+      inputs.push_back(0.0f);
     }
   };
 

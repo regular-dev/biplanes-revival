@@ -62,6 +62,19 @@ enum PLANE_PITCH : uint8_t
   PITCH_RIGHT,
 };
 
+enum class AiAction : uint8_t
+{
+  Idle,
+  Accelerate,
+  Decelerate,
+  TurnLeft,
+  TurnRight,
+  Shoot,
+  Jump,
+
+  EnumSize = Jump,
+};
+
 enum CHUTE_STATE : uint8_t
 {
   CHUTE_IDLE,
