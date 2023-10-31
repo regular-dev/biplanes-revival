@@ -30,7 +30,10 @@ class random_generator {
  private:
   // avoid gen_(0) for MSVC known issue
   // https://connect.microsoft.com/VisualStudio/feedback/details/776456
-  random_generator() : gen_(1) {}
+  random_generator() {
+    std::random_device dev;
+    gen_ = std::mt19937( dev() );
+  }
   std::mt19937 gen_;
 };
 
