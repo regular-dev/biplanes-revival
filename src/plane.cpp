@@ -1264,20 +1264,55 @@ Plane::aiState() const
     if ( plane.mHasJumped == false )
     {
       inputs.push_back(plane.mX);
-      inputs.push_back(plane.mY); // TODO: clamp to ground collision
+//      TODO: clamp to ground collision ?
+      inputs.push_back(plane.mY);
 
-      inputs.push_back(plane.mPrevX);
-      inputs.push_back(plane.mPrevY);
+//      inputs.push_back(plane.mPrevX);
+//      inputs.push_back(plane.mPrevY);
 
-      inputs.push_back(plane.mDir / 337.5f); // TODO: or 360 ?
+//      speed range X: -0.434783, 0.434783
+//      speed range Y: -0.423825, 0.434783
+
+      float speedX {(plane.mX - plane.mPrevX)};
+      float speedY {(plane.mY - plane.mPrevY) * constants::tickRate};
+
+      if ( plane.mX < 0.25f && plane.mPrevX > 0.75f )
+        speedX += 1.0f;
+      else if ( plane.mX > 0.75f && plane.mPrevX < 0.25f )
+        speedX -= 1.0f;
+
+      speedX *= constants::tickRate;
+
+      inputs.push_back(speedX + 0.5f);
+      inputs.push_back(speedY + 0.5f);
+
+//      TODO: or 360 ?
+      inputs.push_back(plane.mDir / 337.5f);
     }
     else
     {
       inputs.push_back(plane.pilot.mX);
-      inputs.push_back((0.5f + plane.pilot.mY) / 1.5f); // TODO: clamp to ground collision
+//      TODO: clamp to ground collision ?
+      inputs.push_back((0.5f + plane.pilot.mY) / 1.5f);
 
-      inputs.push_back(plane.pilot.mPrevX);
-      inputs.push_back((1.0f + plane.pilot.mPrevY) / 2.0f);
+//      inputs.push_back(plane.pilot.mPrevX);
+//      inputs.push_back((0.5f + plane.pilot.mPrevY) / 1.5f);
+
+//      speed range X: -0.45, 0.45
+//      speed range Y: -0.448306, 1.597502
+
+      float speedX {(plane.pilot.mX - plane.pilot.mPrevX)};
+      float speedY {(plane.pilot.mY - plane.pilot.mPrevY) * constants::tickRate};
+
+      if ( plane.pilot.mX < 0.25f && plane.pilot.mPrevX > 0.75f )
+        speedX += 1.0f;
+      else if ( plane.pilot.mX > 0.75f && plane.pilot.mPrevX < 0.25f )
+        speedX -= 1.0f;
+
+      speedX *= constants::tickRate;
+
+      inputs.push_back(speedX + 0.5f);
+      inputs.push_back((speedY + 0.5f) / 2.1f);
 
       inputs.push_back(0.0f);
     }
@@ -1306,7 +1341,9 @@ Plane::aiState() const
 
     inputs.push_back(bullet.x());
     inputs.push_back(bullet.y());
-    inputs.push_back(bullet.dir() / 337.5f); // TODO: or 360 ?
+
+//    TODO: or 360 ?
+    inputs.push_back(bullet.dir() / 337.5f);
   }
 
   inputs.resize(targetSize);

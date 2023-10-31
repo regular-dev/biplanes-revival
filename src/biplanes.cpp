@@ -208,7 +208,14 @@ main(
       if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
         game_loop_mp();
       else
-        game_loop_sp();
+      {
+        deltaTime = tickInterval;
+
+        for ( size_t tick = 0; tick < ticks; ++tick )
+          game_loop_sp();
+
+        deltaTime = ticks * tickInterval;
+      }
     }
 
 
