@@ -72,7 +72,7 @@ enum class AiAction : uint8_t
   Shoot,
   Jump,
 
-  EnumSize = Jump,
+  ActionCount,
 };
 
 enum CHUTE_STATE : uint8_t

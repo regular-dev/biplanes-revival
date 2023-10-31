@@ -80,7 +80,7 @@ void AI_Backend::init_net()
     using namespace tiny_dnn;
 
     const size_t inputSize = 52;
-    const auto outputSize = static_cast <size_t> (AiAction::EnumSize);
+    const auto outputSize = static_cast <size_t> (AiAction::ActionCount);
 
     // model
     m_mdl = std::make_shared< network< sequential > >();
