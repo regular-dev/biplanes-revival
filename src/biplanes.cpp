@@ -398,6 +398,13 @@ game_loop_sp()
     {
       const auto inputs = plane.aiState();
 
+      for ( size_t i = 0; i < inputs.size(); ++i )
+        if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
+          log_message(
+            "plane " + std::to_string(plane.type()),
+            " invalid input " + std::to_string(i) +
+            ": " + std::to_string(inputs[i]), "\n");
+
       const auto output = aiBackend.predictLabel(
         {inputs.begin(), inputs.end()});
 
