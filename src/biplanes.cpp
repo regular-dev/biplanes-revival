@@ -134,7 +134,7 @@ main(
 
   const auto& game = gameState();
 
-  if ( SDL_init(game.isVSyncEnabled, game.isSoundEnabled) != 0 )
+  if ( SDL_init(game.isVSyncEnabled, game.isAudioEnabled) != 0 )
   {
     log_message( "\n\nSDL Startup: SDL startup failed!\n" );
 

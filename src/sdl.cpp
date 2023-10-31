@@ -21,6 +21,7 @@
 #include <include/sdl.hpp>
 #include <include/canvas.hpp>
 #include <include/constants.hpp>
+#include <include/game_state.hpp>
 #include <include/sounds.hpp>
 #include <include/utility.hpp>
 
@@ -64,9 +65,6 @@ SDL_init(
 //  Get screen resolution
   SDL_DisplayMode dm {};
   SDL_GetDesktopDisplayMode( DISPLAY_INDEX, &dm );
-
-//  dm.w = 1000;
-//  dm.h = 1000;
 
   canvas.windowWidth = std::min(dm.w * 0.75f, dm.h * 0.75f);
   canvas.windowHeight = canvas.windowWidth / constants::aspectRatio;
@@ -328,8 +326,12 @@ panSound(
   if ( soundInitialized == false )
     return;
 
-  const uint8_t right = pan * 255;
-  Mix_SetPanning(channel, 255 - right, right);
+  const auto panDepth = gameState().audioPanDepth;
+
+  const uint8_t left = 255 - 255 * pan * panDepth;
+  const uint8_t right = 255 - 255 * (1.0f - pan) * panDepth;
+
+  Mix_SetPanning(channel, left, right);
 }
 
 void
