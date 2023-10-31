@@ -210,6 +210,8 @@ public:
     SDL_Rect mHitbox {};
     SDL_Rect mChuteHitbox {};
 
+    int mAudioLoopChannel {-1};
+
 
   public:
     Pilot();

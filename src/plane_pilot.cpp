@@ -340,7 +340,13 @@ Plane::Pilot::FallUpdate()
 
   if ( mIsChuteOpen == true )
   {
-    playSound(sounds.chute, plane->type(), true);
+    const auto chuteChannel = playSound(
+      sounds.chute, mAudioLoopChannel, true );
+
+    if ( chuteChannel != -1 )
+      mAudioLoopChannel = chuteChannel;
+
+    panSound(mAudioLoopChannel, mX);
 
     if ( mVSpeed > 0.0f )
       mVSpeed = -mGravity * 0.4f;
@@ -361,7 +367,13 @@ Plane::Pilot::FallUpdate()
   }
   else
   {
-    playSound(sounds.fall, plane->type(), true);
+    const auto fallChannel = playSound(
+      sounds.fall, mAudioLoopChannel, true );
+
+    if ( fallChannel != -1 )
+      mAudioLoopChannel = fallChannel;
+
+    panSound(mAudioLoopChannel, mX);
 
     if ( mVSpeed > 0.0f )
     {
@@ -641,7 +653,10 @@ void
 Plane::Pilot::ChuteHit(
   Plane& attacker )
 {
-  playSound(sounds.hitChute, -1, false);
+  panSound(
+    playSound(sounds.hitChute, -1, false),
+    mX );
+
   mChuteState = CHUTE_STATE::CHUTE_DESTROYED;
   mIsChuteOpen = false;
   mFallAnim.Stop();
@@ -654,7 +669,12 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  playSound(sounds.dead, -1, false);
+  if ( mAudioLoopChannel != -1 )
+    Mix_HaltChannel(mAudioLoopChannel);
+
+  panSound(
+    playSound(sounds.dead, -1, false),
+    mX );
 
   mIsRunning = false;
   mIsChuteOpen = false;
@@ -719,6 +739,9 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
+  if ( mAudioLoopChannel != -1 )
+    Mix_HaltChannel(mAudioLoopChannel);
+
   mY = constants::pilot::groundCollision;
 
   mIsRunning = true;
@@ -733,9 +756,11 @@ Plane::Pilot::FallSurvive()
 void
 Plane::Pilot::Rescue()
 {
-  playSound(sounds.rescue, plane->mType, false);
-
   plane->Respawn();
+
+  panSound(
+    playSound(sounds.rescue, -1, false),
+    plane->mX );
 
   if ( gameState().isRoundFinished  == false )
     plane->mStats.rescues++;
@@ -747,6 +772,9 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
+  if ( mAudioLoopChannel != -1 )
+    Mix_HaltChannel(mAudioLoopChannel);
+
   mIsRunning = false;
   mIsChuteOpen = false;
   mIsDead = false;

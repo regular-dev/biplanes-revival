@@ -299,27 +299,38 @@ loadSound(
   return soundBuf;
 }
 
-void
+int
 playSound(
   Mix_Chunk* sound,
-  const uint8_t channel,
+  const int channel,
   const bool repeating )
 {
   if ( soundInitialized == false || sound == nullptr )
-    return;
+    return -1;
 
 
   if ( repeating == true )
   {
     if ( Mix_Playing(channel) == false )
-      Mix_PlayChannel(channel, sound, 0);
+      return Mix_PlayChannel(channel, sound, 0);
 
-    return;
+    return -1;
   }
 
-  Mix_PlayChannel(-1, sound, 0);
+  return Mix_PlayChannel(-1, sound, 0);
 }
 
+void
+panSound(
+  const int channel,
+  const float pan )
+{
+  if ( soundInitialized == false )
+    return;
+
+  const uint8_t right = pan * 255;
+  Mix_SetPanning(channel, 255 - right, right);
+}
 
 void
 setRenderColor(

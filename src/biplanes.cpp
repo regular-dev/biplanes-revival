@@ -274,6 +274,8 @@ game_reset()
     cloud.Respawn();
 
   effects.Clear();
+
+  Mix_HaltChannel(-1);
 }
 
 bool

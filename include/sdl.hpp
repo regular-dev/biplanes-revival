@@ -46,10 +46,14 @@ void show_warning(
 SDL_Texture* loadTexture( const std::string& );
 Mix_Chunk* loadSound( const std::string& );
 
-void playSound(
+int playSound(
   Mix_Chunk* sound,
-  const uint8_t channel,
+  const int channel,
   const bool repeating );
+
+void panSound(
+  const int channel,
+  const float pan );
 
 
 void setRenderColor( const Color& );

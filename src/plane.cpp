@@ -314,7 +314,10 @@ Plane::Shoot()
 
 
   mShootCooldown.Start();
-  playSound(sounds.shoot, -1, false);
+
+  panSound(
+    playSound(sounds.shoot, -1, false),
+    mX );
 
   bullets.SpawnBullet(mX, mY, mDir, mType);
 
@@ -696,7 +699,10 @@ Plane::Hit(
 
   if ( mHp > 0 )
   {
-    playSound(sounds.hit, -1, false);
+    panSound(
+      playSound(sounds.hit, -1, false),
+      mX );
+
     --mHp;
 
     if ( mHp == 1 )
@@ -730,7 +736,9 @@ Plane::Hit(
 void
 Plane::Explode()
 {
-  playSound(sounds.expl, -1, false);
+  panSound(
+    playSound(sounds.expl, -1, false),
+    mX );
 
   mSpeed = 0.0f;
   mDir = 0.0f;
