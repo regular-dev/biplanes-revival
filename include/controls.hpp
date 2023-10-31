@@ -45,6 +45,10 @@ extern Controls controls_opponent;
 void readLocalInput();
 void processLocalControls( Plane&, const Controls& );
 
+void assignKeyBinding(
+  SDL_Keycode& targetBinding,
+  const SDL_Keycode newBinding );
+
 
 extern const SDL_Keycode DEFAULT_THROTTLE_UP;
 extern const SDL_Keycode DEFAULT_THROTTLE_DOWN;
