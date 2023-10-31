@@ -31,7 +31,7 @@
 #include <sstream>
 #include <iostream>
 
-#define CONFIG_FILENAME BIPLANES_EXE_NAME ".ini"
+#define CONFIG_FILENAME BIPLANES_EXE_NAME ".conf"
 #define STATS_FILENAME BIPLANES_EXE_NAME ".stats"
 #define LOG_FILENAME BIPLANES_EXE_NAME ".log"
 
@@ -117,87 +117,87 @@ settingsParse(
     picojson::value::object& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
     try { game.isHardcoreEnabled = jsonAutoFill.at( "HARDCORE_MODE" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { LOCAL_PORT = jsonAutoFill.at( "LOCAL_PORT" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     if ( checkPort( std::to_string(LOCAL_PORT) ) == false )
       LOCAL_PORT = DEFAULT_LOCAL_PORT;
 
     try { REMOTE_PORT = jsonAutoFill.at( "REMOTE_PORT" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     if ( checkPort( std::to_string(REMOTE_PORT) ) == false )
       REMOTE_PORT = DEFAULT_REMOTE_PORT;
 
     try { SERVER_IP = jsonAutoFill.at( "SERVER_IP" ).get <std::string> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     if ( checkIp(SERVER_IP).empty() == true )
       SERVER_IP = DEFAULT_SERVER_IP;
 
     try { MMAKE_PASSWORD = jsonAutoFill.at( "MMAKE_PASSWORD" ).get <std::string> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     if ( checkPass(MMAKE_PASSWORD) == false )
       MMAKE_PASSWORD = "";
   }
-  catch ( std::out_of_range &e ) {};
+  catch ( std::exception& ) {};
 
   try
   {
-    picojson::value::object& jsonConfig  = jsonValue["Config"].get <picojson::object> ();
+    picojson::value::object& jsonConfig = jsonValue["Config"].get <picojson::object> ();
 
     try { game.isSoundEnabled = jsonConfig.at( "EnableSound" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { game.isVSyncEnabled = jsonConfig.at( "EnableVSync" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
   }
-  catch ( std::out_of_range &e ) {};
+  catch ( std::exception& ) {};
 
   try
   {
     picojson::value::object& jsonControls = jsonValue["Controls"].get <picojson::object> ();
 
     try { FIRE = jsonControls.at( "FIRE" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { JUMP = jsonControls.at( "JUMP" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { THROTTLE_DOWN = jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { THROTTLE_UP = jsonControls.at( "THROTTLE_UP" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { TURN_LEFT = jsonControls.at( "TURN_LEFT" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { TURN_RIGHT = jsonControls.at( "TURN_RIGHT" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
   }
-  catch ( std::out_of_range &e ) {};
+  catch ( std::exception& ) {};
 
   try
   {
     picojson::value::object& jsonUtility  = jsonValue["Utility"].get <picojson::object> ();
 
     try { game.output.toConsole = jsonUtility.at( "LogToConsole" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { game.output.toFile = jsonUtility.at( "LogToFile" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { game.output.stats = jsonUtility.at( "StatsOutput" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { game.debug.collisions = jsonUtility.at( "ShowCollisions" ).get <bool> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
   }
-  catch ( std::out_of_range &e ) {};
+  catch ( std::exception& ) {};
 
   return true;
 }
@@ -402,42 +402,42 @@ statsRead()
   try
   {
     try { stats.chute_hits = jsonStats.at( "ChuteHits" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.crashes = jsonStats.at( "Crashes" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.deaths = jsonStats.at( "Deaths" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.falls = jsonStats.at( "Falls" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.jumps = jsonStats.at( "Jumps" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.plane_kills = jsonStats.at( "Kills" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.losses = jsonStats.at( "Losses" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.pilot_hits = jsonStats.at( "PilotHits" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.plane_hits = jsonStats.at( "PlaneHits" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.rescues = jsonStats.at( "Rescues" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.shots = jsonStats.at( "Shots" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
 
     try { stats.wins = jsonStats.at( "Wins" ).get <double> (); }
-    catch ( std::out_of_range &e ) {};
+    catch ( std::exception& ) {};
   }
-  catch ( std::out_of_range &e ) {};
+  catch ( std::exception& ) {};
 
   calcDerivedStats(stats);
 
