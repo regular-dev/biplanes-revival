@@ -459,6 +459,13 @@ game_loop_sp()
           aiControls.jump = true;
           break;
         }
+
+        default:
+        {
+          log_message("ERROR: AI backend predicted out-of-range label "
+            + std::to_string(output), "\n");
+          break;
+        }
       }
 
       processLocalControls(plane, aiControls);
