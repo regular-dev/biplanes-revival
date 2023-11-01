@@ -152,6 +152,7 @@ main(
   network.connection = new net::ReliableConnection(
     ProtocolId, ConnectionTimeout );
 
+  network.flowControl = new net::FlowControl();
   network.matchmaker = new MatchMaker();
 
   textures_load();
@@ -231,6 +232,10 @@ main(
     sendDisconnectMessage();
     connection->Stop();
   }
+
+  delete network.matchmaker;
+  delete network.flowControl;
+  delete network.connection;
 
   if ( gameState().output.stats == true )
     stats_write();
@@ -359,7 +364,6 @@ game_init_mp()
   network.connectionChanged = false;
   network.isOpponentConnected = false;
 
-  network.flowControl = new net::FlowControl();
   packetSendTime = {};
   game_reset();
 
