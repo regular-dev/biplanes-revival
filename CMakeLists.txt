@@ -142,14 +142,14 @@ target_compile_options(${TARGET} PUBLIC
 )
 
 if (NOT ${BUILD_SHARED_LIBS})
-  target_link_libraries(${TARGET} PRIVATE
+  target_link_libraries(${TARGET} PUBLIC
     -static
     -static-libgcc
     -static-libstdc++
   )
 endif()
 
-target_link_libraries(${TARGET} PRIVATE
+target_link_libraries(${TARGET} PUBLIC
   SDL2::Main
   SDL2::Image
   SDL2::Mixer
