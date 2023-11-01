@@ -210,8 +210,8 @@ public:
     int8_t mAngelLoop {};
     Timer mAngelAnim {0.0f};
 
-    SDL_Rect mHitbox {};
-    SDL_Rect mChuteHitbox {};
+    SDL_FRect mHitbox {};
+    SDL_FRect mChuteHitbox {};
 
     int mAudioLoopChannel {-1};
 
