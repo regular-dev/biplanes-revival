@@ -47,7 +47,8 @@ public:
   using Optimizer = tiny_dnn::RMSprop;
 
   explicit AI_Backend();
-  explicit AI_Backend(const std::string &model_path);
+
+  void initNet();
 
   void train(const InputBatch&, const Labels&,
              unsigned int batch_size, unsigned int epochs);
@@ -56,7 +57,9 @@ public:
   Label predictDistLabel(const EvalInput&, int constraint = 0) const;
   Labels predictBatchLabels(const InputBatch&) const;
 
-  void save_model(const std::string &path) const;
+  void saveModel(const std::string &path) const;
+  void loadModel(const std::string &path);
+
   int getIndexByProb(const std::vector< std::pair< int, float > > &probs) const;
 
 protected:
@@ -66,6 +69,5 @@ protected:
   std::unique_ptr<std::random_device> m_dev_rand;
   std::unique_ptr<std::default_random_engine> m_rand;
 
-  void init_net();
   void init_rand();
 };

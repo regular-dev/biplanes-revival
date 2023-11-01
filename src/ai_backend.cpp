@@ -28,14 +28,7 @@
 AI_Backend::AI_Backend()
 {
     init_rand();
-    init_net();
-}
-
-AI_Backend::AI_Backend(const std::string &model_path)
-{
-    init_rand();
-    init_net();
-    // TODO : impl loading
+    initNet();
 }
 
 int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &probs) const
@@ -119,12 +112,12 @@ AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
     return out;
 }
 
-void AI_Backend::save_model(const std::string &path) const
+void AI_Backend::saveModel(const std::string &path) const
 {
     // TODO : impl
 }
 
-void AI_Backend::init_net()
+void AI_Backend::initNet()
 {
     using namespace tiny_dnn::activation;
     using namespace tiny_dnn::layers;
