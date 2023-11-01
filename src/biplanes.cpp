@@ -93,7 +93,7 @@ BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
 
-AI_Backend aiBackend {};
+std::shared_ptr<AI_Backend> aiBackend {};
 
 struct AiDataset
 {
@@ -122,6 +122,12 @@ networkState()
 {
   static NetworkState state {};
   return state;
+}
+
+void
+init_ai()
+{
+  aiBackend = std::make_shared< AI_Backend >();
 }
 
 
@@ -154,6 +160,7 @@ main(
 
   network.matchmaker = new MatchMaker();
 
+  init_ai();
   textures_load();
   sounds_load();
 
@@ -396,8 +403,9 @@ game_loop_sp()
     {
       const auto inputs = plane.aiState();
 
-      const auto output = aiBackend.predictLabel(
-        {inputs.begin(), inputs.end()});
+//      const auto output = aiBackend.predictLabel(
+//        {inputs.begin(), inputs.end()});
+      const auto output = aiBackend->predictDistLabel( {inputs.begin(), inputs.end()}, 3);
 
       auto& dataset = aiDatasets[plane.type()];
 

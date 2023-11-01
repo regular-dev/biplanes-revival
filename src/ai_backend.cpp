@@ -27,14 +27,40 @@
 
 AI_Backend::AI_Backend()
 {
+    init_rand();
     init_net();
 }
 
 AI_Backend::AI_Backend(const std::string &model_path)
 {
+    init_rand();
     init_net();
-
     // TODO : impl loading
+}
+
+int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &probs) const
+{
+    auto sum = 0.0;
+
+    for (auto &it : probs)
+        sum += it.second;
+
+    std::uniform_real_distribution<> dis(0.0, sum);
+
+    float p = dis(*m_rand);
+
+    float cur_pos = 0.0;
+
+    int idx = 0;
+    for (int i = 0; i < probs.size(); ++i) {
+        if (p >= cur_pos && p < cur_pos + probs[i].second) {
+            idx = probs[i].first;
+            break;
+        }
+        cur_pos += probs[i].second;
+    }
+
+    return idx;
 }
 
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,
@@ -54,7 +80,32 @@ void AI_Backend::train(const InputBatch &data, const Labels &lbls,
 
 AI_Backend::Label AI_Backend::predictLabel(const EvalInput &in) const
 {
+    const auto out = m_mdl->predict(in);
     return m_mdl->predict_label(in);
+}
+
+AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constraint) const
+{
+    const auto mdl_out = m_mdl->predict(in);
+
+    using pair_action_t = std::pair< int, float >;
+
+    std::vector< pair_action_t > out_sorted;
+    out_sorted.reserve( mdl_out.size() );
+
+    for (int i = 0; i < mdl_out.size(); ++i)
+        out_sorted.push_back( {i, mdl_out[i]} );
+
+    std::sort(out_sorted.begin(), out_sorted.end(),
+              [ ] (pair_action_t &a1, pair_action_t &a2)
+    {
+        return a1.second > a2.second;
+    });
+
+    if (constraint > 0 && constraint < in.size())
+        out_sorted = { out_sorted.begin(), out_sorted.begin() + constraint };
+
+    return getIndexByProb(out_sorted);
 }
 
 AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
@@ -96,4 +147,10 @@ void AI_Backend::init_net()
 
     m_opt->alpha = 1e-3;
     m_opt->mu = 0.9;
+}
+
+void AI_Backend::init_rand()
+{
+    m_dev_rand = std::make_unique< std::random_device >();
+    m_rand = std::make_unique< std::default_random_engine >((*m_dev_rand)());
 }

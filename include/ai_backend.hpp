@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <random>
 
 #include "tiny_dnn/util/util.h"
 
@@ -52,13 +53,19 @@ public:
              unsigned int batch_size, unsigned int epochs);
 
   Label predictLabel(const EvalInput&) const;
+  Label predictDistLabel(const EvalInput&, int constraint = 0) const;
   Labels predictBatchLabels(const InputBatch&) const;
 
   void save_model(const std::string &path) const;
+  int getIndexByProb(const std::vector< std::pair< int, float > > &probs) const;
 
 protected:
   std::shared_ptr< SeqNet > m_mdl;
   std::shared_ptr< Optimizer > m_opt;
 
+  std::unique_ptr<std::random_device> m_dev_rand;
+  std::unique_ptr<std::default_random_engine> m_rand;
+
   void init_net();
+  void init_rand();
 };
