@@ -565,6 +565,7 @@ Menu::Select()
 
     case ROOMS::MENU_COPYRIGHT:
     {
+      mIntroAutoSkipTimer.Start();
       ChangeRoom(ROOMS::MENU_SPLASH);
       break;
     }
@@ -589,6 +590,7 @@ Menu::GoBack()
   {
     case ROOMS::MENU_COPYRIGHT:
     {
+      mIntroAutoSkipTimer.Start();
       ChangeRoom(ROOMS::MENU_SPLASH);
       break;
     }

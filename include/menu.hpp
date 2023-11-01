@@ -56,6 +56,7 @@ class Menu
 
   MESSAGE_TYPE mCurrentMessage {};
   Timer mConnectedMessageTimer {0.0};
+  Timer mIntroAutoSkipTimer {0.0};
 
 
 public:

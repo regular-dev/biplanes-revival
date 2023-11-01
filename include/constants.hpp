@@ -61,6 +61,9 @@ namespace constants
 
     static constexpr float sizeX {1.0f};
     static constexpr float sizeY {59.904 / baseHeight};
+
+    static constexpr double introAutoSkipTimeout {3.0};
+    static constexpr double connectedMessageTimeout {3.0};
   }
 
   namespace button

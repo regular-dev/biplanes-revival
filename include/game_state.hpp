@@ -65,6 +65,7 @@ public:
   bool isRoundFinished {};
   bool isHardcoreEnabled {};
 
+  bool autoSkipIntro {};
   bool isVSyncEnabled {true};
   bool isAudioEnabled {true};
   float audioPanDepth {0.4f};

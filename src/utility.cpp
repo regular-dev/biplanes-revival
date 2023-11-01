@@ -60,6 +60,7 @@ settingsWrite()
   jsonAutoFill["MMAKE_PASSWORD"]  = picojson::value( MMAKE_PASSWORD );
 
   picojson::object jsonConfig;
+  jsonConfig["AutoSkipIntro"]     = picojson::value( game.autoSkipIntro );
   jsonConfig["EnableAudio"]       = picojson::value( game.isAudioEnabled );
   jsonConfig["EnableVSync"]       = picojson::value( game.isVSyncEnabled );
   jsonConfig["AudioPanningDepth"] = picojson::value( game.audioPanDepth );
@@ -149,6 +150,9 @@ settingsParse(
   try
   {
     picojson::value::object& jsonConfig = jsonValue["Config"].get <picojson::object> ();
+
+    try { game.autoSkipIntro = jsonConfig.at( "AutoSkipIntro" ).get <bool> (); }
+    catch ( const std::exception& ) {};
 
     try { game.isAudioEnabled = jsonConfig.at( "EnableAudio" ).get <bool> (); }
     catch ( const std::exception& ) {};
