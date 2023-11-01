@@ -303,7 +303,7 @@ Menu::DrawMenu()
 
         if ( game_init_mp() != 0 )
         {
-          log_message( "\nLOG: Failed to initialize game!\n\n" );
+          log_message( "\nLOG: Failed to initialize multiplayer game!\n\n" );
           network.connection->Stop();
 
           ReturnToMainMenu();

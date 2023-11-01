@@ -112,11 +112,11 @@ settingsParse(
 
   auto& game = gameState();
 
-  picojson::value::object& jsonValue = jsonParsed.get <picojson::object> ();
+  auto& jsonValue = jsonParsed.get <picojson::object> ();
 
   try
   {
-    picojson::value::object& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
+    auto& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
     try { game.isHardcoreEnabled = jsonAutoFill.at( "HARDCORE_MODE" ).get <bool> (); }
     catch ( const std::exception& ) {};
@@ -149,7 +149,7 @@ settingsParse(
 
   try
   {
-    picojson::value::object& jsonConfig = jsonValue["Config"].get <picojson::object> ();
+    auto& jsonConfig = jsonValue["Config"].get <picojson::object> ();
 
     try { game.autoSkipIntro = jsonConfig.at( "AutoSkipIntro" ).get <bool> (); }
     catch ( const std::exception& ) {};
@@ -174,7 +174,7 @@ settingsParse(
 
   try
   {
-    picojson::value::object& jsonControls = jsonValue["Controls"].get <picojson::object> ();
+    auto& jsonControls = jsonValue["Controls"].get <picojson::object> ();
 
     try { FIRE = jsonControls.at( "FIRE" ).get <double> (); }
     catch ( const std::exception& ) {};
@@ -198,7 +198,7 @@ settingsParse(
 
   try
   {
-    picojson::value::object& jsonUtility  = jsonValue["Utility"].get <picojson::object> ();
+    auto& jsonUtility  = jsonValue["Utility"].get <picojson::object> ();
 
     try { game.output.toConsole = jsonUtility.at( "LogToConsole" ).get <bool> (); }
     catch ( const std::exception& ) {};
@@ -413,7 +413,8 @@ statsRead()
 
   auto& stats = gameState().stats.total;
 
-  picojson::value::object& jsonStats = jsonParsed.get <picojson::object> ();
+  auto& jsonStats = jsonParsed.get <picojson::object> ();
+
   try
   {
     try { stats.chute_hits = jsonStats.at( "ChuteHits" ).get <double> (); }

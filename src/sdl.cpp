@@ -72,10 +72,6 @@ SDL_init(
   canvas.windowWidthNew = canvas.windowWidth;
   canvas.windowHeightNew = canvas.windowHeight;
 
-  log_message(
-    "screen size: " + std::to_string(canvas.windowWidth) +
-    "x" + std::to_string(canvas.windowHeight) + "\n" );
-
   recalculateVirtualScreen();
 
 
