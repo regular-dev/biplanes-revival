@@ -141,6 +141,9 @@ public:
   bool isDead() const;
   bool hasJumped() const;
 
+  bool isAirborne() const;
+  bool isTakingOff() const;
+
   bool canAccelerate() const;
   bool canDecelerate() const;
   bool canTurn() const;
