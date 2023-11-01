@@ -13,6 +13,8 @@
 #include <utility>
 #include <vector>
 
+#include <fstream>
+
 #ifndef CNN_NO_SERIALIZATION
 #include <cereal/types/tuple.hpp>
 #include <cereal/types/utility.hpp>
@@ -204,6 +206,37 @@ class nodes {
     for (auto n : nodes_) {
       oa(*n);
     }
+  }
+
+  // @xion
+  void save_weights_raw(const std::string &filepath) const {
+    std::fstream fs(filepath, std::fstream::out);
+
+    if ( !fs.is_open() ) {
+      std::cerr << "Couldn't open file " << filepath << " to save weights.\n";
+      return;
+    }
+
+    for (auto n : nodes_) {
+      n->save(fs);
+    }
+
+    fs.close();
+  }
+
+  void load_weights_raw(const std::string &filepath) {
+    std::fstream fs(filepath, std::fstream::in | std::fstream::binary);
+
+    if ( !fs.is_open() ) {
+      std::cerr << "Couldn't open file " << filepath << " to save weights\n";
+      return;
+    }
+
+    for (auto n : nodes_) {
+      n->load(fs);
+    }
+
+    fs.close();
   }
 
   template <typename InputArchive>

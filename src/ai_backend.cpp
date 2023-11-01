@@ -114,7 +114,12 @@ AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
 
 void AI_Backend::saveModel(const std::string &path) const
 {
-    // TODO : impl
+    m_mdl->save(path);
+}
+
+void AI_Backend::loadModel(const std::string &path)
+{
+    m_mdl->load(path);
 }
 
 void AI_Backend::initNet()

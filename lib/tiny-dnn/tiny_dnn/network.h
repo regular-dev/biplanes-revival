@@ -696,7 +696,10 @@ class network {
       default: throw nn_error("invalid serialization format");
     }
 #else
-    throw nn_error("tiny-dnn was not built with Serialization support");
+    // @xion
+    net_.load_weights_raw(filename);
+
+    //throw nn_error("tiny-dnn was not built with Serialization support");
 #endif  // CNN_NO_SERIALIZATION
   }
 
@@ -723,7 +726,9 @@ class network {
       default: throw nn_error("invalid serialization format");
     }
 #else
-    throw nn_error("tiny-dnn was not built with Serialization support");
+    // @xion impl
+    net_.save_weights_raw(filename);
+    //throw nn_error("tiny-dnn was not built with Serialization support");
 #endif  // CNN_NO_SERIALIZATION
   }
 
