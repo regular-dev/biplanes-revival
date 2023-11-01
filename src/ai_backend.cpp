@@ -143,7 +143,7 @@ void AI_Backend::initNet()
     // optimizer
     m_opt = std::make_shared< RMSprop >();
 
-    m_opt->alpha = 1e-3;
+    m_opt->alpha = 1e-4;
     m_opt->mu = 0.9;
 }
 
