@@ -33,7 +33,7 @@
 #define MATCHMAKE_MSG_TYPE "type"
 #define MATCHMAKE_MSG_PASS "matchpass"
 #define MATCHMAKE_MSG_CID  "client_id"
-#define MATCHMAKE_SRV_IP "217.182.21.102"
+#define MATCHMAKE_SRV_IP "194.76.37.102"
 #define MATCHMAKE_SRV_PORT 2000
 #define MATCH_MAKE_TIMEOUT 15
 

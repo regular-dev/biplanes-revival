@@ -76,7 +76,10 @@ Menu::Menu()
   mInputPassword = MMAKE_PASSWORD;
   mInputScoreToWin = std::to_string(gameState().winScore);
 
-  mConnectedMessageTimer = {3.0f};
+  mConnectedMessageTimer = {constants::menu::connectedMessageTimeout};
+  mIntroAutoSkipTimer = {constants::menu::introAutoSkipTimeout};
+
+  mIntroAutoSkipTimer.Start();
 }
 
 void
@@ -142,12 +145,38 @@ Menu::DrawMenu()
   {
     case ROOMS::MENU_COPYRIGHT:
     {
+      if ( game.autoSkipIntro == true )
+      {
+        ChangeRoom(ROOMS::MENU_MAIN);
+        mButtonWasPressed = false;
+        break;
+      }
+
+      mIntroAutoSkipTimer.Update();
+
+      if ( mIntroAutoSkipTimer.isReady() == true )
+      {
+        mIntroAutoSkipTimer.Start();
+        ChangeRoom(ROOMS::MENU_SPLASH);
+        mButtonWasPressed = false;
+        break;
+      }
+
       screen_copyright();
       break;
     }
 
     case ROOMS::MENU_SPLASH:
     {
+      mIntroAutoSkipTimer.Update();
+
+      if ( mIntroAutoSkipTimer.isReady() == true )
+      {
+        ChangeRoom(ROOMS::MENU_MAIN);
+        mButtonWasPressed = false;
+        break;
+      }
+
       screen_splash();
       break;
     }
@@ -274,7 +303,7 @@ Menu::DrawMenu()
 
         if ( game_init_mp() != 0 )
         {
-          log_message( "\nLOG: Failed to initialize game!\n\n" );
+          log_message( "\nLOG: Failed to initialize multiplayer game!\n\n" );
           network.connection->Stop();
 
           ReturnToMainMenu();
@@ -680,8 +709,6 @@ Menu::screen_copyright()
   draw_text( "       casqade & xion  at       ", 0, 0.700f );
   draw_text( "     github.com/regular-dev     ", 0, 0.750f );
   draw_text( "         regular-dev.org        ", 0, 0.800f );
-
-  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, 0.900f );
 }
 
 void
@@ -703,6 +730,4 @@ Menu::screen_splash()
     textures.menu_logo,
     nullptr,
     &logoRect );
-
-  draw_text( "  Press [SPACE],[ESC]or[RETURN] ", 0, 0.900f );
 }

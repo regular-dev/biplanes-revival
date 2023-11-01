@@ -368,43 +368,46 @@ Menu::UpdateDefiningKey()
     return;
   }
 
-  if ( windowEvent.type == SDL_KEYDOWN && mButtonWasPressed == false )
+  if (  windowEvent.type == SDL_KEYDOWN &&
+        mButtonWasPressed == false )
   {
+    const auto newKey = windowEvent.key.keysym.sym;
+
     switch (mKeyToDefine)
     {
       case MENU_SETTINGS_CONTROLS::ACCELERATE:
       {
-        THROTTLE_UP = windowEvent.key.keysym.sym;
+        assignKeyBinding(THROTTLE_UP, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::DECELERATE:
       {
-        THROTTLE_DOWN = windowEvent.key.keysym.sym;
+        assignKeyBinding(THROTTLE_DOWN, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::LEFT:
       {
-        TURN_LEFT = windowEvent.key.keysym.sym;
+        assignKeyBinding(TURN_LEFT, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::RIGHT:
       {
-        TURN_RIGHT = windowEvent.key.keysym.sym;
+        assignKeyBinding(TURN_RIGHT, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::SHOOT:
       {
-        FIRE = windowEvent.key.keysym.sym;
+        assignKeyBinding(FIRE, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::EJECT:
       {
-        JUMP = windowEvent.key.keysym.sym;
+        assignKeyBinding(JUMP, newKey);
         break;
       }
 

@@ -21,6 +21,7 @@
 #include <include/sdl.hpp>
 #include <include/canvas.hpp>
 #include <include/constants.hpp>
+#include <include/game_state.hpp>
 #include <include/sounds.hpp>
 #include <include/utility.hpp>
 
@@ -65,18 +66,11 @@ SDL_init(
   SDL_DisplayMode dm {};
   SDL_GetDesktopDisplayMode( DISPLAY_INDEX, &dm );
 
-//  dm.w = 1000;
-//  dm.h = 1000;
-
   canvas.windowWidth = std::min(dm.w * 0.75f, dm.h * 0.75f);
   canvas.windowHeight = canvas.windowWidth / constants::aspectRatio;
 
   canvas.windowWidthNew = canvas.windowWidth;
   canvas.windowHeightNew = canvas.windowHeight;
-
-  log_message(
-    "screen size: " + std::to_string(canvas.windowWidth) +
-    "x" + std::to_string(canvas.windowHeight) + "\n" );
 
   recalculateVirtualScreen();
 
@@ -299,27 +293,42 @@ loadSound(
   return soundBuf;
 }
 
-void
+int
 playSound(
   Mix_Chunk* sound,
-  const uint8_t channel,
+  const int channel,
   const bool repeating )
 {
   if ( soundInitialized == false || sound == nullptr )
-    return;
+    return -1;
 
 
   if ( repeating == true )
   {
     if ( Mix_Playing(channel) == false )
-      Mix_PlayChannel(channel, sound, 0);
+      return Mix_PlayChannel(channel, sound, 0);
 
-    return;
+    return -1;
   }
 
-  Mix_PlayChannel(-1, sound, 0);
+  return Mix_PlayChannel(-1, sound, 0);
 }
 
+void
+panSound(
+  const int channel,
+  const float pan )
+{
+  if ( soundInitialized == false )
+    return;
+
+  const auto panDepth = gameState().audioPanDepth;
+
+  const uint8_t left = 255 - 255 * pan * panDepth;
+  const uint8_t right = 255 - 255 * (1.0f - pan) * panDepth;
+
+  Mix_SetPanning(channel, left, right);
+}
 
 void
 setRenderColor(

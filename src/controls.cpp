@@ -40,6 +40,33 @@ SDL_Keycode JUMP          = SDLK_LCTRL;
 
 
 void
+assignKeyBinding(
+  SDL_Keycode& targetBinding,
+  const SDL_Keycode newBinding )
+{
+  if ( newBinding == THROTTLE_UP )
+    THROTTLE_UP = targetBinding;
+
+  else if ( newBinding == THROTTLE_DOWN )
+    THROTTLE_DOWN = targetBinding;
+
+  else if ( newBinding == TURN_LEFT )
+    TURN_LEFT = targetBinding;
+
+  else if ( newBinding == TURN_RIGHT )
+    TURN_RIGHT = targetBinding;
+
+  else if ( newBinding == FIRE )
+    FIRE = targetBinding;
+
+  else if ( newBinding == JUMP )
+    JUMP = targetBinding;
+
+
+  targetBinding = newBinding;
+}
+
+void
 readLocalInput()
 {
   const Uint8* keyboard_state = SDL_GetKeyboardState({});

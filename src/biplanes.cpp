@@ -93,7 +93,7 @@ BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
 
-std::shared_ptr<AI_Backend> aiBackend {};
+AI_Backend aiBackend {};
 
 struct AiDataset
 {
@@ -124,12 +124,6 @@ networkState()
   return state;
 }
 
-void
-init_ai()
-{
-  aiBackend = std::make_shared< AI_Backend >();
-}
-
 
 int
 main(
@@ -140,7 +134,7 @@ main(
 
   const auto& game = gameState();
 
-  if ( SDL_init(game.isVSyncEnabled, game.isSoundEnabled) != 0 )
+  if ( SDL_init(game.isVSyncEnabled, game.isAudioEnabled) != 0 )
   {
     log_message( "\n\nSDL Startup: SDL startup failed!\n" );
 
@@ -158,9 +152,9 @@ main(
   network.connection = new net::ReliableConnection(
     ProtocolId, ConnectionTimeout );
 
+  network.flowControl = new net::FlowControl();
   network.matchmaker = new MatchMaker();
 
-  init_ai();
   textures_load();
   sounds_load();
 
@@ -223,10 +217,10 @@ main(
 
         deltaTime = ticks * tickInterval;
       }
+
+      draw_game();
     }
 
-
-    draw_game();
     menu.DrawMenu();
     draw_window_letterbox();
 
@@ -238,6 +232,10 @@ main(
     sendDisconnectMessage();
     connection->Stop();
   }
+
+  delete network.matchmaker;
+  delete network.flowControl;
+  delete network.connection;
 
   if ( gameState().output.stats == true )
     stats_write();
@@ -281,6 +279,8 @@ game_reset()
     cloud.Respawn();
 
   effects.Clear();
+
+  Mix_HaltChannel(-1);
 }
 
 bool
@@ -364,7 +364,6 @@ game_init_mp()
   network.connectionChanged = false;
   network.isOpponentConnected = false;
 
-  network.flowControl = new net::FlowControl();
   packetSendTime = {};
   game_reset();
 
@@ -403,9 +402,15 @@ game_loop_sp()
     {
       const auto inputs = plane.aiState();
 
-//      const auto output = aiBackend.predictLabel(
-//        {inputs.begin(), inputs.end()});
-      const auto output = aiBackend->predictDistLabel( {inputs.begin(), inputs.end()}, 3);
+      for ( size_t i = 0; i < inputs.size(); ++i )
+        if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
+          log_message(
+            "plane " + std::to_string(plane.type()),
+            " invalid input " + std::to_string(i) +
+            ": " + std::to_string(inputs[i]), "\n");
+
+      const auto output = aiBackend.predictLabel(
+        {inputs.begin(), inputs.end()});
 
       auto& dataset = aiDatasets[plane.type()];
 
@@ -463,6 +468,13 @@ game_loop_sp()
         {
           log_message(std::to_string(plane.type()), ": jump", "\n");
           aiControls.jump = true;
+          break;
+        }
+
+        default:
+        {
+          log_message("ERROR: AI backend predicted out-of-range label "
+            + std::to_string(output), "\n");
           break;
         }
       }

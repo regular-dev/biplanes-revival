@@ -65,8 +65,10 @@ public:
   bool isRoundFinished {};
   bool isHardcoreEnabled {};
 
+  bool autoSkipIntro {};
   bool isVSyncEnabled {true};
-  bool isSoundEnabled {true};
+  bool isAudioEnabled {true};
+  float audioPanDepth {0.4f};
 
   GAME_MODE gameMode {};
   DIFFICULTY botDifficulty {DIFFICULTY::MEDIUM};
