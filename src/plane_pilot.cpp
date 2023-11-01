@@ -606,6 +606,16 @@ Plane::Pilot::ChuteHitboxUpdate()
   };
 }
 
+void
+Plane::Pilot::FadeLoopingSounds()
+{
+  if ( mAudioLoopChannel != -1 )
+  {
+    Mix_FadeOutChannel(mAudioLoopChannel, constants::audioFadeDuration);
+    mAudioLoopChannel = -1;
+  }
+}
+
 bool
 Plane::Pilot::ChuteIsHit(
   const float x,
@@ -669,8 +679,7 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   panSound(
     playSound(sounds.dead, -1, false),
@@ -739,8 +748,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   mY = constants::pilot::groundCollision;
 
@@ -772,8 +780,7 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   mIsRunning = false;
   mIsChuteOpen = false;

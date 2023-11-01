@@ -240,6 +240,8 @@ public:
     void HitboxUpdate();
     void ChuteHitboxUpdate();
 
+    void FadeLoopingSounds();
+
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );
     void Death();

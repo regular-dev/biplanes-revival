@@ -303,7 +303,7 @@ playSound(
     return -1;
 
 
-  if ( repeating == true )
+  if ( repeating == true && channel != -1 )
   {
     if ( Mix_Playing(channel) == false )
       return Mix_PlayChannel(channel, sound, 0);
