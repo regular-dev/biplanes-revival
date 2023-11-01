@@ -216,10 +216,10 @@ main(
 
         deltaTime = ticks * tickInterval;
       }
+
+      draw_game();
     }
 
-
-    draw_game();
     menu.DrawMenu();
     draw_window_letterbox();
 
