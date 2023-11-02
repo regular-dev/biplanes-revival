@@ -31,7 +31,7 @@ AI_Backend::AI_Backend()
     initNet();
 }
 
-int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &probs) const
+int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &probs)
 {
     auto sum = 0.0;
 
@@ -40,7 +40,7 @@ int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &pro
 
     std::uniform_real_distribution<> dis(0.0, sum);
 
-    float p = dis(*m_rand);
+    float p = dis(m_rand);
 
     float cur_pos = 0.0;
 
@@ -77,7 +77,7 @@ AI_Backend::Label AI_Backend::predictLabel(const EvalInput &in) const
     return m_mdl->predict_label(in);
 }
 
-AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constraint) const
+AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constraint)
 {
     const auto mdl_out = m_mdl->predict(in);
 
@@ -149,6 +149,5 @@ void AI_Backend::initNet()
 
 void AI_Backend::init_rand()
 {
-    m_dev_rand = std::make_unique< std::random_device >();
-    m_rand = std::make_unique< std::default_random_engine >((*m_dev_rand)());
+    m_rand = std::default_random_engine(m_dev_rand());
 }
