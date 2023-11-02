@@ -141,6 +141,9 @@ public:
   bool isDead() const;
   bool hasJumped() const;
 
+  bool isAirborne() const;
+  bool isTakingOff() const;
+
   bool canAccelerate() const;
   bool canDecelerate() const;
   bool canTurn() const;
@@ -207,8 +210,8 @@ public:
     int8_t mAngelLoop {};
     Timer mAngelAnim {0.0f};
 
-    SDL_Rect mHitbox {};
-    SDL_Rect mChuteHitbox {};
+    SDL_FRect mHitbox {};
+    SDL_FRect mChuteHitbox {};
 
     int mAudioLoopChannel {-1};
 
@@ -236,6 +239,8 @@ public:
     void ChuteAnimUpdate();
     void HitboxUpdate();
     void ChuteHitboxUpdate();
+
+    void FadeLoopingSounds();
 
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );

@@ -93,17 +93,36 @@ BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
 
-AI_Backend aiBackend {};
+Timer trainingCooldown {10.0};
 
-struct AiDataset
+struct AiState
 {
+  Duration spawnTime {};
+
+  bool isAirborne {};
+  Duration takeOffTime {};
+
+  bool isDead {};
+  Duration deathTime {};
+
+
+  AiState() = default;
+};
+
+struct AiData
+{
+  AiState state {};
+
   AI_Backend::InputBatch batch {};
   AI_Backend::Labels labels {};
 
-  AiDataset() = default;
+  std::shared_ptr <AI_Backend> backend {};
+
+
+  AiData() = default;
 };
 
-static std::map <PLANE_TYPE, AiDataset> aiDatasets
+static std::map <PLANE_TYPE, AiData> aiData
 {
   {PLANE_TYPE::BLUE, {}},
   {PLANE_TYPE::RED, {}},
@@ -299,6 +318,16 @@ game_init_sp()
 
   menu.setMessage(MESSAGE_TYPE::SUCCESSFULL_CONNECTION);
 
+  const auto spawnTime = TimeUtils::Now();
+
+  for ( auto& [planeType, data] : aiData )
+  {
+    data = {};
+    data.state.spawnTime = spawnTime;
+
+    data.backend = std::make_shared <AI_Backend> ();
+  }
+
   return 0;
 }
 
@@ -396,6 +425,9 @@ game_loop_sp()
     processLocalControls(*playerPlane, controls_local);
   }
 
+  if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
+    trainingCooldown.Update();
+
   for ( auto& [planeType, plane] : planes )
   {
     if ( plane.isBot() == true )
@@ -409,10 +441,11 @@ game_loop_sp()
             " invalid input " + std::to_string(i) +
             ": " + std::to_string(inputs[i]), "\n");
 
-      const auto output = aiBackend.predictLabel(
-        {inputs.begin(), inputs.end()});
 
-      auto& dataset = aiDatasets[plane.type()];
+      const auto output = aiData[plane.type()].backend->predictDistLabel(
+        {inputs.begin(), inputs.end()}, 0 );
+
+      auto& dataset = aiData[plane.type()];
 
       dataset.labels.push_back(output);
 
@@ -447,6 +480,7 @@ game_loop_sp()
         {
           log_message(std::to_string(plane.type()), ": left", "\n");
           aiControls.pitch = PITCH_LEFT;
+
           break;
         }
 
@@ -454,6 +488,7 @@ game_loop_sp()
         {
           log_message(std::to_string(plane.type()), ": right", "\n");
           aiControls.pitch = PITCH_RIGHT;
+
           break;
         }
 
@@ -493,6 +528,149 @@ game_loop_sp()
   zeppelin.Update();
   bullets.Update();
   effects.Update();
+
+  const auto currentTime = TimeUtils::Now();
+
+  bool roundFinished {};
+  bool blueIsWinner {};
+  bool redIsWinner {};
+
+  for ( auto& [planeType, dataset] : aiData )
+  {
+    auto& state = dataset.state;
+
+    if (  state.isAirborne == false &&
+          planes.at(planeType).isAirborne() == true )
+    {
+      dataset.state.isAirborne = true;
+      dataset.state.takeOffTime = currentTime;
+    }
+
+    if (  state.isDead == false &&
+          planes.at(planeType).isDead() == true )
+    {
+      dataset.state.isDead = true;
+      dataset.state.deathTime = currentTime;
+    }
+  }
+
+  if ( planeBlue.isDead() == true )
+  {
+    if ( planeRed.isAirborne() == false )
+      blueIsWinner = true;
+    else if ( planeRed.isDead() == false )
+      redIsWinner = true;
+
+    roundFinished = true;
+  }
+
+  if ( planeRed.isDead() == true )
+  {
+    if ( planeBlue.isAirborne() == false )
+      redIsWinner = true;
+    else if ( planeBlue.isDead() == false )
+      blueIsWinner = true;
+
+    roundFinished = true;
+  }
+
+
+  if ( trainingCooldown.isReady() == true )
+  {
+    roundFinished = true;
+
+    if ( planeBlue.isAirborne() == true && planeRed.isAirborne() == true )
+    {
+      const auto blueTimeAirborne =
+        currentTime - aiData[planeBlue.type()].state.takeOffTime;
+
+      const auto redTimeAirborne =
+        currentTime - aiData[planeRed.type()].state.takeOffTime;
+
+      const auto blueTimeIdle =
+        aiData[planeBlue.type()].state.takeOffTime -
+        aiData[planeBlue.type()].state.spawnTime;
+
+      const auto redTimeIdle =
+        aiData[planeRed.type()].state.takeOffTime -
+        aiData[planeRed.type()].state.spawnTime;
+
+      const auto idleFine = 2.0;
+
+      const auto blueCoeff = (double) blueTimeAirborne - idleFine * (double) blueTimeIdle;
+      const auto redCoeff = (double) redTimeAirborne - idleFine * (double) redTimeIdle;
+
+
+      blueIsWinner = blueCoeff > redCoeff;
+      redIsWinner = redCoeff < blueCoeff;
+
+      log_message("blue / red: " + std::to_string(blueCoeff) + " " + std::to_string(redCoeff), "\n");
+    }
+    else if ( planeBlue.isAirborne() == true )
+      blueIsWinner = true;
+    else if ( planeRed.isAirborne() == true )
+      redIsWinner = true;
+  }
+
+  if ( roundFinished == true )
+  {
+    if ( blueIsWinner == true )
+      log_message("BLUE wins\n");
+
+    else if ( redIsWinner == true )
+      log_message("RED wins\n");
+
+    else
+      log_message("NOBODY wins\n");
+
+    if ( blueIsWinner != redIsWinner )
+    {
+      auto& blueData = aiData[PLANE_TYPE::BLUE];
+      auto& redData = aiData[PLANE_TYPE::RED];
+
+      if ( blueIsWinner == true )
+      {
+        blueData.backend->train(
+          blueData.batch,
+          blueData.labels,
+          4, 1 );
+
+        if ( planeRed.isAirborne() == false )
+          redData.backend->initNet();
+      }
+      else
+      {
+        redData.backend->train(
+          redData.batch,
+          redData.labels,
+          4, 1 );
+
+        if ( planeBlue.isAirborne() == false )
+          blueData.backend->initNet();
+      }
+    }
+    else if ( planeBlue.isAirborne() == false && planeBlue.isAirborne() == false )
+    {
+      for ( auto& [planeType, dataset] : aiData )
+        dataset.backend->initNet();
+    }
+
+
+    game_reset();
+
+    trainingCooldown.SetNewTimeout(10.0);
+    trainingCooldown.Start();
+
+    const auto spawnTime = TimeUtils::Now();
+
+    for ( auto& [planeType, dataset] : aiData )
+    {
+      dataset.state = {};
+      dataset.state.spawnTime = spawnTime;
+      dataset.batch.clear();
+      dataset.labels.clear();
+    }
+  }
 }
 
 void

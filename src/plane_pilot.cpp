@@ -161,16 +161,19 @@ Plane::Pilot::Draw() const
 
   if ( gameState().debug.collisions == true )
   {
-    const SDL_FRect chuteHitbox
+    if ( mIsChuteOpen == true )
     {
-      toWindowSpaceX(mChuteHitbox.x),
-      toWindowSpaceY(mChuteHitbox.y),
-      scaleToScreenX(mChuteHitbox.w),
-      scaleToScreenY(mChuteHitbox.h),
-    };
+      const SDL_FRect chuteHitbox
+      {
+        toWindowSpaceX(mChuteHitbox.x),
+        toWindowSpaceY(mChuteHitbox.y),
+        scaleToScreenX(mChuteHitbox.w),
+        scaleToScreenY(mChuteHitbox.h),
+      };
 
-    setRenderColor(colors::bulletHitbox);
-    SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
+      setRenderColor(colors::bulletHitbox);
+      SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
+    }
 
     const SDL_FRect hitbox
     {
@@ -580,10 +583,10 @@ Plane::Pilot::HitboxUpdate()
 
   mHitbox =
   {
-    toWindowSpaceX(mX - 0.5f * pilot::sizeX),
-    toWindowSpaceY(mY - 0.5f * pilot::sizeY),
-    scaleToScreenX(pilot::sizeX),
-    scaleToScreenY(pilot::sizeY),
+    mX - 0.5f * pilot::sizeX,
+    mY - 0.5f * pilot::sizeY,
+    pilot::sizeX,
+    pilot::sizeY,
   };
 }
 
@@ -599,11 +602,21 @@ Plane::Pilot::ChuteHitboxUpdate()
 
   mChuteHitbox =
   {
-    toWindowSpaceX(mX - 0.5f * chute::sizeX),
-    toWindowSpaceY(mY - chute::offsetY),
-    scaleToScreenX(chute::sizeX),
-    scaleToScreenY(chute::sizeY),
+    mX - 0.5f * chute::sizeX,
+    mY - chute::offsetY,
+    chute::sizeX,
+    chute::sizeY,
   };
+}
+
+void
+Plane::Pilot::FadeLoopingSounds()
+{
+  if ( mAudioLoopChannel != -1 )
+  {
+    Mix_FadeOutChannel(mAudioLoopChannel, constants::audioFadeDuration);
+    mAudioLoopChannel = -1;
+  }
 }
 
 bool
@@ -615,9 +628,9 @@ Plane::Pilot::ChuteIsHit(
     return false;
 
 
-  const SDL_Point hitPoint {x, y};
+  const SDL_FPoint hitPoint {x, y};
 
-  return SDL_PointInRect(&hitPoint, &mChuteHitbox);
+  return SDL_PointInFRect(&hitPoint, &mChuteHitbox);
 }
 
 float
@@ -669,8 +682,7 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   panSound(
     playSound(sounds.dead, -1, false),
@@ -739,8 +751,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   mY = constants::pilot::groundCollision;
 
@@ -772,8 +783,7 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
-  if ( mAudioLoopChannel != -1 )
-    Mix_HaltChannel(mAudioLoopChannel);
+  FadeLoopingSounds();
 
   mIsRunning = false;
   mIsChuteOpen = false;
@@ -803,9 +813,9 @@ Plane::Pilot::isHit(
     return false;
 
 
-  const SDL_Point hitPoint {x, y};
+  const SDL_FPoint hitPoint {x, y};
 
-  return SDL_PointInRect(&hitPoint, &mHitbox);
+  return SDL_PointInFRect(&hitPoint, &mHitbox);
 }
 
 SDL_Point

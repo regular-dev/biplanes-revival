@@ -1007,6 +1007,18 @@ Plane::hasJumped() const
 }
 
 bool
+Plane::isAirborne() const
+{
+  return mIsOnGround == false;
+}
+
+bool
+Plane::isTakingOff() const
+{
+  return mIsTakingOff == true;
+}
+
+bool
 Plane::canAccelerate() const
 {
   return

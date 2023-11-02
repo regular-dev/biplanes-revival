@@ -59,16 +59,16 @@ int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &pro
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,
                        unsigned int batch_size, unsigned int epochs)
 {
-    log_message("Begin training...");
+    log_message("Begin training...\n");
 
-    const auto prev_loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
-    log_message("Loss before training : {:.3f}", std::to_string(prev_loss));
+//    const auto prev_loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
+//    log_message("Loss before training : {:.3f}", std::to_string(prev_loss), "\n");
 
     m_mdl->train< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls,
                                                        batch_size, epochs);
 
-    const auto loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
-    log_message("Loss after training : {:.3f}", std::to_string(loss));
+//    const auto loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
+//    log_message("Loss after training : {:.3f}", std::to_string(loss), "\n");
 }
 
 AI_Backend::Label AI_Backend::predictLabel(const EvalInput &in) const
@@ -143,7 +143,7 @@ void AI_Backend::initNet()
     // optimizer
     m_opt = std::make_shared< RMSprop >();
 
-    m_opt->alpha = 1e-3;
+    m_opt->alpha = 1e-4;
     m_opt->mu = 0.9;
 }
 

@@ -36,6 +36,9 @@ namespace constants
   static constexpr float baseHeight {208.f};
   static constexpr float aspectRatio {baseWidth / baseHeight};
 
+  static constexpr int audioFadeDuration {500}; // milliseconds
+
+
   namespace colors
   {
     static constexpr Color background {0, 154, 239, 255};
