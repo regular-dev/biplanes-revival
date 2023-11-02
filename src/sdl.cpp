@@ -319,7 +319,7 @@ panSound(
   const int channel,
   const float pan )
 {
-  if ( soundInitialized == false )
+  if ( soundInitialized == false || channel == -1 )
     return;
 
   const auto panDepth = gameState().audioPanDepth;

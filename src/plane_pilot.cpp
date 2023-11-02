@@ -666,6 +666,8 @@ void
 Plane::Pilot::ChuteHit(
   Plane& attacker )
 {
+  FadeLoopingSounds();
+
   panSound(
     playSound(sounds.hitChute, -1, false),
     mX );
