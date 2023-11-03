@@ -93,28 +93,170 @@ BulletSpawner bullets {};
 std::vector <Cloud> clouds {};
 Zeppelin zeppelin {};
 
-Timer trainingCooldown {10.0};
 
-struct AiState
+struct AiStateMonitor
 {
-  Duration spawnTime {};
+  std::map <AiAction, size_t> actionStats {};
 
-  bool isAirborne {};
-  Duration takeOffTime {};
+  size_t wins {};
+  size_t lifeTime {};
+  size_t airborneTime {};
+  size_t ejectedTime {};
 
-  bool isDead {};
-  Duration deathTime {};
 
+  AiStateMonitor() = default;
 
-  AiState() = default;
+  void update( const Plane& self, const Plane& opponent );
+  void reset();
+
+  int64_t airborneScore() const;
 };
+
+void
+AiStateMonitor::update(
+  const Plane& self,
+  const Plane& opponent )
+{
+  if ( self.isDead() == true )
+    return;
+
+  ++lifeTime;
+
+  if ( self.hasJumped() == true )
+  {
+    ++ejectedTime;
+    return;
+  }
+
+  if (  self.isTakingOff() == true ||
+        self.isAirborne() == true )
+    ++airborneTime;
+}
+
+void
+AiStateMonitor::reset()
+{
+  lifeTime = 0;
+  airborneTime = 0;
+  ejectedTime = 0;
+}
+
+int64_t
+AiStateMonitor::airborneScore() const
+{
+  const auto idlePenalty {2.0};
+
+  const auto idleTime = idlePenalty *
+    (lifeTime - airborneTime);
+
+  return airborneTime - idleTime;
+}
+
+struct AiDatasetEntry
+{
+  std::vector <float> inputs {};
+  size_t output {};
+
+  AiDatasetEntry() = default;
+};
+
+
+class AiDataset
+{
+  std::vector <AiDatasetEntry> mData {};
+
+
+public:
+  AiDataset() = default;
+
+
+  void push(
+    const std::vector <float>& inputs,
+    const size_t output );
+
+  void shuffle();
+
+  void dropEveryNthEntry( const size_t n );
+  void saveEveryNthEntry( const size_t n );
+
+  size_t size() const;
+
+  AI_Backend::InputBatch toBatch() const;
+  AI_Backend::Labels toLabels() const;
+};
+
+void
+AiDataset::push(
+  const std::vector <float>& inputs,
+  const size_t output )
+{
+  mData.push_back({inputs, output});
+}
+
+void
+AiDataset::shuffle()
+{
+  std::shuffle(
+    mData.begin(),
+    mData.end(),
+    std::mt19937 {std::random_device{}()} );
+}
+
+void
+AiDataset::dropEveryNthEntry(
+  const size_t n )
+{
+  for ( size_t i = mData.size() - 1; i > 0; --i )
+    if ( (i + 1) % n == 0 )
+      mData.erase(mData.begin() + i);
+}
+
+void
+AiDataset::saveEveryNthEntry(
+  const size_t n )
+{
+  for ( size_t i = mData.size() - 1; i > 0; --i )
+    if ( (i + 1) % n != 0 )
+      mData.erase(mData.begin() + i);
+}
+
+size_t
+AiDataset::size() const
+{
+  return mData.size();
+}
+
+AI_Backend::InputBatch
+AiDataset::toBatch() const
+{
+  AI_Backend::InputBatch batch {};
+  batch.reserve(mData.size());
+
+  for ( const auto& state : mData )
+    batch.push_back(
+      {state.inputs.begin(), state.inputs.end()} );
+
+  return batch;
+}
+
+AI_Backend::Labels
+AiDataset::toLabels() const
+{
+  AI_Backend::Labels labels {};
+  labels.reserve(mData.size());
+
+  for ( const auto& state : mData )
+    labels.push_back(state.output);
+
+  return labels;
+}
+
 
 struct AiData
 {
-  AiState state {};
+  AiStateMonitor state {};
 
-  AI_Backend::InputBatch batch {};
-  AI_Backend::Labels labels {};
+  AiDataset dataset {};
 
   std::shared_ptr <AI_Backend> backend {};
 
@@ -122,11 +264,410 @@ struct AiData
   AiData() = default;
 };
 
-static std::map <PLANE_TYPE, AiData> aiData
+class AiController
 {
-  {PLANE_TYPE::BLUE, {}},
-  {PLANE_TYPE::RED, {}},
+  std::map <PLANE_TYPE, AiData> mAiData
+  {
+    {PLANE_TYPE::BLUE, {}},
+    {PLANE_TYPE::RED, {}},
+  };
+
+  Timer mRoundDuration {10.0};
+
+  const size_t mWinCountRequirement {3};
+  size_t mEpochsTrained {};
+  size_t mActionRandomness {};
+
+
+  void newEpoch();
+  void restartRound();
+
+  void increaseActionRandomness();
+  void decreaseActionRandomness();
+  void resetActionRandomness();
+
+
+public:
+  AiController() = default;
+
+  void init();
+  void update();
+  void processInput();
+  void train();
+
+  void printActionStats();
 };
+
+void
+AiController::init()
+{
+  for ( auto& [planeType, data] : mAiData )
+  {
+    data = {};
+    data.backend = std::make_shared <AI_Backend> ();
+  }
+
+  mRoundDuration.SetNewTimeout(10.0);
+  mRoundDuration.Start();
+}
+
+void
+AiController::newEpoch()
+{
+  for ( auto& [planeType, data] : mAiData )
+  {
+    data.state = {};
+    data.dataset = {};
+  }
+}
+
+void
+AiController::restartRound()
+{
+  game_reset();
+
+  mRoundDuration.SetNewTimeout(10.0);
+  mRoundDuration.Start();
+
+  for ( auto& [planeType, data] : mAiData )
+    data.state.reset();
+}
+
+void
+AiController::increaseActionRandomness()
+{
+  if ( mActionRandomness + 1 >= static_cast <size_t> (AiAction::ActionCount) )
+    return;
+
+  ++mActionRandomness;
+
+  log_message("increased action randomness to " + std::to_string(mActionRandomness) + "\n");
+}
+
+void
+AiController::decreaseActionRandomness()
+{
+  if ( mActionRandomness == 0 )
+    return;
+
+  --mActionRandomness;
+  log_message("decreased action randomness to " + std::to_string(mActionRandomness) + "\n");
+}
+
+void
+AiController::resetActionRandomness()
+{
+  mActionRandomness = 0;
+}
+
+void
+AiController::processInput()
+{
+  for ( auto& [planeType, plane] : planes )
+  {
+    if ( plane.isBot() == false )
+      continue;
+
+
+    const auto inputs = plane.aiState();
+
+    for ( size_t i = 0; i < inputs.size(); ++i )
+      if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
+      {
+        log_message(
+          "plane " + std::to_string(plane.type()),
+          " invalid input " + std::to_string(i) +
+          ": " + std::to_string(inputs[i]), "\n");
+
+        assert(false);
+      }
+
+    auto& data = mAiData[plane.type()];
+
+    const auto output = data.backend->predictDistLabel(
+      {inputs.begin(), inputs.end()}, mActionRandomness );
+
+
+    Controls aiControls {};
+
+    const auto action = static_cast <AiAction> (output);
+
+    switch (action)
+    {
+      case AiAction::Idle:
+      {
+//        log_message(std::to_string(plane.type()), ": idle", "\n");
+        break;
+      }
+
+      case AiAction::Accelerate:
+      {
+//        log_message(std::to_string(plane.type()), ": fwd", "\n");
+        aiControls.throttle = THROTTLE_INCREASE;
+        break;
+      }
+
+      case AiAction::Decelerate:
+      {
+//        log_message(std::to_string(plane.type()), ": back", "\n");
+        aiControls.throttle = THROTTLE_DECREASE;
+        break;
+      }
+
+      case AiAction::TurnLeft:
+      {
+//        log_message(std::to_string(plane.type()), ": left", "\n");
+        aiControls.pitch = PITCH_LEFT;
+
+        break;
+      }
+
+      case AiAction::TurnRight:
+      {
+//        log_message(std::to_string(plane.type()), ": right", "\n");
+        aiControls.pitch = PITCH_RIGHT;
+
+        break;
+      }
+
+      case AiAction::Shoot:
+      {
+//        log_message(std::to_string(plane.type()), ": shoot", "\n");
+        aiControls.shoot = true;
+        break;
+      }
+
+      case AiAction::Jump:
+      {
+//        log_message(std::to_string(plane.type()), ": jump", "\n");
+//        aiControls.jump = true;
+        break;
+      }
+
+      default:
+      {
+        log_message("ERROR: AI backend predicted out-of-range label "
+          + std::to_string(output), "\n");
+        break;
+      }
+    }
+
+    processLocalControls(plane, aiControls);
+
+
+    if ( gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+      continue;
+
+    if ( data.state.wins < mWinCountRequirement )
+    {
+      data.dataset.push(inputs, output);
+      data.state.actionStats[action]++;
+    }
+  }
+}
+
+void
+AiController::update()
+{
+  mRoundDuration.Update();
+
+  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+  auto& blueData = mAiData[planeBlue.type()];
+  auto& redData = mAiData[planeRed.type()];
+
+  bool roundFinished {};
+
+  if ( planeBlue.isDead() == true || planeRed.isDead() == true )
+  {
+    roundFinished = true;
+
+    if ( planeBlue.isDead() == true && redData.state.airborneScore() > 0 )
+    {
+      resetActionRandomness();
+      redData.state.wins++;
+      log_message("RED wins (airborne score " + std::to_string(redData.state.airborneScore()) + ")\n");
+    }
+    else if ( planeRed.isDead() == true && blueData.state.airborneScore() > 0 )
+    {
+      resetActionRandomness();
+      blueData.state.wins++;
+      log_message("BLUE wins (airborne score " + std::to_string(blueData.state.airborneScore()) + ")\n");
+    }
+    else
+    {
+      increaseActionRandomness();
+
+      log_message(
+        "NOBODY wins (score " +
+        std::to_string(blueData.state.airborneScore()) +
+        "/" +
+        std::to_string(redData.state.airborneScore()) +
+        "\n");
+    }
+  }
+
+  blueData.state.update(planeBlue, planeRed);
+  redData.state.update(planeRed, planeBlue);
+
+
+  if ( mRoundDuration.isReady() == true )
+  {
+    roundFinished = true;
+
+    const auto blueScore = blueData.state.airborneScore();
+    const auto redScore = redData.state.airborneScore();
+
+    log_message("blue/red: " + std::to_string(blueScore) + " " + std::to_string(redScore), "\n");
+
+    if ( blueScore < 0.0 && redScore <= 0.0 )
+    {
+      increaseActionRandomness();
+      log_message("NOBODY wins\n");
+    }
+
+    else if ( blueScore > redScore )
+    {
+      resetActionRandomness();
+      blueData.state.wins++;
+      log_message("BLUE wins\n");
+    }
+    else if ( redScore > blueScore )
+    {
+      resetActionRandomness();
+      redData.state.wins++;
+      log_message("RED wins\n");
+    }
+
+    if ( mEpochsTrained == 0 )
+    {
+      if ( blueData.state.wins == 0 && blueData.state.airborneTime == 0 )
+      {
+        resetActionRandomness();
+        blueData.backend->initNet();
+        log_message("BLUE reinit\n");
+      }
+
+      if ( redData.state.wins == 0 && redData.state.airborneTime == 0 )
+      {
+        resetActionRandomness();
+        redData.backend->initNet();
+        log_message("RED reinit\n");
+      }
+    }
+  }
+
+  if ( roundFinished == true )
+  {
+    if (  blueData.state.wins >= mWinCountRequirement &&
+          redData.state.wins >= mWinCountRequirement )
+    {
+      printActionStats();
+      train();
+      newEpoch();
+      resetActionRandomness();
+    }
+
+    restartRound();
+  }
+}
+
+void
+AiController::train()
+{
+  const size_t epochs {3};
+  const size_t batchSize {8};
+
+
+  log_message("training epoch " + std::to_string(mEpochsTrained + 1) + "\n");
+
+  for ( auto& [planeType, data] : mAiData )
+  {
+    data.dataset.saveEveryNthEntry(3);
+    data.dataset.shuffle();
+
+    data.backend->train(
+      data.dataset.toBatch(),
+      data.dataset.toLabels(),
+      batchSize, epochs );
+  }
+
+  ++mEpochsTrained;
+  gameState().deltaTimeResetRequested = true;
+}
+
+void
+AiController::printActionStats()
+{
+  for ( const auto& [planeType, aiData] : mAiData )
+  {
+    log_message(std::to_string(planeType) + " action stats:", "\n");
+
+    size_t totalActionCount {};
+
+    for ( const auto& [action, count] : aiData.state.actionStats )
+      totalActionCount += count;
+
+
+    for ( const auto& [action, count] : aiData.state.actionStats )
+    {
+      switch (action)
+      {
+        case AiAction::Idle:
+        {
+          log_message("idle ");
+          break;
+        }
+
+        case AiAction::Accelerate:
+        {
+          log_message("accel ");
+          break;
+        }
+
+        case AiAction::Decelerate:
+        {
+          log_message("decel ");
+          break;
+        }
+
+        case AiAction::TurnLeft:
+        {
+          log_message("left ");
+          break;
+        }
+
+        case AiAction::TurnRight:
+        {
+          log_message("right ");
+          break;
+        }
+
+        case AiAction::Shoot:
+        {
+          log_message("shoot ");
+          break;
+        }
+
+        case AiAction::Jump:
+        {
+          log_message("jump ");
+          break;
+        }
+      }
+
+      std::stringstream stream {};
+      stream <<
+        std::fixed <<
+        std::setprecision(2) <<
+        100.0 * count / totalActionCount;
+
+      log_message(stream.str() + "% ");
+    }
+    log_message("\n");
+  }
+}
 
 
 GameState&
@@ -143,6 +684,8 @@ networkState()
   return state;
 }
 
+static AiController aiController {};
+
 
 int
 main(
@@ -151,7 +694,7 @@ main(
 {
   logVersionAndReadSettings();
 
-  const auto& game = gameState();
+  auto& game = gameState();
 
   if ( SDL_init(game.isVSyncEnabled, game.isAudioEnabled) != 0 )
   {
@@ -193,7 +736,17 @@ main(
     TimeUtils::SleepUntil(tickPrevious + tickInterval);
 
     const auto currentTime = TimeUtils::Now();
-    deltaTime = static_cast <double> (currentTime - timePrevious);
+
+    if ( game.deltaTimeResetRequested == true )
+    {
+      game.deltaTimeResetRequested = false;
+
+      while ( currentTime >= tickPrevious + tickInterval )
+        tickPrevious += tickInterval;
+    }
+    else
+      deltaTime = static_cast <double> (currentTime - timePrevious);
+
     timePrevious = currentTime;
 
     if ( connection->IsRunning() == true )
@@ -314,19 +867,11 @@ game_init_sp()
   network.isOpponentConnected = true;
   game_reset();
 
+  aiController.init();
+
   log_message( "\nLOG: Singleplayer game initialized successfully!\n\n" );
 
   menu.setMessage(MESSAGE_TYPE::SUCCESSFULL_CONNECTION);
-
-  const auto spawnTime = TimeUtils::Now();
-
-  for ( auto& [planeType, data] : aiData )
-  {
-    data = {};
-    data.state.spawnTime = spawnTime;
-
-    data.backend = std::make_shared <AI_Backend> ();
-  }
 
   return 0;
 }
@@ -425,99 +970,8 @@ game_loop_sp()
     processLocalControls(*playerPlane, controls_local);
   }
 
-  if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
-    trainingCooldown.Update();
-
-  for ( auto& [planeType, plane] : planes )
-  {
-    if ( plane.isBot() == true )
-    {
-      const auto inputs = plane.aiState();
-
-      for ( size_t i = 0; i < inputs.size(); ++i )
-        if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
-          log_message(
-            "plane " + std::to_string(plane.type()),
-            " invalid input " + std::to_string(i) +
-            ": " + std::to_string(inputs[i]), "\n");
-
-
-      const auto output = aiData[plane.type()].backend->predictDistLabel(
-        {inputs.begin(), inputs.end()}, 0 );
-
-      auto& dataset = aiData[plane.type()];
-
-      dataset.labels.push_back(output);
-
-      dataset.batch.push_back(
-        {inputs.begin(), inputs.end()} );
-
-      Controls aiControls {};
-
-      switch (static_cast <AiAction> (output))
-      {
-        case AiAction::Idle:
-        {
-          log_message(std::to_string(plane.type()), ": idle", "\n");
-          break;
-        }
-
-        case AiAction::Accelerate:
-        {
-          log_message(std::to_string(plane.type()), ": fwd", "\n");
-          aiControls.throttle = THROTTLE_INCREASE;
-          break;
-        }
-
-        case AiAction::Decelerate:
-        {
-          log_message(std::to_string(plane.type()), ": back", "\n");
-          aiControls.throttle = THROTTLE_DECREASE;
-          break;
-        }
-
-        case AiAction::TurnLeft:
-        {
-          log_message(std::to_string(plane.type()), ": left", "\n");
-          aiControls.pitch = PITCH_LEFT;
-
-          break;
-        }
-
-        case AiAction::TurnRight:
-        {
-          log_message(std::to_string(plane.type()), ": right", "\n");
-          aiControls.pitch = PITCH_RIGHT;
-
-          break;
-        }
-
-        case AiAction::Shoot:
-        {
-          log_message(std::to_string(plane.type()), ": shoot", "\n");
-          aiControls.shoot = true;
-          break;
-        }
-
-        case AiAction::Jump:
-        {
-          log_message(std::to_string(plane.type()), ": jump", "\n");
-          aiControls.jump = true;
-          break;
-        }
-
-        default:
-        {
-          log_message("ERROR: AI backend predicted out-of-range label "
-            + std::to_string(output), "\n");
-          break;
-        }
-      }
-
-      processLocalControls(plane, aiControls);
-    }
-  }
-
+  aiController.update();
+  aiController.processInput();
 
   for ( auto& cloud : clouds )
     cloud.Update();
@@ -528,149 +982,6 @@ game_loop_sp()
   zeppelin.Update();
   bullets.Update();
   effects.Update();
-
-  const auto currentTime = TimeUtils::Now();
-
-  bool roundFinished {};
-  bool blueIsWinner {};
-  bool redIsWinner {};
-
-  for ( auto& [planeType, dataset] : aiData )
-  {
-    auto& state = dataset.state;
-
-    if (  state.isAirborne == false &&
-          planes.at(planeType).isAirborne() == true )
-    {
-      dataset.state.isAirborne = true;
-      dataset.state.takeOffTime = currentTime;
-    }
-
-    if (  state.isDead == false &&
-          planes.at(planeType).isDead() == true )
-    {
-      dataset.state.isDead = true;
-      dataset.state.deathTime = currentTime;
-    }
-  }
-
-  if ( planeBlue.isDead() == true )
-  {
-    if ( planeRed.isAirborne() == false )
-      blueIsWinner = true;
-    else if ( planeRed.isDead() == false )
-      redIsWinner = true;
-
-    roundFinished = true;
-  }
-
-  if ( planeRed.isDead() == true )
-  {
-    if ( planeBlue.isAirborne() == false )
-      redIsWinner = true;
-    else if ( planeBlue.isDead() == false )
-      blueIsWinner = true;
-
-    roundFinished = true;
-  }
-
-
-  if ( trainingCooldown.isReady() == true )
-  {
-    roundFinished = true;
-
-    if ( planeBlue.isAirborne() == true && planeRed.isAirborne() == true )
-    {
-      const auto blueTimeAirborne =
-        currentTime - aiData[planeBlue.type()].state.takeOffTime;
-
-      const auto redTimeAirborne =
-        currentTime - aiData[planeRed.type()].state.takeOffTime;
-
-      const auto blueTimeIdle =
-        aiData[planeBlue.type()].state.takeOffTime -
-        aiData[planeBlue.type()].state.spawnTime;
-
-      const auto redTimeIdle =
-        aiData[planeRed.type()].state.takeOffTime -
-        aiData[planeRed.type()].state.spawnTime;
-
-      const auto idleFine = 2.0;
-
-      const auto blueCoeff = (double) blueTimeAirborne - idleFine * (double) blueTimeIdle;
-      const auto redCoeff = (double) redTimeAirborne - idleFine * (double) redTimeIdle;
-
-
-      blueIsWinner = blueCoeff > redCoeff;
-      redIsWinner = redCoeff < blueCoeff;
-
-      log_message("blue / red: " + std::to_string(blueCoeff) + " " + std::to_string(redCoeff), "\n");
-    }
-    else if ( planeBlue.isAirborne() == true )
-      blueIsWinner = true;
-    else if ( planeRed.isAirborne() == true )
-      redIsWinner = true;
-  }
-
-  if ( roundFinished == true )
-  {
-    if ( blueIsWinner == true )
-      log_message("BLUE wins\n");
-
-    else if ( redIsWinner == true )
-      log_message("RED wins\n");
-
-    else
-      log_message("NOBODY wins\n");
-
-    if ( blueIsWinner != redIsWinner )
-    {
-      auto& blueData = aiData[PLANE_TYPE::BLUE];
-      auto& redData = aiData[PLANE_TYPE::RED];
-
-      if ( blueIsWinner == true )
-      {
-        blueData.backend->train(
-          blueData.batch,
-          blueData.labels,
-          4, 1 );
-
-        if ( planeRed.isAirborne() == false )
-          redData.backend->initNet();
-      }
-      else
-      {
-        redData.backend->train(
-          redData.batch,
-          redData.labels,
-          4, 1 );
-
-        if ( planeBlue.isAirborne() == false )
-          blueData.backend->initNet();
-      }
-    }
-    else if ( planeBlue.isAirborne() == false && planeBlue.isAirborne() == false )
-    {
-      for ( auto& [planeType, dataset] : aiData )
-        dataset.backend->initNet();
-    }
-
-
-    game_reset();
-
-    trainingCooldown.SetNewTimeout(10.0);
-    trainingCooldown.Start();
-
-    const auto spawnTime = TimeUtils::Now();
-
-    for ( auto& [planeType, dataset] : aiData )
-    {
-      dataset.state = {};
-      dataset.state.spawnTime = spawnTime;
-      dataset.batch.clear();
-      dataset.labels.clear();
-    }
-  }
 }
 
 void
