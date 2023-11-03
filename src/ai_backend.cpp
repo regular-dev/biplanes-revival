@@ -95,7 +95,7 @@ AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constrai
         return a1.second > a2.second;
     });
 
-    if (constraint > 0 && constraint < in.size())
+    if (constraint > 0 && constraint < out_sorted.size())
         out_sorted = { out_sorted.begin(), out_sorted.begin() + constraint };
 
     return getIndexByProb(out_sorted);
