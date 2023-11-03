@@ -57,8 +57,8 @@ public:
   Label predictDistLabel(const EvalInput&, int constraint = 0); // not const cause of rand_engine
   Labels predictBatchLabels(const InputBatch&) const;
 
-  void saveModel(const std::string &path) const;
-  void loadModel(const std::string &path);
+  bool saveModel(const std::string &path) const;
+  bool loadModel(const std::string &path);
 
   int getIndexByProb(const std::vector< std::pair< int, float > > &probs);
 

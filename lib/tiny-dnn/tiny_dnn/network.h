@@ -673,7 +673,7 @@ class network {
   const_iterator begin() const { return net_.begin(); }
   const_iterator end() const { return net_.end(); }
 
-  void load(const std::string &filename,
+  bool load(const std::string &filename,
             content_type what  = content_type::weights_and_model,
             file_format format = file_format::binary) {
 #ifndef CNN_NO_SERIALIZATION
@@ -697,13 +697,13 @@ class network {
     }
 #else
     // @xion
-    net_.load_weights_raw(filename);
+    return net_.load_weights_raw(filename);
 
     //throw nn_error("tiny-dnn was not built with Serialization support");
 #endif  // CNN_NO_SERIALIZATION
   }
 
-  void save(const std::string &filename,
+  bool save(const std::string &filename,
             content_type what  = content_type::weights_and_model,
             file_format format = file_format::binary) const {
 #ifndef CNN_NO_SERIALIZATION
@@ -727,7 +727,7 @@ class network {
     }
 #else
     // @xion impl
-    net_.save_weights_raw(filename);
+    return net_.save_weights_raw(filename);
     //throw nn_error("tiny-dnn was not built with Serialization support");
 #endif  // CNN_NO_SERIALIZATION
   }

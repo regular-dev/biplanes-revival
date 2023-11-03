@@ -209,34 +209,45 @@ class nodes {
   }
 
   // @xion
-  void save_weights_raw(const std::string &filepath) const {
+  bool save_weights_raw(const std::string &filepath) const {
     std::fstream fs(filepath, std::fstream::out);
 
     if ( !fs.is_open() ) {
       std::cerr << "Couldn't open file " << filepath << " to save weights.\n";
-      return;
+      return false;
     }
 
-    for (auto n : nodes_) {
-      n->save(fs);
+    try {
+      for (auto n : nodes_) {
+        n->save(fs);
+      }
+    } catch (...) {
+      fs.close();
+      return false;
     }
 
     fs.close();
+    return true;
   }
 
-  void load_weights_raw(const std::string &filepath) {
+  bool load_weights_raw(const std::string &filepath) {
     std::fstream fs(filepath, std::fstream::in | std::fstream::binary);
 
     if ( !fs.is_open() ) {
       std::cerr << "Couldn't open file " << filepath << " to save weights\n";
-      return;
+      return false;
     }
 
-    for (auto n : nodes_) {
-      n->load(fs);
+    try {
+      for (auto n : nodes_) {
+        n->load(fs);
+      }
+    } catch (...) {
+      return false;
     }
 
     fs.close();
+    return true;
   }
 
   template <typename InputArchive>

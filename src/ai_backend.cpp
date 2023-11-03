@@ -112,14 +112,14 @@ AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
     return out;
 }
 
-void AI_Backend::saveModel(const std::string &path) const
+bool AI_Backend::saveModel(const std::string &path) const
 {
-    m_mdl->save(path);
+    return m_mdl->save(path);
 }
 
-void AI_Backend::loadModel(const std::string &path)
+bool AI_Backend::loadModel(const std::string &path)
 {
-    m_mdl->load(path);
+    return m_mdl->load(path);
 }
 
 void AI_Backend::initNet()
@@ -134,16 +134,16 @@ void AI_Backend::initNet()
     // model
     m_mdl = std::make_shared< network< sequential > >();
 
-    *m_mdl  << fc(inputSize, 256) << relu()
-            << fc(256, 128) << relu()
-            << fc(128, 64) << relu()
-            << fc(64, outputSize)
-            << softmax_layer(outputSize);
+    *m_mdl << fc(inputSize, 256) << relu()
+           << fc(256, 128) << relu() << dropout(128, 0.2)
+           << fc(128, 64) << relu() << dropout(64, 0.2)
+           << fc(64, outputSize)
+           << softmax_layer(outputSize);
 
     // optimizer
     m_opt = std::make_shared< RMSprop >();
 
-    m_opt->alpha = 1e-4;
+    m_opt->alpha = 3e-4;
     m_opt->mu = 0.9;
 }
 
