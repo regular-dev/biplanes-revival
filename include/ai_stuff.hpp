@@ -111,6 +111,7 @@ class AiController
   };
 
   Timer mRoundDuration {10.0};
+  Timer mDeathCounter {1.0};
 
   const static size_t mWinCountRequirement {3};
   size_t mEpochsTrained {};
@@ -122,6 +123,8 @@ class AiController
   void raiseActionConstraint( AiData& );
   void lowerActionConstraint( AiData& );
   void resetActionConstraint( AiData& );
+
+  void evaluateWinner();
 
 
 public:

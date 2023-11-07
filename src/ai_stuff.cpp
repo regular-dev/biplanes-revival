@@ -226,7 +226,6 @@ AiDataset::printActionStats() const
 }
 
 
-
 void
 AiController::init()
 {
@@ -237,6 +236,7 @@ AiController::init()
   }
 
   mRoundDuration.Start();
+  mDeathCounter.Reset();
 }
 
 void
@@ -256,6 +256,8 @@ AiController::restartRound()
   game_reset();
 
   mRoundDuration.Start();
+  mDeathCounter.Stop();
+  mDeathCounter.Reset();
 
   for ( auto& [planeType, data] : mAiData )
   {
@@ -292,6 +294,90 @@ AiController::resetActionConstraint(
   AiData& data )
 {
   data.actionConstraint = 0;
+}
+
+void
+AiController::evaluateWinner()
+{
+  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+  auto& blueData = mAiData[planeBlue.type()];
+  auto& redData = mAiData[planeRed.type()];
+
+  size_t blueScore {};
+  size_t redScore {};
+
+  blueScore += planeBlue.isDead() == false;
+  redScore += planeRed.isDead() == false;
+
+  blueScore += blueData.state.airborneTime > 0;
+  redScore += redData.state.airborneTime > 0;
+
+  blueScore += redData.state.airborneScore() <= 0;
+  redScore += blueData.state.airborneScore() <= 0;
+
+  blueScore += blueData.state.airborneScore() > redData.state.airborneScore();
+  redScore += redData.state.airborneScore() > blueData.state.airborneScore();
+
+  blueScore += planeBlue.isDead() == false && planeBlue.isAirborne() == true;
+  redScore += planeRed.isDead() == false && planeRed.isAirborne() == true;
+
+  log_message("blue/red: " + std::to_string(blueScore) + " " + std::to_string(redScore), "\n");
+
+
+  if ( blueScore > redScore )
+  {
+    menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
+    log_message("BLUE wins (airborne score " + std::to_string(blueData.state.airborneScore()) + ")\n");
+    blueData.state.wins++;
+    resetActionConstraint(blueData);
+    raiseActionConstraint(redData);
+
+    if ( blueData.state.wins <= mWinCountRequirement )
+    {
+      log_message("merging blue dataset\n");
+      log_message("blue action stats:\n");
+      blueData.roundDataset.printActionStats();
+      blueData.roundDataset.merge(blueData.epochDataset);
+    }
+
+    return;
+  }
+
+  if ( redScore > blueScore )
+  {
+    menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
+    log_message("RED wins (airborne score " + std::to_string(redData.state.airborneScore()) + ")\n");
+    redData.state.wins++;
+    resetActionConstraint(redData);
+    raiseActionConstraint(blueData);
+
+    if ( redData.state.wins <= mWinCountRequirement )
+    {
+      log_message("merging red dataset\n");
+      log_message("red action stats:\n");
+      redData.roundDataset.printActionStats();
+      redData.roundDataset.merge(redData.epochDataset);
+    }
+
+    return;
+  }
+
+  menu.setMessage(MESSAGE_TYPE::ROUND_DRAW);
+  log_message(
+    "NOBODY wins (score " +
+    std::to_string(blueScore) +
+    "/" +
+    std::to_string(redScore) +
+    ", airborne score " +
+    std::to_string(blueData.state.airborneScore()) +
+    "/" +
+    std::to_string(redData.state.airborneScore()) +
+    "\n");
+
+  raiseActionConstraint(redData);
+  raiseActionConstraint(blueData);
 }
 
 void
@@ -405,6 +491,7 @@ void
 AiController::update()
 {
   mRoundDuration.Update();
+  mDeathCounter.Update();
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
@@ -412,167 +499,60 @@ AiController::update()
   auto& blueData = mAiData[planeBlue.type()];
   auto& redData = mAiData[planeRed.type()];
 
-  bool roundFinished {};
+  bool roundFinished = mRoundDuration.isReady();
 
   if ( planeBlue.isDead() == true || planeRed.isDead() == true )
   {
-    roundFinished = true;
+    if ( mDeathCounter.isCounting() == false )
+      mDeathCounter.Start();
 
-    size_t blueScore {};
-    size_t redScore {};
-
-    blueScore += planeBlue.isDead() == false;
-    redScore += planeRed.isDead() == false;
-
-    blueScore += blueData.state.airborneTime > 0;
-    redScore += redData.state.airborneTime > 0;
-
-    blueScore += redData.state.airborneScore() <= 0;
-    redScore += blueData.state.airborneScore() <= 0;
-
-    blueScore += blueData.state.airborneScore() > redData.state.airborneScore();
-    redScore += redData.state.airborneScore() > blueData.state.airborneScore();
-
-    blueScore += planeBlue.isDead() == false && planeBlue.isAirborne() == true;
-    redScore += planeRed.isDead() == false && planeRed.isAirborne() == true;
-
-    if ( blueScore > redScore )
-    {
-      menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
-      log_message("BLUE wins (airborne score " + std::to_string(blueData.state.airborneScore()) + ")\n");
-      blueData.state.wins++;
-      resetActionConstraint(blueData);
-      raiseActionConstraint(redData);
-
-      if ( blueData.state.wins <= mWinCountRequirement )
-      {
-        log_message("merging blue dataset\n");
-        log_message("blue action stats:\n");
-        blueData.roundDataset.printActionStats();
-        blueData.roundDataset.merge(blueData.epochDataset);
-      }
-    }
-    else if ( redScore > blueScore )
-    {
-      menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
-      log_message("RED wins (airborne score " + std::to_string(redData.state.airborneScore()) + ")\n");
-      redData.state.wins++;
-      resetActionConstraint(redData);
-      raiseActionConstraint(blueData);
-
-      if ( redData.state.wins <= mWinCountRequirement )
-      {
-        log_message("merging red dataset\n");
-        log_message("red action stats:\n");
-        redData.roundDataset.printActionStats();
-        redData.roundDataset.merge(redData.epochDataset);
-      }
-    }
-    else
-    {
-      menu.setMessage(MESSAGE_TYPE::ROUND_DRAW);
-      log_message(
-        "NOBODY wins (score " +
-        std::to_string(blueScore) +
-        "/" +
-        std::to_string(redScore) +
-        ", airborne score " +
-        std::to_string(blueData.state.airborneScore()) +
-        "/" +
-        std::to_string(redData.state.airborneScore()) +
-        "\n");
-
-      raiseActionConstraint(redData);
-      raiseActionConstraint(blueData);
-    }
+    if (  mDeathCounter.isReady() == true ||
+          ( planeBlue.isDead() == true &&
+            planeRed.isDead() == true) )
+      roundFinished = true;
   }
+
 
   blueData.state.update(planeBlue, planeRed);
   redData.state.update(planeRed, planeBlue);
 
 
-  if ( mRoundDuration.isReady() == true )
+  if ( roundFinished == false )
+    return;
+
+
+  evaluateWinner();
+
+  if ( mEpochsTrained == 0 )
   {
-    roundFinished = true;
-
-    const auto blueScore = blueData.state.airborneScore();
-    const auto redScore = redData.state.airborneScore();
-
-    log_message("blue/red: " + std::to_string(blueScore) + " " + std::to_string(redScore), "\n");
-
-    if ( blueScore <= 0.0 && redScore <= 0.0 )
-    {
-      menu.setMessage(MESSAGE_TYPE::ROUND_DRAW);
-      log_message("NOBODY wins\n");
-      raiseActionConstraint(redData);
-      raiseActionConstraint(blueData);
-    }
-
-    else if ( blueScore > redScore )
+    if ( blueData.state.wins == 0 && blueData.state.airborneTime == 0 )
     {
       resetActionConstraint(blueData);
-      blueData.state.wins++;
-      log_message("BLUE wins\n");
-      menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
-
-      if ( blueData.state.wins <= mWinCountRequirement )
-      {
-        log_message("merging blue dataset\n");
-        log_message("blue action stats:\n");
-        blueData.roundDataset.printActionStats();
-        blueData.roundDataset.merge(blueData.epochDataset);
-      }
+      blueData.backend->initNet();
+      log_message("BLUE reinit\n");
     }
-    else if ( redScore > blueScore )
+
+    if ( redData.state.wins == 0 && redData.state.airborneTime == 0 )
     {
       resetActionConstraint(redData);
-      redData.state.wins++;
-      log_message("RED wins\n");
-      menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
-
-      if ( redData.state.wins <= mWinCountRequirement )
-      {
-        log_message("merging red dataset\n");
-        log_message("red action stats:\n");
-        redData.roundDataset.printActionStats();
-        redData.roundDataset.merge(redData.epochDataset);
-      }
-    }
-
-    if ( mEpochsTrained == 0 )
-    {
-      if ( blueData.state.wins == 0 && blueData.state.airborneTime == 0 )
-      {
-        resetActionConstraint(blueData);
-        blueData.backend->initNet();
-        log_message("BLUE reinit\n");
-      }
-
-      if ( redData.state.wins == 0 && redData.state.airborneTime == 0 )
-      {
-        resetActionConstraint(redData);
-        redData.backend->initNet();
-        log_message("RED reinit\n");
-      }
+      redData.backend->initNet();
+      log_message("RED reinit\n");
     }
   }
 
-  if ( roundFinished == true )
+  if (  blueData.state.wins >= mWinCountRequirement &&
+        redData.state.wins >= mWinCountRequirement )
   {
-    if (  blueData.state.wins >= mWinCountRequirement &&
-          redData.state.wins >= mWinCountRequirement )
-    {
-      log_message("\n");
-      printEpochActionStats();
-      train();
-      newEpoch();
-      resetActionConstraint(blueData);
-      resetActionConstraint(redData);
-    }
-
     log_message("\n");
-    restartRound();
+    printEpochActionStats();
+    train();
+    newEpoch();
+    resetActionConstraint(blueData);
+    resetActionConstraint(redData);
   }
+
+  log_message("\n");
+  restartRound();
 }
 
 void
