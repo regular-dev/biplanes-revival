@@ -55,6 +55,7 @@ public:
 
   Label predictLabel(const EvalInput&) const;
   Label predictDistLabel(const EvalInput&, int constraint = 0); // not const cause of rand_engine
+  std::vector <int> predictDistLabels(const EvalInput&); // not const cause of rand_engine
   Labels predictBatchLabels(const InputBatch&) const;
 
   bool saveModel(const std::string &path) const;

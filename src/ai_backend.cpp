@@ -101,6 +101,33 @@ AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constrai
     return getIndexByProb(out_sorted);
 }
 
+std::vector <int> AI_Backend::predictDistLabels(const EvalInput &in)
+{
+  const auto mdl_out = m_mdl->predict(in);
+
+  using pair_action_t = std::pair< int, float >;
+
+  std::vector< pair_action_t > out_sorted;
+  out_sorted.reserve( mdl_out.size() );
+
+  for (int i = 0; i < mdl_out.size(); ++i)
+      out_sorted.push_back( {i, mdl_out[i]} );
+
+  std::sort(out_sorted.begin(), out_sorted.end(),
+            [ ] (pair_action_t &a1, pair_action_t &a2)
+  {
+      return a1.second > a2.second;
+  });
+
+  std::vector <int> result {};
+  result.reserve(out_sorted.size());
+
+  for ( const auto& [action, prob] : out_sorted )
+    result.push_back(action);
+
+  return result;
+}
+
 AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
 {
     auto out = Labels( in.size() );

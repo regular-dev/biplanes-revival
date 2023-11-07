@@ -516,6 +516,12 @@ Menu::DrawMenu()
       break;
     }
 
+    case MESSAGE_TYPE::ROUND_DRAW:
+    {
+      draw_text( "           Nobody won           ", 0, 0 );
+      break;
+    }
+
     case MESSAGE_TYPE::MMAKE_CONNECTING_TO_SERVER:
     {
       draw_text( "Connecting to matchmake server...", 0, 0 );
