@@ -40,4 +40,5 @@ public:
 
   float remainderTime() const;
   bool isReady() const;
+  bool isCounting() const;
 };

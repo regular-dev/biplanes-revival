@@ -86,3 +86,9 @@ Timer::isReady() const
 {
   return mCounter <= 0.0f;
 }
+
+bool
+Timer::isCounting() const
+{
+  return mIsCounting;
+}
