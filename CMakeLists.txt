@@ -107,6 +107,9 @@ target_sources(${TARGET} PRIVATE
 
   src/ai_backend.cpp
   include/ai_backend.hpp
+
+  src/ai_stuff.cpp
+  include/ai_stuff.hpp
 )
 
 
