@@ -131,6 +131,9 @@ public:
   AiController() = default;
 
   void init();
+  void save();
+  void load();
+
   void update();
   void processInput();
   void train();

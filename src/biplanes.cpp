@@ -157,7 +157,8 @@ main(
 
   while ( game.isExiting == false )
   {
-    TimeUtils::SleepUntil(tickPrevious + tickInterval);
+    if ( game.fastforwardGameLoop == false )
+      TimeUtils::SleepUntil(tickPrevious + tickInterval);
 
     const auto currentTime = TimeUtils::Now();
 
@@ -194,6 +195,9 @@ main(
     deltaTime = ticks * tickInterval;
 
 
+    if ( game.fastforwardGameLoop == true )
+      ticks = 1;
+
 //    TODO: independent render frequency
     if ( ticks == 0 )
       continue;
@@ -214,8 +218,14 @@ main(
         deltaTime = ticks * tickInterval;
       }
 
+      if ( game.disableRendering == true )
+        continue;
+
       draw_game();
     }
+
+    if ( game.disableRendering == true )
+      continue;
 
     menu.DrawMenu();
     draw_window_letterbox();
@@ -395,8 +405,10 @@ game_loop_sp()
     processLocalControls(*playerPlane, controls_local);
   }
 
-  aiController.update();
   aiController.processInput();
+
+  if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
+    aiController.update();
 
   for ( auto& cloud : clouds )
     cloud.Update();

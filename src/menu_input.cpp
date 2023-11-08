@@ -22,6 +22,7 @@
 #include <include/sdl.hpp>
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
+#include <include/ai_stuff.hpp>
 #include <include/controls.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
@@ -30,6 +31,7 @@
 void
 Menu::UpdateControls()
 {
+  auto& game = gameState();
   const Uint8* keyboardState = SDL_GetKeyboardState({});
 
   if (  keyboardState[SDL_SCANCODE_RETURN] == 0 &&
@@ -38,12 +40,49 @@ Menu::UpdateControls()
         keyboardState[SDL_SCANCODE_SPACE] == 0 &&
         keyboardState[SDL_SCANCODE_ESCAPE] == 0 &&
         keyboardState[SDL_SCANCODE_F1] == 0 &&
+        keyboardState[SDL_SCANCODE_S] == 0 &&
+        keyboardState[SDL_SCANCODE_L] == 0 &&
         mButtonWasPressed == true )
     mButtonWasPressed = false;
 
 
+  if ( keyboardState[SDL_SCANCODE_R] == 1 )
+    game.disableRendering = true;
+  else
+    game.disableRendering = false;
+
+
+  if (  keyboardState[SDL_SCANCODE_T] == 1 &&
+        mCurrentRoom == ROOMS::GAME &&
+        game.gameMode == GAME_MODE::BOT_VS_BOT )
+    game.fastforwardGameLoop = true;
+  else
+    game.fastforwardGameLoop = false;
+
+
   if ( mCurrentRoom == ROOMS::GAME )
   {
+    if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
+    {
+      if ( keyboardState[SDL_SCANCODE_S] == 1 && mButtonWasPressed == false )
+      {
+        aiController.save();
+        mButtonWasPressed = true;
+      }
+      else if ( keyboardState[SDL_SCANCODE_S] == 0 && mButtonWasPressed == true )
+        mButtonWasPressed = false;
+
+
+      if ( keyboardState[SDL_SCANCODE_L] == 1 && mButtonWasPressed == false )
+      {
+        aiController.load();
+        mButtonWasPressed = true;
+      }
+      else if ( keyboardState[SDL_SCANCODE_L] == 0 && mButtonWasPressed == true )
+        mButtonWasPressed = false;
+    }
+
+
     if ( keyboardState[SDL_SCANCODE_ESCAPE] == 1 && mButtonWasPressed == false )
       GoBack();
 

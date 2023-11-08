@@ -71,6 +71,8 @@ public:
   float audioPanDepth {0.4f};
 
   bool deltaTimeResetRequested {};
+  bool fastforwardGameLoop {};
+  bool disableRendering {};
 
   GAME_MODE gameMode {};
   DIFFICULTY botDifficulty {DIFFICULTY::MEDIUM};

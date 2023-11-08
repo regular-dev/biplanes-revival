@@ -28,6 +28,9 @@
 
 #include <iomanip>
 
+#define AI_BLUE_PATH "assets/blue.ai"
+#define AI_RED_PATH "assets/red.ai"
+
 
 void
 AiStateMonitor::update(
@@ -237,6 +240,39 @@ AiController::init()
 
   mRoundDuration.Start();
   mDeathCounter.Reset();
+}
+
+void
+AiController::save()
+{
+  auto& blueBackend = mAiData[PLANE_TYPE::BLUE].backend;
+  auto& redBackend = mAiData[PLANE_TYPE::RED].backend;
+
+  log_message("Saving blue AI model\n");
+  blueBackend->saveModel(AI_BLUE_PATH);
+
+  log_message("Saving red AI model\n");
+  redBackend->saveModel(AI_RED_PATH);
+}
+
+void
+AiController::load()
+{
+  init();
+  restartRound();
+
+  auto& blueBackend = mAiData[PLANE_TYPE::BLUE].backend;
+  auto& redBackend = mAiData[PLANE_TYPE::RED].backend;
+
+  log_message("Loading blue AI model\n");
+
+  if ( blueBackend->loadModel(AI_BLUE_PATH) == false )
+    log_message("ERROR: Failed to load blue AI model '" AI_BLUE_PATH "'\n");
+
+  log_message("Loading red AI model\n");
+
+  if ( redBackend->loadModel(AI_RED_PATH) == false )
+    log_message("ERROR: Failed to load red AI model '" AI_RED_PATH "'\n");
 }
 
 void
