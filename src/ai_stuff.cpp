@@ -21,6 +21,7 @@
 #include <include/ai_stuff.hpp>
 #include <include/biplanes.hpp>
 #include <include/controls.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/menu.hpp>
 #include <include/plane.hpp>
@@ -48,17 +49,34 @@ AiStateMonitor::update(
     return;
   }
 
-  if (  self.isTakingOff() == true ||
-        self.isAirborne() == true )
+  if ( self.isAirborne() == true )
+  {
     ++airborneTime;
+
+//    y is inverted
+    maxHeight = std::max(maxHeight, 1.0f - self.y());
+  }
 }
 
 void
 AiStateMonitor::reset()
 {
-  lifeTime = 0;
-  airborneTime = 0;
-  ejectedTime = 0;
+  const auto winCountBackup = winCount;
+
+  *this = {};
+
+  winCount = winCountBackup;
+}
+
+void
+AiStateMonitor::printState() const
+{
+  log_message("winCount: : " + std::to_string(winCount) + "\n");
+  log_message("lifeTime: : " + std::to_string(lifeTime) + "\n");
+  log_message("airborneTime: : " + std::to_string(airborneTime) + "\n");
+  log_message("airborneScore: : " + std::to_string(airborneScore()) + "\n");
+  log_message("ejectedTime: : " + std::to_string(ejectedTime) + "\n");
+  log_message("max height: " + std::to_string(maxHeight) + "\n");
 }
 
 int64_t
@@ -276,6 +294,32 @@ AiController::load()
 }
 
 void
+AiController::train()
+{
+  const size_t epochs {1};
+  const size_t batchSize {4};
+
+
+  log_message("training epoch " + std::to_string(mEpochsTrained + 1) + "\n");
+
+  for ( auto& [planeType, data] : mAiData )
+  {
+    auto& dataset = data.epochDataset;
+
+    dataset.saveEveryNthEntry(3);
+    dataset.shuffle();
+
+    data.backend->train(
+      dataset.toBatch(),
+      dataset.toLabels(),
+      batchSize, epochs );
+  }
+
+  ++mEpochsTrained;
+  gameState().deltaTimeResetRequested = true;
+}
+
+void
 AiController::newEpoch()
 {
   for ( auto& [planeType, data] : mAiData )
@@ -303,26 +347,29 @@ AiController::restartRound()
 }
 
 void
+AiController::printEpochActionStats()
+{
+  for ( const auto& [planeType, aiData] : mAiData )
+  {
+    log_message(std::to_string(planeType) + " action stats:", "\n");
+    aiData.epochDataset.printActionStats();
+  }
+}
+
+void
 AiController::raiseActionConstraint(
   AiData& data )
 {
-  if ( data.actionConstraint >= static_cast <size_t> (AiAction::ActionCount) )
-    return;
-
-  ++data.actionConstraint;
-
-//  log_message("increased action randomness to " + std::to_string(data.actionConstraint) + "\n");
+  if ( data.actionConstraint < static_cast <size_t> (AiAction::ActionCount) - 1 )
+    ++data.actionConstraint;
 }
 
 void
 AiController::lowerActionConstraint(
   AiData& data )
 {
-  if ( data.actionConstraint == 0 )
-    return;
-
-  --data.actionConstraint;
-//  log_message("decreased action randomness to " + std::to_string(data.actionConstraint) + "\n");
+  if ( data.actionConstraint > 0 )
+    --data.actionConstraint;
 }
 
 void
@@ -330,6 +377,30 @@ AiController::resetActionConstraint(
   AiData& data )
 {
   data.actionConstraint = 0;
+}
+
+bool
+AiController::hasRoundFinished()
+{
+  if ( mRoundDuration.isReady() == true )
+    return true;
+
+
+  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+  if ( planeBlue.isDead() == false && planeRed.isDead() == false )
+    return false;
+
+  if ( mDeathCounter.isCounting() == false )
+    mDeathCounter.Start();
+
+  if (  mDeathCounter.isReady() == true ||
+        ( planeBlue.isDead() == true &&
+          planeRed.isDead() == true ) )
+    return true;
+
+  return false;
 }
 
 void
@@ -344,39 +415,65 @@ AiController::evaluateWinner()
   size_t blueScore {};
   size_t redScore {};
 
-  blueScore += planeBlue.isDead() == false;
-  redScore += planeRed.isDead() == false;
-
-  blueScore += blueData.state.airborneTime > 0;
-  redScore += redData.state.airborneTime > 0;
-
-  blueScore += redData.state.airborneScore() <= 0;
-  redScore += blueData.state.airborneScore() <= 0;
-
-  blueScore += blueData.state.airborneScore() > redData.state.airborneScore();
-  redScore += redData.state.airborneScore() > blueData.state.airborneScore();
-
   blueScore += planeBlue.isDead() == false && planeBlue.isAirborne() == true;
   redScore += planeRed.isDead() == false && planeRed.isAirborne() == true;
 
-  log_message("blue/red: " + std::to_string(blueScore) + " " + std::to_string(redScore), "\n");
+  if ( planeBlue.isDead() == true )
+    blueScore = 0;
 
+  if ( planeRed.isDead() == true )
+    redScore = 0;
+
+  if ( blueData.state.airborneScore() <= 0 )
+    blueScore = 0;
+
+  if ( redData.state.airborneScore() <= 0 )
+    redScore = 0;
+
+  const auto spawnHeight = 1.0f - constants::plane::spawnY;
+
+  if ( blueData.state.maxHeight <= spawnHeight )
+  {
+    blueScore = 0;
+    log_message("blue is too low\n");
+  }
+
+  if ( redData.state.maxHeight <= spawnHeight )
+  {
+    redScore = 0;
+    log_message("red is too low\n");
+  }
+
+  log_message("blue/red: " +
+    std::to_string(blueScore) + " " +
+    std::to_string(redScore) + "\n");
+
+
+  if ( mEpochsTrained == 0 )
+  {
+    if ( blueData.state.winCount == 0 && blueScore == 0 )
+    {
+      resetActionConstraint(blueData);
+      blueData.backend->initNet();
+      log_message("BLUE reinit\n");
+    }
+
+    if ( redData.state.winCount == 0 && redScore == 0 )
+    {
+      resetActionConstraint(redData);
+      redData.backend->initNet();
+      log_message("RED reinit\n");
+    }
+  }
 
   if ( blueScore > redScore )
   {
     menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
-    log_message("BLUE wins (airborne score " + std::to_string(blueData.state.airborneScore()) + ")\n");
-    blueData.state.wins++;
-    resetActionConstraint(blueData);
-    raiseActionConstraint(redData);
+    log_message("BLUE wins\n");
+    blueData.state.printState();
 
-    if ( blueData.state.wins <= mWinCountRequirement )
-    {
-      log_message("merging blue dataset\n");
-      log_message("blue action stats:\n");
-      blueData.roundDataset.printActionStats();
-      blueData.roundDataset.merge(blueData.epochDataset);
-    }
+    processWinner(blueData);
+    raiseActionConstraint(redData);
 
     return;
   }
@@ -384,36 +481,59 @@ AiController::evaluateWinner()
   if ( redScore > blueScore )
   {
     menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
-    log_message("RED wins (airborne score " + std::to_string(redData.state.airborneScore()) + ")\n");
-    redData.state.wins++;
-    resetActionConstraint(redData);
+    log_message("RED wins\n");
+    redData.state.printState();
+
+    processWinner(redData);
     raiseActionConstraint(blueData);
 
-    if ( redData.state.wins <= mWinCountRequirement )
-    {
-      log_message("merging red dataset\n");
-      log_message("red action stats:\n");
-      redData.roundDataset.printActionStats();
-      redData.roundDataset.merge(redData.epochDataset);
-    }
+    return;
+  }
+
+  if (  planeBlue.isDead() == false && blueData.state.maxHeight > spawnHeight &&
+        planeRed.isDead() == false && redData.state.maxHeight > spawnHeight )
+  {
+    menu.setMessage(MESSAGE_TYPE::EVERY_SIDE_WON);
+    log_message("EVERYONE wins\n");
+
+    log_message("blue state:\n");
+    blueData.state.printState();
+    processWinner(blueData);
+
+    log_message("red state:\n");
+    redData.state.printState();
+    processWinner(redData);
 
     return;
   }
 
   menu.setMessage(MESSAGE_TYPE::ROUND_DRAW);
-  log_message(
-    "NOBODY wins (score " +
-    std::to_string(blueScore) +
-    "/" +
-    std::to_string(redScore) +
-    ", airborne score " +
-    std::to_string(blueData.state.airborneScore()) +
-    "/" +
-    std::to_string(redData.state.airborneScore()) +
-    "\n");
+  log_message("NOBODY wins\n");
+
+  log_message("blue state:\n");
+  blueData.state.printState();
+
+  log_message("red state:\n");
+  redData.state.printState();
 
   raiseActionConstraint(redData);
   raiseActionConstraint(blueData);
+}
+
+void
+AiController::processWinner(
+  AiData& aiData )
+{
+  aiData.state.winCount++;
+  resetActionConstraint(aiData);
+
+  if ( aiData.state.winCount <= mWinCountRequirement )
+  {
+    log_message("merging dataset\n");
+    log_message("action stats:\n");
+    aiData.roundDataset.printActionStats();
+    aiData.roundDataset.merge(aiData.epochDataset);
+  }
 }
 
 void
@@ -421,7 +541,7 @@ AiController::processInput()
 {
   for ( auto& [planeType, plane] : planes )
   {
-    if ( plane.isBot() == false )
+    if ( plane.isBot() == false || plane.isDead() == true )
       continue;
 
 
@@ -440,87 +560,137 @@ AiController::processInput()
 
     auto& data = mAiData[plane.type()];
 
-    const auto output = data.backend->predictDistLabel(
-      {inputs.begin(), inputs.end()},
+//    const auto output = data.backend->predictDistLabel(
+//      {inputs.begin(), inputs.end()},
+//      data.actionConstraint );
+
+    auto outputs = data.backend->predictDistLabels(
+      {inputs.begin(), inputs.end()} );
+
+    filterValidActions(plane, outputs);
+
+    const auto output = data.backend->getRandomIndex(
+      outputs,
       data.actionConstraint );
 
-
-    Controls aiControls {};
+//    if ( plane.type() == PLANE_TYPE::BLUE )
+//      log_message("output " + std::to_string(output) +
+//        " / " + std::to_string(data.actionConstraint) +
+//        " / " + std::to_string(outputs.size()) +
+//        "\n");
 
     const auto action = static_cast <AiAction> (output);
 
-    switch (action)
-    {
-      case AiAction::Idle:
-      {
-//        log_message(std::to_string(plane.type()), ": idle", "\n");
-        break;
-      }
-
-      case AiAction::Accelerate:
-      {
-//        log_message(std::to_string(plane.type()), ": fwd", "\n");
-        aiControls.throttle = THROTTLE_INCREASE;
-        break;
-      }
-
-      case AiAction::Decelerate:
-      {
-//        log_message(std::to_string(plane.type()), ": back", "\n");
-        aiControls.throttle = THROTTLE_DECREASE;
-        break;
-      }
-
-      case AiAction::TurnLeft:
-      {
-//        log_message(std::to_string(plane.type()), ": left", "\n");
-        aiControls.pitch = PITCH_LEFT;
-
-        break;
-      }
-
-      case AiAction::TurnRight:
-      {
-//        log_message(std::to_string(plane.type()), ": right", "\n");
-        aiControls.pitch = PITCH_RIGHT;
-
-        break;
-      }
-
-      case AiAction::Shoot:
-      {
-//        log_message(std::to_string(plane.type()), ": shoot", "\n");
-        aiControls.shoot = true;
-        break;
-      }
-
-      case AiAction::Jump:
-      {
-//        log_message(std::to_string(plane.type()), ": jump", "\n");
-//        aiControls.jump = true;
-        break;
-      }
-
-      default:
-      {
-        log_message("ERROR: AI backend predicted out-of-range label "
-          + std::to_string(output), "\n");
-        break;
-      }
-    }
-
-    processLocalControls(plane, aiControls);
+    processLocalControls(
+      plane,
+      actionToControls(action) );
 
 
     if ( gameState().gameMode != GAME_MODE::BOT_VS_BOT )
       continue;
 
-    if ( data.state.wins < mWinCountRequirement )
-    {
+    if ( data.state.winCount < mWinCountRequirement )
       data.roundDataset.push(inputs, static_cast <size_t> (action));
-      data.state.actionStats[action]++;
+  }
+}
+
+void
+AiController::filterValidActions(
+  const Plane& plane,
+  std::vector <size_t>& actions ) const
+{
+  for ( size_t i = 0; i < actions.size(); )
+  {
+    const auto action =
+      static_cast <AiAction> (actions[i++]);
+
+    if (  action == AiAction::Accelerate &&
+          plane.canAccelerate() == true )
+      continue;
+
+    if (  action == AiAction::Decelerate &&
+          plane.canDecelerate() == true )
+      continue;
+
+    if (  action == AiAction::TurnLeft &&
+          plane.canTurn() == true )
+      continue;
+
+    if (  action == AiAction::TurnRight &&
+          plane.canTurn() == true )
+      continue;
+
+    if (  action == AiAction::Shoot &&
+          plane.canShoot() == true )
+      continue;
+
+    if (  action == AiAction::Jump &&
+          plane.canJump() == true )
+      continue;
+
+
+    actions.erase(actions.begin() + --i);
+  }
+
+  actions.push_back(static_cast <size_t> (AiAction::Idle));
+}
+
+Controls
+AiController::actionToControls(
+  const AiAction action ) const
+{
+  Controls controls {};
+
+  switch (action)
+  {
+    case AiAction::Idle:
+      break;
+
+    case AiAction::Accelerate:
+    {
+      controls.throttle = THROTTLE_INCREASE;
+      break;
+    }
+
+    case AiAction::Decelerate:
+    {
+      controls.throttle = THROTTLE_DECREASE;
+      break;
+    }
+
+    case AiAction::TurnLeft:
+    {
+      controls.pitch = PITCH_LEFT;
+      break;
+    }
+
+    case AiAction::TurnRight:
+    {
+      controls.pitch = PITCH_RIGHT;
+      break;
+    }
+
+    case AiAction::Shoot:
+    {
+      controls.shoot = true;
+      break;
+    }
+
+    case AiAction::Jump:
+    {
+      controls.jump = true;
+      break;
+    }
+
+    default:
+    {
+      log_message("ERROR: Unknown AiAction: "
+        + std::to_string(static_cast <size_t> (action)), "\n");
+      break;
     }
   }
+
+  return controls;
 }
 
 void
@@ -535,49 +705,18 @@ AiController::update()
   auto& blueData = mAiData[planeBlue.type()];
   auto& redData = mAiData[planeRed.type()];
 
-  bool roundFinished = mRoundDuration.isReady();
-
-  if ( planeBlue.isDead() == true || planeRed.isDead() == true )
-  {
-    if ( mDeathCounter.isCounting() == false )
-      mDeathCounter.Start();
-
-    if (  mDeathCounter.isReady() == true ||
-          ( planeBlue.isDead() == true &&
-            planeRed.isDead() == true) )
-      roundFinished = true;
-  }
-
-
   blueData.state.update(planeBlue, planeRed);
   redData.state.update(planeRed, planeBlue);
 
 
-  if ( roundFinished == false )
+  if ( hasRoundFinished() == false )
     return;
 
 
   evaluateWinner();
 
-  if ( mEpochsTrained == 0 )
-  {
-    if ( blueData.state.wins == 0 && blueData.state.airborneTime == 0 )
-    {
-      resetActionConstraint(blueData);
-      blueData.backend->initNet();
-      log_message("BLUE reinit\n");
-    }
-
-    if ( redData.state.wins == 0 && redData.state.airborneTime == 0 )
-    {
-      resetActionConstraint(redData);
-      redData.backend->initNet();
-      log_message("RED reinit\n");
-    }
-  }
-
-  if (  blueData.state.wins >= mWinCountRequirement &&
-        redData.state.wins >= mWinCountRequirement )
+  if (  blueData.state.winCount >= mWinCountRequirement &&
+        redData.state.winCount >= mWinCountRequirement )
   {
     log_message("\n");
     printEpochActionStats();
@@ -589,40 +728,4 @@ AiController::update()
 
   log_message("\n");
   restartRound();
-}
-
-void
-AiController::train()
-{
-  const size_t epochs {1};
-  const size_t batchSize {8};
-
-
-  log_message("training epoch " + std::to_string(mEpochsTrained + 1) + "\n");
-
-  for ( auto& [planeType, data] : mAiData )
-  {
-    auto& dataset = data.epochDataset;
-
-    dataset.saveEveryNthEntry(3);
-    dataset.shuffle();
-
-    data.backend->train(
-      dataset.toBatch(),
-      dataset.toLabels(),
-      batchSize, epochs );
-  }
-
-  ++mEpochsTrained;
-  gameState().deltaTimeResetRequested = true;
-}
-
-void
-AiController::printEpochActionStats()
-{
-  for ( const auto& [planeType, aiData] : mAiData )
-  {
-    log_message(std::to_string(planeType) + " action stats:", "\n");
-    aiData.epochDataset.printActionStats();
-  }
 }

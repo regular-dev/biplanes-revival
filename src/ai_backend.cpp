@@ -31,7 +31,7 @@ AI_Backend::AI_Backend()
     initNet();
 }
 
-int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &probs)
+size_t AI_Backend::getIndexByProb(const std::vector< std::pair< size_t, float > > &probs)
 {
     auto sum = 0.0;
 
@@ -45,7 +45,7 @@ int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &pro
     float cur_pos = 0.0;
 
     int idx = 0;
-    for (int i = 0; i < probs.size(); ++i) {
+    for (size_t i = 0; i < probs.size(); ++i) {
         if (p >= cur_pos && p < cur_pos + probs[i].second) {
             idx = probs[i].first;
             break;
@@ -56,8 +56,18 @@ int AI_Backend::getIndexByProb(const std::vector< std::pair< int, float > > &pro
     return idx;
 }
 
+size_t AI_Backend::getRandomIndex(const std::vector< size_t >& labels, const size_t constraint)
+{
+  std::uniform_int_distribution<> dis(0,
+    constraint < labels.size()
+    ? constraint
+    : labels.size() - 1);
+
+  return labels.at(dis(m_rand));
+}
+
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,
-                       unsigned int batch_size, unsigned int epochs)
+                       size_t batch_size, size_t epochs)
 {
     log_message("Begin training...\n");
 
@@ -77,16 +87,16 @@ AI_Backend::Label AI_Backend::predictLabel(const EvalInput &in) const
     return m_mdl->predict_label(in);
 }
 
-AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constraint)
+AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t constraint)
 {
     const auto mdl_out = m_mdl->predict(in);
 
-    using pair_action_t = std::pair< int, float >;
+    using pair_action_t = std::pair< size_t, float >;
 
     std::vector< pair_action_t > out_sorted;
     out_sorted.reserve( mdl_out.size() );
 
-    for (int i = 0; i < mdl_out.size(); ++i)
+    for (size_t i = 0; i < mdl_out.size(); ++i)
         out_sorted.push_back( {i, mdl_out[i]} );
 
     std::sort(out_sorted.begin(), out_sorted.end(),
@@ -101,16 +111,16 @@ AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, int constrai
     return getIndexByProb(out_sorted);
 }
 
-std::vector <int> AI_Backend::predictDistLabels(const EvalInput &in)
+std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in)
 {
   const auto mdl_out = m_mdl->predict(in);
 
-  using pair_action_t = std::pair< int, float >;
+  using pair_action_t = std::pair< size_t, float >;
 
   std::vector< pair_action_t > out_sorted;
   out_sorted.reserve( mdl_out.size() );
 
-  for (int i = 0; i < mdl_out.size(); ++i)
+  for (size_t i = 0; i < mdl_out.size(); ++i)
       out_sorted.push_back( {i, mdl_out[i]} );
 
   std::sort(out_sorted.begin(), out_sorted.end(),
@@ -119,7 +129,7 @@ std::vector <int> AI_Backend::predictDistLabels(const EvalInput &in)
       return a1.second > a2.second;
   });
 
-  std::vector <int> result {};
+  std::vector <size_t> result {};
   result.reserve(out_sorted.size());
 
   for ( const auto& [action, prob] : out_sorted )

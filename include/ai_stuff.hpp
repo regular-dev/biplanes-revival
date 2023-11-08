@@ -32,18 +32,19 @@
 
 struct AiStateMonitor
 {
-  std::map <AiAction, size_t> actionStats {};
-
-  size_t wins {};
+  size_t winCount {};
   size_t lifeTime {};
   size_t airborneTime {};
   size_t ejectedTime {};
+  float maxHeight {};
 
 
   AiStateMonitor() = default;
 
   void update( const Plane& self, const Plane& opponent );
   void reset();
+
+  void printState() const;
 
   int64_t airborneScore() const;
 };
@@ -110,21 +111,28 @@ class AiController
     {PLANE_TYPE::RED, {}},
   };
 
-  Timer mRoundDuration {10.0};
+  Timer mRoundDuration {5.0};
   Timer mDeathCounter {1.0};
 
   const static size_t mWinCountRequirement {3};
   size_t mEpochsTrained {};
 
 
+  void train();
   void newEpoch();
   void restartRound();
+  void printEpochActionStats();
 
   void raiseActionConstraint( AiData& );
   void lowerActionConstraint( AiData& );
   void resetActionConstraint( AiData& );
 
+  bool hasRoundFinished();
   void evaluateWinner();
+  void processWinner( AiData& );
+
+  void filterValidActions( const Plane&, std::vector <size_t>& ) const;
+  Controls actionToControls( const AiAction ) const;
 
 
 public:
@@ -136,9 +144,6 @@ public:
 
   void update();
   void processInput();
-  void train();
-
-  void printEpochActionStats();
 };
 
 extern AiController aiController;

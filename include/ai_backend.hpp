@@ -51,17 +51,18 @@ public:
   void initNet();
 
   void train(const InputBatch&, const Labels&,
-             unsigned int batch_size, unsigned int epochs);
+             size_t batch_size, size_t epochs);
 
   Label predictLabel(const EvalInput&) const;
-  Label predictDistLabel(const EvalInput&, int constraint = 0); // not const cause of rand_engine
-  std::vector <int> predictDistLabels(const EvalInput&); // not const cause of rand_engine
+  Label predictDistLabel(const EvalInput&, size_t constraint = 0); // not const cause of rand_engine
+  std::vector <size_t> predictDistLabels(const EvalInput&); // not const cause of rand_engine
   Labels predictBatchLabels(const InputBatch&) const;
 
   bool saveModel(const std::string &path) const;
   bool loadModel(const std::string &path);
 
-  int getIndexByProb(const std::vector< std::pair< int, float > > &probs);
+  size_t getIndexByProb(const std::vector< std::pair< size_t, float > > &probs);
+  size_t getRandomIndex(const std::vector< size_t> &, const size_t constraint = 0);
 
 protected:
   std::shared_ptr< SeqNet > m_mdl;
