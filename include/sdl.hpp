@@ -43,6 +43,8 @@ void show_warning(
   const char*,
   const char* );
 
+void setVSync( const bool enabled );
+
 SDL_Texture* loadTexture( const std::string& );
 Mix_Chunk* loadSound( const std::string& );
 

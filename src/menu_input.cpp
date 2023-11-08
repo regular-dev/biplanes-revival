@@ -55,9 +55,15 @@ Menu::UpdateControls()
   if (  keyboardState[SDL_SCANCODE_T] == 1 &&
         mCurrentRoom == ROOMS::GAME &&
         game.gameMode == GAME_MODE::BOT_VS_BOT )
+  {
     game.fastforwardGameLoop = true;
+    setVSync(false);
+  }
   else
+  {
     game.fastforwardGameLoop = false;
+    setVSync(game.isVSyncEnabled);
+  }
 
 
   if ( mCurrentRoom == ROOMS::GAME )

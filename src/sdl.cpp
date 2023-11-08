@@ -33,6 +33,7 @@ SDL_Renderer* gRenderer {};
 SDL_Event windowEvent {};
 
 static bool soundInitialized {};
+static bool vsyncEnabled {};
 
 
 bool
@@ -130,20 +131,9 @@ SDL_init(
       return 1;
     }
   }
-
-  if ( enableVSync == true )
-  {
-    if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, "1" ) == false )
-      log_message( "Warning: Failed to enable V-Sync!\n" );
-
-    if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, "1" ) == false )
-      log_message( "Warning: Failed to enable dynamic V-Sync!\n" );
-
-    if ( SDL_RenderSetVSync(gRenderer, true) != 0 )
-      log_message( "Warning: Failed to enable renderer V-Sync!\n");
-  }
-
   log_message( "Done!\n" );
+
+  setVSync(enableVSync);
 
 
 //  Initialize renderer color
@@ -197,16 +187,6 @@ SDL_init(
 
 
 void
-show_warning(
-  const char* title,
-  const char* message )
-{
-  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message, nullptr ) < 0 )
-    log_message( "SDL Error: Unable to show warning window : ", SDL_GetError() );
-}
-
-
-void
 SDL_close()
 {
 //  Destroy window
@@ -238,6 +218,38 @@ SDL_close()
   log_message( "EXIT: Closing SDL..." );
   SDL_Quit();
   log_message( "Done!\n" );
+}
+
+
+void
+show_warning(
+  const char* title,
+  const char* message )
+{
+  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message, nullptr ) < 0 )
+    log_message( "SDL Error: Unable to show warning window : ", SDL_GetError() );
+}
+
+
+void
+setVSync(
+  const bool enabled )
+{
+  if ( enabled == vsyncEnabled )
+    return;
+
+  vsyncEnabled = enabled;
+
+  log_message("SDL: Setting V-Sync to " + std::to_string(enabled) + "\n");
+
+  if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, std::to_string(enabled).c_str() ) == false )
+    log_message( "Warning: Failed to set V-Sync!\n" );
+
+  if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, std::to_string(enabled).c_str() ) == false )
+    log_message( "Warning: Failed to set dynamic V-Sync!\n" );
+
+  if ( SDL_RenderSetVSync(gRenderer, enabled) != 0 )
+    log_message( "Warning: Failed to set renderer V-Sync!\n");
 }
 
 
