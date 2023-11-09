@@ -176,27 +176,6 @@ draw_score()
 }
 
 void
-draw_menu_rect()
-{
-  namespace menu = constants::menu;
-
-
-  const SDL_FRect menuRect
-  {
-    toWindowSpaceX(menu::originX),
-    toWindowSpaceY(menu::originY),
-    scaleToScreenX(menu::sizeX),
-    scaleToScreenY(menu::sizeY),
-  };
-
-  SDL_RenderCopyF(
-    gRenderer,
-    textures.menu_box,
-    nullptr,
-    &menuRect );
-}
-
-void
 draw_window_letterbox()
 {
   const SDL_FRect rectLeft

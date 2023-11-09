@@ -29,7 +29,7 @@
 void
 Menu::screen_sp()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -38,7 +38,7 @@ Menu::screen_sp()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
 
@@ -91,7 +91,7 @@ Menu::screen_sp()
 void
 Menu::screen_sp_setup()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -100,7 +100,7 @@ Menu::screen_sp_setup()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
 

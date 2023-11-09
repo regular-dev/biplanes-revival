@@ -30,7 +30,7 @@
 void
 Menu::screen_mp()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -39,7 +39,7 @@ Menu::screen_mp()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
   draw_text( "TWO PLAYER GAME", 0.250f, 0.2855f );
@@ -52,7 +52,7 @@ Menu::screen_mp()
 void
 Menu::screen_mp_mmake()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -61,7 +61,7 @@ Menu::screen_mp_mmake()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
 
@@ -116,7 +116,7 @@ Menu::screen_mp_mmake()
 void
 Menu::screen_mp_dc()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -125,7 +125,7 @@ Menu::screen_mp_dc()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
   draw_text( "DIRECT CONNECT    ", 0.250f, 0.2855f );
@@ -138,7 +138,7 @@ Menu::screen_mp_dc()
 void
 Menu::screen_mp_dc_host()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -147,7 +147,7 @@ Menu::screen_mp_dc_host()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
 
@@ -204,7 +204,7 @@ Menu::screen_mp_dc_host()
 void
 Menu::screen_mp_dc_join()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
   setRenderColor(constants::colors::background);
@@ -213,7 +213,7 @@ Menu::screen_mp_dc_join()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
   draw_text( "JOIN TWO PLAYER GAME",  0.025f, 0.2855f );

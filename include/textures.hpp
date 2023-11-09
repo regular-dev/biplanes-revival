@@ -27,9 +27,6 @@ struct Textures
 {
   SDL_Texture* main_font {};
 
-  SDL_Texture* menu_box {};
-  SDL_Texture* menu_settings_box {};
-  SDL_Texture* menu_settings_controls_box {};
   SDL_Texture* menu_help {};
   SDL_Texture* menu_moving_button {};
   SDL_Texture* menu_logo {};

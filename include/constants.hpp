@@ -44,6 +44,10 @@ namespace constants
     static constexpr Color background {0, 154, 239, 255};
     static constexpr Color letterbox {0, 0, 0, 255}; // TODO: choose suitable color
 
+    static constexpr Color menuBox {254, 100, 99, 255};
+    static constexpr Color menuHeader {102, 153, 204, 255};
+    static constexpr Color menuBorder {99, 0, 181, 255};
+
     static constexpr Color planeHitbox {255, 255, 0, 255};
     static constexpr Color pilotHitbox {0, 255, 0, 255};
     static constexpr Color bulletHitbox {255, 0, 0, 255};
@@ -62,25 +66,35 @@ namespace constants
     static constexpr float originX {};
     static constexpr float originY {0.3f};
 
-    static constexpr float sizeX {1.0f};
-    static constexpr float sizeY {59.904 / baseHeight};
+    static constexpr float sizeX {1.f};
 
     static constexpr double introAutoSkipTimeout {3.0};
     static constexpr double connectedMessageTimeout {3.0};
-  }
 
-  namespace button
-  {
-    static constexpr float width {255.f};
-    static constexpr float height {12.f};
+    namespace header
+    {
+      static constexpr float sizeX {1.f};
+      static constexpr float sizeY {10.f / baseHeight};
+    }
 
-    static constexpr float sizeX {251.904f / baseWidth};
-    static constexpr float sizeY {height / baseHeight};
-//    static constexpr float speed {19.2f / baseWidth};
-    static constexpr float speed {0.75f};
+    namespace border
+    {
+      static constexpr float thicknessX {2.f / baseWidth};
+      static constexpr float thicknessY {2.f / baseHeight};
+    }
 
-    static constexpr float originX {2.048f / baseWidth};
-    static constexpr float originY {72.2904f / baseHeight};
+    namespace button
+    {
+      static constexpr float width {255.f};
+      static constexpr float height {12.f};
+
+      static constexpr float sizeX {menu::sizeX - 2.f * border::thicknessX};
+      static constexpr float sizeY {height / baseHeight};
+      static constexpr float speed {0.75f};
+
+      static constexpr float originX {menu::originX + border::thicknessX};
+      static constexpr float originY {menu::originY + header::sizeY};
+    }
   }
 
 

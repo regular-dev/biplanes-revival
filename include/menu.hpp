@@ -63,6 +63,7 @@ public:
   Menu();
 
   void DrawMenu();
+  void DrawMenuRect();
   void DrawButton();
   void setMessage( const MESSAGE_TYPE );
   void ChangeRoom( const ROOMS );

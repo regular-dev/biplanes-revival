@@ -31,7 +31,6 @@ void draw_text( const std::string&, const float x, const float y );
 void draw_background();
 void draw_barn();
 void draw_score();
-void draw_menu_rect();
 void draw_window_letterbox();
 
 void display_update();

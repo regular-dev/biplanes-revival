@@ -95,7 +95,10 @@ Menu::setMessage(
 void
 Menu::AnimateButton()
 {
-  mButtonX += mButtonDir * constants::button::speed * deltaTime;
+  namespace button = constants::menu::button;
+
+
+  mButtonX += mButtonDir * button::speed * deltaTime;
 
   if ( mButtonX >= 1.0f )
   {
@@ -573,9 +576,114 @@ Menu::DrawMenu()
 }
 
 void
+Menu::DrawMenuRect()
+{
+  namespace menu = constants::menu;
+  namespace header = menu::header;
+  namespace border = menu::border;
+  namespace button = menu::button;
+  namespace colors = constants::colors;
+
+
+  const auto buttonCount = mButtons[mCurrentRoom] + 1;
+
+  const auto buttonSectionSizeY =
+    buttonCount * button::height / constants::baseHeight;
+
+  const auto menuSizeY =
+    header::sizeY + buttonSectionSizeY + border::thicknessY;
+
+
+  const SDL_FRect boxRect
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(menu::sizeX),
+    scaleToScreenY(menuSizeY),
+  };
+
+  const SDL_FRect headerRect
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(header::sizeX),
+    scaleToScreenY(header::sizeY),
+  };
+
+  setRenderColor(colors::menuBox);
+  SDL_RenderFillRectF(
+    gRenderer,
+    &boxRect );
+
+  setRenderColor(colors::menuHeader);
+  SDL_RenderFillRectF(
+    gRenderer,
+    &headerRect );
+
+
+  setRenderColor(colors::menuBorder);
+
+
+//  top
+  SDL_FRect borderRect
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(menu::sizeX),
+    scaleToScreenY(border::thicknessY),
+  };
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &borderRect );
+
+
+//  right
+  borderRect =
+  {
+    toWindowSpaceX(menu::originX + menu::sizeX - border::thicknessX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(border::thicknessX),
+    scaleToScreenY(menuSizeY),
+  };
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &borderRect );
+
+
+//  bottom
+  borderRect =
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY + header::sizeY + buttonSectionSizeY),
+    scaleToScreenX(menu::sizeX),
+    scaleToScreenY(border::thicknessY),
+  };
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &borderRect );
+
+
+//  left
+  borderRect =
+  {
+    toWindowSpaceX(menu::originX),
+    toWindowSpaceY(menu::originY),
+    scaleToScreenX(border::thicknessX),
+    scaleToScreenY(menuSizeY),
+  };
+
+  SDL_RenderFillRectF(
+    gRenderer,
+    &borderRect );
+}
+
+void
 Menu::DrawButton()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
   const SDL_Rect srcRect
   {
@@ -604,7 +712,7 @@ Menu::DrawButton()
 void
 Menu::screen_main()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
   setRenderColor(constants::colors::background);
   SDL_RenderClear(gRenderer);
@@ -612,7 +720,7 @@ Menu::screen_main()
   draw_background();
   draw_barn();
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
 
@@ -631,6 +739,9 @@ Menu::screen_main()
 void
 Menu::screen_settings()
 {
+  namespace button = constants::menu::button;
+
+
   if ( gameState().isPaused == false )
   {
     setRenderColor(constants::colors::background);
@@ -640,40 +751,24 @@ Menu::screen_settings()
     draw_barn();
   }
 
-
-  const SDL_FRect settingsRect
-  {
-    toWindowSpaceX(constants::menu::originX),
-    toWindowSpaceY(constants::menu::originY),
-    scaleToScreenX(constants::menu::sizeX),
-//    TODO: move to constants
-    scaleToScreenY(constants::menu::sizeY + 0.05775 * 3.0),
-  };
-
-  SDL_RenderCopyF(
-    gRenderer,
-    textures.menu_settings_controls_box,
-    nullptr,
-    &settingsRect);
-
-
+  DrawMenuRect();
   DrawButton();
 
 
   draw_text( "Controls            ",        0.250f, 0.2855f );
   draw_text( "Accelerate          ",        0.025f, 0.2855f + 0.0721f );
   draw_text( SDL_GetKeyName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
-  draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY );
-  draw_text( SDL_GetKeyName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + constants::button::sizeY );
-  draw_text( "Turn Anti-Clockwise ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 2.f );
-  draw_text( SDL_GetKeyName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 2.f );
-  draw_text( "Turn Clockwise      ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 3.f );
-  draw_text( SDL_GetKeyName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 3.f );
-  draw_text( "Fire                ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 4.f );
-  draw_text( SDL_GetKeyName(FIRE),          0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 4.f );
-  draw_text( "Eject               ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 5.f );
-  draw_text( SDL_GetKeyName(JUMP),          0.700f, 0.2855f + 0.0721f + constants::button::sizeY * 5.f );
-  draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + constants::button::sizeY * 6.f );
+  draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( SDL_GetKeyName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Turn Anti-Clockwise ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( SDL_GetKeyName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Turn Clockwise      ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( SDL_GetKeyName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Fire                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( SDL_GetKeyName(FIRE),          0.700f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( "Eject               ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+  draw_text( SDL_GetKeyName(JUMP),          0.700f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+  draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 6.f );
 
   if ( menu.isDefiningKey() == true )
   {
@@ -693,10 +788,10 @@ Menu::screen_settings()
 void
 Menu::screen_pause()
 {
-  namespace button = constants::button;
+  namespace button = constants::menu::button;
 
 
-  draw_menu_rect();
+  DrawMenuRect();
   DrawButton();
 
   draw_text( "GAME PAUSED       ", 0.250f, 0.2855f );

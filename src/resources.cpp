@@ -45,8 +45,6 @@ textures_load()
   }
 
 
-  textures.menu_box = loadTexture( "assets/menu/menu_box.png" );
-  textures.menu_settings_controls_box = loadTexture( "assets/menu/menu_settings_controls_box.png" );
   textures.menu_help = loadTexture( "assets/menu/menu_help.png" );
   textures.menu_moving_button = loadTexture( "assets/menu/menu_moving_button.png" );
   textures.menu_logo = loadTexture( "assets/menu/menu_logo.png" );
