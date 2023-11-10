@@ -48,7 +48,7 @@ public:
   virtual ~Effect() = default;
 
 
-  void Update();
+  virtual void Update();
   void Draw() const;
 
   bool hasFinished() const;
@@ -97,6 +97,30 @@ public:
   Explosion(
     const float x,
     const float y );
+
+
+protected:
+  void DrawImpl() const override;
+};
+
+
+class ExplosionSpark : public Effect
+{
+protected:
+  float mSpeedX {};
+  float mSpeedY {};
+
+  uint8_t mBounces {};
+
+
+public:
+  ExplosionSpark(
+    const float x,
+    const float y,
+    const float speed,
+    const float dir );
+
+  void Update() override;
 
 
 protected:

@@ -736,9 +736,22 @@ Plane::Hit(
 void
 Plane::Explode()
 {
+  namespace spark = constants::explosion::spark;
+
+
   panSound(
     playSound(sounds.expl, -1, false),
     mX );
+
+  const auto sparkDirFactor =
+    std::sin(mDir * M_PI / 180.f);
+
+  const auto sparkSpeedFactor =
+    mSpeed / mMaxSpeedVar;
+
+  const auto sparkDirOffset =
+    spark::dirOffset * sparkDirFactor * sparkSpeedFactor;
+
 
   mSpeed = 0.0f;
   mDir = 0.0f;
@@ -754,6 +767,28 @@ Plane::Explode()
   mDeadCooldown.Start();
 
   effects.Spawn(new Explosion{mX, mY});
+
+
+  for ( size_t i = 0; i < spark::count; ++i )
+  {
+    const auto instanceFactor =
+      static_cast <float> (i) / spark::count;
+
+    const auto dir =
+      sparkDirOffset + spark::dirRange *
+      ( -0.5f + instanceFactor +
+        0.45f * sparkDirFactor / spark::count );
+
+    const auto speedVariation = std::fmod(
+      spark::speedMask, instanceFactor );
+
+    const auto sparkSpeed =
+      spark::speedMin + speedVariation * spark::speedRange;
+
+    effects.Spawn(new ExplosionSpark{
+      mX, mY, sparkSpeed,
+      dir * M_PI / 180.f });
+  }
 }
 
 void

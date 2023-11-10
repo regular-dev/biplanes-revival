@@ -20,6 +20,7 @@
 
 #include <include/effects.hpp>
 #include <include/sdl.hpp>
+#include <include/time.hpp>
 #include <include/constants.hpp>
 #include <include/textures.hpp>
 
@@ -174,6 +175,95 @@ Explosion::DrawImpl() const
     textures.anim_expl,
     &textures.anim_expl_rect[mFrame],
     &explosionRect );
+}
+
+
+ExplosionSpark::ExplosionSpark(
+  const float x,
+  const float y,
+  const float speed,
+  const float dir )
+  : Effect {x, y, 0.05, 5}
+{
+  mSpeedX = std::sin(dir) * speed;
+  mSpeedY = std::cos(dir) * -speed;
+}
+
+void
+ExplosionSpark::Update()
+{
+  namespace barn = constants::barn;
+  namespace spark = constants::explosion::spark;
+
+  if ( hasFinished() == true )
+    return;
+
+
+  mAnim.Update();
+
+  if ( mAnim.isReady() == true )
+  {
+    mAnim.Start();
+    ++mFrame;
+
+    if ( mFrame >= mFrameCount )
+      mFrame = 0;
+  }
+
+
+  mSpeedX -= mSpeedX * deltaTime;
+  mSpeedY += spark::gravity * deltaTime;
+
+  mX += mSpeedX * deltaTime;
+  mY += mSpeedY * deltaTime;
+
+  if ( mX > 1.0f )
+    mX -= 1.0f;
+
+  if ( mX < 0.0f )
+    mX += 1.0f;
+
+
+  if ( mSpeedY < 0.0f )
+    return;
+
+
+  if ( mBounces >= spark::maxBounces )
+    mFrame = mFrameCount;
+
+
+  if ( mY < barn::bulletCollisionY )
+    return;
+
+  if (  mY < spark::groundCollision &&
+        ( mX < barn::bulletCollisionX ||
+          mX > barn::bulletCollisionX + barn::bulletCollisionSizeX ) )
+    return;
+
+
+  ++mBounces;
+  mSpeedY = -spark::speedBounce;
+}
+
+void
+ExplosionSpark::DrawImpl() const
+{
+  namespace spark = constants::explosion::spark;
+  namespace colors = constants::colors;
+
+
+  const SDL_FRect sparkRect
+  {
+    toWindowSpaceX(mX - 0.5f * spark::sizeX),
+    toWindowSpaceY(mY - 0.5f * spark::sizeY),
+    scaleToScreenX(spark::sizeX),
+    scaleToScreenY(spark::sizeY),
+  };
+
+  setRenderColor(colors::explosionSpark[mFrame]);
+  SDL_RenderFillRectF(
+    gRenderer,
+    &sparkRect );
 }
 
 

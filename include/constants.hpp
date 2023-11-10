@@ -51,6 +51,14 @@ namespace constants
     static constexpr Color planeHitbox {255, 255, 0, 255};
     static constexpr Color pilotHitbox {0, 255, 0, 255};
     static constexpr Color bulletHitbox {255, 0, 0, 255};
+
+    static constexpr Color explosionSpark[]
+    {
+      {0, 0, 0, 255},
+      {255, 127, 0, 255},
+      {255, 255, 255, 255},
+      {255, 255, 0, 255},
+    };
   }
 
 
@@ -158,6 +166,28 @@ namespace constants
   {
     static constexpr float sizeX {40.f / baseWidth};
     static constexpr float sizeY {40.f / baseHeight};
+
+
+    namespace spark
+    {
+      static constexpr uint8_t count {25};
+      static constexpr uint8_t maxBounces {2};
+
+      static constexpr float sizeX {2.f / baseWidth};
+      static constexpr float sizeY {2.f / baseHeight};
+
+      static constexpr float speedMin {0.4f};
+      static constexpr float speedMax {0.6f};
+      static constexpr float speedRange {speedMax - speedMin};
+      static constexpr float speedBounce {0.1f};
+      static constexpr float speedMask {count / 1.0123456789f};
+
+      static constexpr float dirRange {75.f};
+      static constexpr float dirOffset {dirRange * 0.2f};
+
+      static constexpr float gravity {0.75f};
+      static constexpr float groundCollision {195.f / baseHeight};
+    }
   }
 
 
