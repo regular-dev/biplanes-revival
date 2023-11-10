@@ -82,12 +82,12 @@ AiStateMonitor::printState() const
 int64_t
 AiStateMonitor::airborneScore() const
 {
-  const auto idlePenalty {2.0};
+  const auto takeoffTime = lifeTime - airborneTime;
 
-  const auto idleTime = idlePenalty *
-    (lifeTime - airborneTime);
+  if ( takeoffTime > 0.5 * constants::tickRate )
+    return -1;
 
-  return airborneTime - idleTime;
+  return airborneTime - takeoffTime;
 }
 
 
