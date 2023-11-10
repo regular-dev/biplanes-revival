@@ -183,7 +183,7 @@ ExplosionSpark::ExplosionSpark(
   const float y,
   const float speed,
   const float dir )
-  : Effect {x, y, 0.05, 5}
+  : Effect {x, y, 0.035, 5}
 {
   mSpeedX = std::sin(dir) * speed;
   mSpeedY = std::cos(dir) * -speed;

@@ -55,9 +55,9 @@ namespace constants
     static constexpr Color explosionSpark[]
     {
       {0, 0, 0, 255},
-      {255, 127, 0, 255},
+      {246, 99, 0, 255},
       {255, 255, 255, 255},
-      {255, 255, 0, 255},
+      {253, 255, 108, 255},
     };
   }
 
