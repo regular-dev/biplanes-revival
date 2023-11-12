@@ -390,6 +390,7 @@ AiController::train()
 {
   const size_t epochs {1};
   const size_t batchSize {4};
+  const float minLoss {2.0f};
 
 
   log_message("training epoch " + std::to_string(mEpochsTrained + 1) + "\n");
@@ -402,10 +403,23 @@ AiController::train()
     dataset.saveEveryNthEntry(3);
     dataset.shuffle();
 
-    data.backend->train(
-      dataset.toBatch(),
-      dataset.toLabels(),
-      batchSize, epochs );
+    const auto inputs = dataset.toBatch();
+    const auto labels = dataset.toOneHotLabels();
+
+    float maxLoss {};
+
+    do
+    {
+      maxLoss = data.backend->getLoss(inputs, labels);
+
+      if ( maxLoss < 2.0f )
+        break;
+
+      data.backend->train(
+        inputs, labels,
+        batchSize, 1 );
+    }
+    while ( data.backend->getLoss(inputs, labels) <= maxLoss );
   }
 
   ++mEpochsTrained;
