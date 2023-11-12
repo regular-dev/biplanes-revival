@@ -138,6 +138,27 @@ std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in)
   return result;
 }
 
+std::vector <std::pair< size_t, float >> AI_Backend::predictDistLabelsProb(const EvalInput &in)
+{
+  const auto mdl_out = m_mdl->predict(in);
+
+  using pair_action_t = std::pair< size_t, float >;
+
+  std::vector< pair_action_t > out_sorted;
+  out_sorted.reserve( mdl_out.size() );
+
+  for (size_t i = 0; i < mdl_out.size(); ++i)
+      out_sorted.push_back( {i, mdl_out[i]} );
+
+  std::sort(out_sorted.begin(), out_sorted.end(),
+            [ ] (pair_action_t &a1, pair_action_t &a2)
+  {
+      return a1.second > a2.second;
+  });
+
+  return out_sorted;
+}
+
 AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
 {
     auto out = Labels( in.size() );

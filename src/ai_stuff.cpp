@@ -112,16 +112,79 @@ AiDataset::merge(
 void
 AiDataset::shuffle()
 {
+  static std::mt19937 rng {std::random_device{}()};
+
   std::shuffle(
     mData.begin(),
     mData.end(),
-    std::mt19937 {std::random_device{}()} );
+    rng );
+}
+
+void
+AiDataset::removeDuplicates(
+  const float margin )
+{
+  if ( mData.size() < 2 )
+    return;
+
+
+  size_t removedElements {};
+  size_t initialSize = mData.size();
+
+  for ( size_t iLhs = mData.size() - 2; iLhs > 0; --iLhs )
+  {
+    const auto& inputLhs = mData[iLhs].inputs;
+    const auto& inputRhs = mData[iLhs + 1].inputs;
+
+    bool discardElement {true};
+
+
+    for ( size_t i = 0; i < inputLhs.size(); ++i )
+    {
+      if ( i < 11 || (i > 15 && i < 27) )
+      {
+        const auto distance =
+          std::sqrt(std::pow(inputLhs[i] - inputRhs[i], 2.f) );
+
+        if ( distance > 0.5f )
+        {
+          discardElement = false;
+          break;
+        }
+
+        continue;
+      }
+
+
+      const auto distance = std::sqrt(
+        std::pow(inputLhs[i] - inputRhs[i], 2.f));
+
+      if ( distance > margin )
+      {
+        discardElement = false;
+        break;
+      }
+    }
+
+
+    if ( discardElement == true )
+    {
+      mData.erase(mData.begin() + iLhs + 1);
+      ++removedElements;
+    }
+  }
+
+  log_message("removed " + std::to_string(removedElements) + + "/" + std::to_string(initialSize) + " elements\n");
 }
 
 void
 AiDataset::dropEveryNthEntry(
   const size_t n )
 {
+  if ( mData.empty() == true )
+    return;
+
+
   for ( size_t i = mData.size() - 1; i > 0; --i )
     if ( (i + 1) % n == 0 )
       mData.erase(mData.begin() + i);
@@ -131,6 +194,10 @@ void
 AiDataset::saveEveryNthEntry(
   const size_t n )
 {
+  if ( mData.empty() == true )
+    return;
+
+
   for ( size_t i = mData.size() - 1; i > 0; --i )
     if ( (i + 1) % n != 0 )
       mData.erase(mData.begin() + i);
@@ -306,6 +373,7 @@ AiController::train()
   {
     auto& dataset = data.epochDataset;
 
+    dataset.removeDuplicates();
     dataset.saveEveryNthEntry(3);
     dataset.shuffle();
 
@@ -377,6 +445,14 @@ AiController::resetActionConstraint(
   AiData& data )
 {
   data.actionConstraint = 0;
+}
+
+void
+AiController::randomizeActionConstraint(
+  AiData& data )
+{
+  data.actionConstraint =
+    std::rand() % static_cast <size_t> (AiAction::ActionCount) - 1;
 }
 
 bool
@@ -547,6 +623,7 @@ AiController::processInput()
 
     const auto inputs = plane.aiState();
 
+#if false || BIPLANES_CHECK_AI_INPUTS
     for ( size_t i = 0; i < inputs.size(); ++i )
       if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
       {
@@ -557,6 +634,7 @@ AiController::processInput()
 
         assert(false);
       }
+#endif
 
     auto& data = mAiData[plane.type()];
 
@@ -564,20 +642,19 @@ AiController::processInput()
 //      {inputs.begin(), inputs.end()},
 //      data.actionConstraint );
 
-    auto outputs = data.backend->predictDistLabels(
+//    auto outputs = data.backend->predictDistLabels(
+//      {inputs.begin(), inputs.end()} );
+
+//    const auto output = data.backend->getRandomIndex(
+//      outputs,
+//      data.actionConstraint );
+
+    auto outputs = data.backend->predictDistLabelsProb(
       {inputs.begin(), inputs.end()} );
 
     filterValidActions(plane, outputs);
 
-    const auto output = data.backend->getRandomIndex(
-      outputs,
-      data.actionConstraint );
-
-//    if ( plane.type() == PLANE_TYPE::BLUE )
-//      log_message("output " + std::to_string(output) +
-//        " / " + std::to_string(data.actionConstraint) +
-//        " / " + std::to_string(outputs.size()) +
-//        "\n");
+    const auto output = data.backend->getIndexByProb(outputs);
 
     const auto action = static_cast <AiAction> (output);
 
@@ -603,6 +680,9 @@ AiController::filterValidActions(
   {
     const auto action =
       static_cast <AiAction> (actions[i++]);
+
+    if (  action == AiAction::Idle )
+      continue;
 
     if (  action == AiAction::Accelerate &&
           plane.canAccelerate() == true )
@@ -631,8 +711,48 @@ AiController::filterValidActions(
 
     actions.erase(actions.begin() + --i);
   }
+}
 
-  actions.push_back(static_cast <size_t> (AiAction::Idle));
+void
+AiController::filterValidActions(
+  const Plane& plane,
+  std::vector <std::pair< size_t, float >>& actions ) const
+{
+  for ( size_t i = 0; i < actions.size(); )
+  {
+    const auto action =
+      static_cast <AiAction> (actions[i++].first);
+
+    if (  action == AiAction::Idle )
+      continue;
+
+    if (  action == AiAction::Accelerate &&
+          plane.canAccelerate() == true )
+      continue;
+
+    if (  action == AiAction::Decelerate &&
+          plane.canDecelerate() == true )
+      continue;
+
+    if (  action == AiAction::TurnLeft &&
+          plane.canTurn() == true )
+      continue;
+
+    if (  action == AiAction::TurnRight &&
+          plane.canTurn() == true )
+      continue;
+
+    if (  action == AiAction::Shoot &&
+          plane.canShoot() == true )
+      continue;
+
+    if (  action == AiAction::Jump &&
+          plane.canJump() == true )
+      continue;
+
+
+    actions.erase(actions.begin() + --i);
+  }
 }
 
 Controls

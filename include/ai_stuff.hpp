@@ -75,6 +75,7 @@ public:
   void merge( AiDataset& target );
 
   void shuffle();
+  void removeDuplicates( const float margin = 0.001f );
   void dropEveryNthEntry( const size_t n );
   void saveEveryNthEntry( const size_t n );
 
@@ -126,12 +127,14 @@ class AiController
   void raiseActionConstraint( AiData& );
   void lowerActionConstraint( AiData& );
   void resetActionConstraint( AiData& );
+  void randomizeActionConstraint( AiData& );
 
   bool hasRoundFinished();
   void evaluateWinner();
   void processWinner( AiData& );
 
   void filterValidActions( const Plane&, std::vector <size_t>& ) const;
+  void filterValidActions( const Plane&, std::vector <std::pair< size_t, float >>& ) const;
   Controls actionToControls( const AiAction ) const;
 
 
