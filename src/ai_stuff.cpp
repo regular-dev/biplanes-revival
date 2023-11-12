@@ -89,7 +89,7 @@ AiStateMonitor::takeoffTime() const
 int64_t
 AiStateMonitor::airborneScore() const
 {
-  const auto takeoffTime = lifeTime - airborneTime;
+  const int64_t takeoffTime = lifeTime - airborneTime;
 
   if ( takeoffTime > 0.5 * constants::tickRate )
     return -1;
