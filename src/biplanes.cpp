@@ -243,6 +243,8 @@ main(
   delete network.flowControl;
   delete network.connection;
 
+  net::ShutdownSockets();
+
   if ( gameState().output.stats == true )
     stats_write();
 

@@ -348,9 +348,6 @@ namespace net
         if ( connected )
           OnDisconnect();
         OnStop();
-        #if PLATFORM == PLATFORM_WINDOWS
-          net::ShutdownSockets(); // TODO: remove this line?
-        #endif
       }
     }
 
