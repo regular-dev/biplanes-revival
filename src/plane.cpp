@@ -753,6 +753,11 @@ Plane::Explode()
     spark::dirOffset * sparkDirFactor * sparkSpeedFactor;
 
 
+  mX = 0.0f;
+  mPrevX = 0.0f;
+  mY = 0.0f;
+  mPrevY = 0.0f;
+
   mSpeed = 0.0f;
   mDir = 0.0f;
   mHp = 0;
