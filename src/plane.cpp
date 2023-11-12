@@ -753,11 +753,6 @@ Plane::Explode()
     spark::dirOffset * sparkDirFactor * sparkSpeedFactor;
 
 
-  mX = 0.0f;
-  mPrevX = 0.0f;
-  mY = 0.0f;
-  mPrevY = 0.0f;
-
   mSpeed = 0.0f;
   mDir = 0.0f;
   mHp = 0;
@@ -772,7 +767,6 @@ Plane::Explode()
   mDeadCooldown.Start();
 
   effects.Spawn(new Explosion{mX, mY});
-
 
   for ( size_t i = 0; i < spark::count; ++i )
   {
@@ -794,6 +788,12 @@ Plane::Explode()
       mX, mY, sparkSpeed,
       dir * M_PI / 180.f });
   }
+
+
+  mX = 0.0f;
+  mPrevX = 0.0f;
+  mY = 0.0f;
+  mPrevY = 0.0f;
 }
 
 void
