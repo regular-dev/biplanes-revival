@@ -69,22 +69,30 @@ size_t AI_Backend::getRandomIndex(const std::vector< size_t >& labels, const siz
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,
                        size_t batch_size, size_t epochs)
 {
-    log_message("Begin training...\n");
-
-//    const auto prev_loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
-//    log_message("Loss before training : {:.3f}", std::to_string(prev_loss), "\n");
-
+    log_message("Begin labeled training...\n");
     m_mdl->train< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls,
                                                        batch_size, epochs);
-
-//    const auto loss = m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
-//    log_message("Loss after training : {:.3f}", std::to_string(loss), "\n");
 }
 
-AI_Backend::Label AI_Backend::predictLabel(const EvalInput &in) const
+void AI_Backend::train(const InputBatch &data, const InputBatch &lbls, size_t batch_size, size_t epochs)
 {
-    const auto out = m_mdl->predict(in);
-    return m_mdl->predict_label(in);
+    log_message("Begin training...\n");
+
+    for ( size_t epoch = 0; epoch < epochs; ++epoch )
+    {
+      const auto prev_loss = getLoss(data, lbls);
+      log_message("Loss before training epoch " + std::to_string(epoch) + ": " + std::to_string(prev_loss), "\n");
+
+      m_mdl->fit< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
+
+      const auto loss = getLoss(data, lbls);
+      log_message("Loss after training epoch " + std::to_string(epoch) + ": " + std::to_string(loss), "\n");
+    }
+}
+
+float AI_Backend::getLoss(const InputBatch& data, const InputBatch& lbls) const
+{
+  return m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
 }
 
 AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t constraint)

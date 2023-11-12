@@ -53,6 +53,10 @@ public:
   void train(const InputBatch&, const Labels&,
              size_t batch_size, size_t epochs);
 
+  void train(const InputBatch&, const InputBatch& lbls, size_t batch_size, size_t epochs);
+
+  float getLoss(const InputBatch&, const InputBatch& lbls) const;
+
   Label predictLabel(const EvalInput&) const;
   Label predictDistLabel(const EvalInput&, size_t constraint = 0); // not const cause of rand_engine
   std::vector <size_t> predictDistLabels(const EvalInput&); // not const cause of rand_engine

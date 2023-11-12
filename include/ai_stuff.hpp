@@ -83,6 +83,7 @@ public:
   size_t size() const;
 
   AI_Backend::InputBatch toBatch() const;
+  AI_Backend::InputBatch toOneHotLabels() const;
   AI_Backend::Labels toLabels() const;
 
   void printActionStats() const;

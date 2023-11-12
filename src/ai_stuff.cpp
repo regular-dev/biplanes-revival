@@ -229,6 +229,24 @@ AiDataset::toBatch() const
   return batch;
 }
 
+AI_Backend::InputBatch
+AiDataset::toOneHotLabels() const
+{
+  AI_Backend::InputBatch labels {};
+  labels.reserve(mData.size());
+
+  for ( const auto& state : mData )
+  {
+    AI_Backend::EvalInput labelsVector (
+      static_cast <size_t> (AiAction::ActionCount));
+
+    labelsVector[state.output] = 1.0f;
+    labels.push_back(labelsVector);
+  }
+
+  return labels;
+}
+
 AI_Backend::Labels
 AiDataset::toLabels() const
 {
