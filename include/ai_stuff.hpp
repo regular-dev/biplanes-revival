@@ -46,6 +46,7 @@ struct AiStateMonitor
 
   void printState() const;
 
+  int64_t takeoffTime() const;
   int64_t airborneScore() const;
 };
 

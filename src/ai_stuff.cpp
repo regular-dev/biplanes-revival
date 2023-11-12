@@ -73,10 +73,17 @@ AiStateMonitor::printState() const
 {
   log_message("winCount: : " + std::to_string(winCount) + "\n");
   log_message("lifeTime: : " + std::to_string(lifeTime) + "\n");
+  log_message("takeoffTime: : " + std::to_string(takeoffTime()) + "\n");
   log_message("airborneTime: : " + std::to_string(airborneTime) + "\n");
   log_message("airborneScore: : " + std::to_string(airborneScore()) + "\n");
   log_message("ejectedTime: : " + std::to_string(ejectedTime) + "\n");
   log_message("max height: " + std::to_string(maxHeight) + "\n");
+}
+
+int64_t
+AiStateMonitor::takeoffTime() const
+{
+  return lifeTime - airborneTime;
 }
 
 int64_t
