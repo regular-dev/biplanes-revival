@@ -63,7 +63,25 @@ size_t AI_Backend::getRandomIndex(const std::vector< size_t >& labels, const siz
     ? constraint
     : labels.size() - 1);
 
-  return labels.at(dis(m_rand));
+    return labels.at(dis(m_rand));
+}
+
+std::vector<float> AI_Backend::getWeights()
+{
+    std::vector< float > out;
+    out.reserve(256 * 128);
+
+    for (auto i = 0; i < m_mdl->layer_size(); ++i) {
+        auto l = m_mdl->at<tiny_dnn::layer*>(i);
+
+        for (auto &iw : l->weights()) {
+            for (auto it = iw->begin(); it != iw->end(); ++it) {
+                out.push_back(*it);
+            }
+        }
+    }
+
+    return out;
 }
 
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,

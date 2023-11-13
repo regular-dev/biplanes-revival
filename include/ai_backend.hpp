@@ -69,6 +69,8 @@ public:
   size_t getIndexByProb(const std::vector< std::pair< size_t, float > > &probs);
   size_t getRandomIndex(const std::vector< size_t> &, const size_t constraint = 0);
 
+  std::vector< float > getWeights();
+
 protected:
   std::shared_ptr< SeqNet > m_mdl;
   std::shared_ptr< Optimizer > m_opt;
