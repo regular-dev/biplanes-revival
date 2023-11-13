@@ -92,7 +92,7 @@ void AI_Backend::train(const InputBatch &data, const InputBatch &lbls, size_t ba
 
 float AI_Backend::getLoss(const InputBatch& data, const InputBatch& lbls) const
 {
-  return m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls);
+    return m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls) / data.size();
 }
 
 AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t constraint)
