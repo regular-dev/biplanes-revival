@@ -72,12 +72,16 @@ std::vector<float> AI_Backend::getWeights()
     out.reserve(256 * 128);
 
     for (auto i = 0; i < m_mdl->layer_size(); ++i) {
-        auto l = m_mdl->at<tiny_dnn::layer*>(i);
+        try {
+            auto &l = m_mdl->at<tiny_dnn::layers::fc>(i);
 
-        for (auto &iw : l->weights()) {
-            for (auto it = iw->begin(); it != iw->end(); ++it) {
-                out.push_back(*it);
+            for (auto &iw : l.weights()) {
+                for (auto it = iw->begin(); it != iw->end(); ++it) {
+                    out.push_back(*it);
             }
+        }
+        } catch(tiny_dnn::nn_error) {
+            continue;
         }
     }
 
