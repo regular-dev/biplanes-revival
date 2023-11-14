@@ -68,7 +68,13 @@ Menu::UpdateControls()
 
   if ( mCurrentRoom == ROOMS::GAME )
   {
-    if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
+    if ( keyboardState[SDL_SCANCODE_ESCAPE] == 1 && mButtonWasPressed == false )
+      GoBack();
+
+    else if ( keyboardState[SDL_SCANCODE_ESCAPE] == 0 && mButtonWasPressed == true )
+      mButtonWasPressed = false;
+
+    else if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
     {
       if ( keyboardState[SDL_SCANCODE_S] == 1 && mButtonWasPressed == false )
       {
@@ -79,7 +85,7 @@ Menu::UpdateControls()
         mButtonWasPressed = false;
 
 
-      if ( keyboardState[SDL_SCANCODE_L] == 1 && mButtonWasPressed == false )
+      else if ( keyboardState[SDL_SCANCODE_L] == 1 && mButtonWasPressed == false )
       {
         aiController.load();
         mButtonWasPressed = true;
@@ -87,13 +93,6 @@ Menu::UpdateControls()
       else if ( keyboardState[SDL_SCANCODE_L] == 0 && mButtonWasPressed == true )
         mButtonWasPressed = false;
     }
-
-
-    if ( keyboardState[SDL_SCANCODE_ESCAPE] == 1 && mButtonWasPressed == false )
-      GoBack();
-
-    else if ( keyboardState[SDL_SCANCODE_ESCAPE] == 0 && mButtonWasPressed == true )
-      mButtonWasPressed = false;
 
     return;
   }
