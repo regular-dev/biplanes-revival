@@ -1239,14 +1239,17 @@ Plane::aiState() const
 
 
   std::vector <float> inputs {};
+  inputs.resize(AiDatasetIndices::IndexCount);
 
   const auto& opponentPlane =
     planes.at(static_cast <PLANE_TYPE> (!mType));
 
 
-  const auto getPlaneState =
-  [&inputs] ( const Plane& plane )
+  const auto writePlaneState =
+  [&inputs] ( const Plane& plane, const AiDatasetIndices::AiDatasetIndices baseIndex )
   {
+    namespace DatasetIndices = AiDatasetPlaneIndices;
+
     const auto damage =
       (plane.isDead() == false && plane.mHasJumped == false) *
       float(plane::maxHp - plane.mHp) / plane::maxHp;
@@ -1260,81 +1263,74 @@ Plane::aiState() const
       (plane.mHasJumped == false) *
       plane.mProtection.remainderTime() / plane::spawnProtectionCooldown;
 
-    inputs.push_back(plane.canAccelerate());
-    inputs.push_back(plane.canDecelerate());
-    inputs.push_back(plane.canTurn());
-    inputs.push_back(plane.canShoot());
-    inputs.push_back(plane.canJump());
 
-    inputs.push_back(plane.isDead());
+    inputs[baseIndex + DatasetIndices::CanAccelerate] = plane.canAccelerate();
+    inputs[baseIndex + DatasetIndices::CanDecelerate] = plane.canDecelerate();
+    inputs[baseIndex + DatasetIndices::CanTurn] = plane.canTurn();
+    inputs[baseIndex + DatasetIndices::CanShoot] = plane.canShoot();
+    inputs[baseIndex + DatasetIndices::CanJump] = plane.canJump();
+
+
+    inputs[baseIndex + DatasetIndices::IsDead] = plane.isDead();
 
     if ( plane.isDead() == true )
-    {
-      inputs.resize(inputs.size() + 15);
       return;
-    }
 
-//    OnGround
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::IsOnGround] =
       plane.mIsOnGround == true &&
       plane.mIsTakingOff == false &&
-      plane.mHasJumped == false );
+      plane.mHasJumped == false;
 
-//    TakingOff
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::IsTakingOff] =
       plane.mIsTakingOff == true &&
-      plane.mHasJumped == false );
+      plane.mHasJumped == false;
 
-//    Airborne
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::IsAirborne] =
       plane.mIsOnGround == false &&
       plane.mIsTakingOff == false &&
-      plane.mHasJumped == false );
+      plane.mHasJumped == false;
 
-//    Ejected
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::HasJumped] =
       plane.mHasJumped == true &&
       plane.pilot.mIsChuteOpen == false &&
       plane.pilot.mChuteState != CHUTE_DESTROYED &&
-      plane.pilot.mIsRunning == false );
+      plane.pilot.mIsRunning == false;
 
-//    ChuteOpen
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::IsChuteOpen] =
       plane.mHasJumped == true &&
       plane.pilot.mIsChuteOpen == true &&
       plane.pilot.mChuteState != CHUTE_DESTROYED &&
-      plane.pilot.mIsRunning == false );
+      plane.pilot.mIsRunning == false;
 
-//    ChuteDestroyed
-    inputs.push_back(
+    inputs[baseIndex + DatasetIndices::IsChuteDestroyed] =
       plane.mHasJumped == true &&
       plane.pilot.mIsRunning == false &&
-      plane.pilot.mChuteState == CHUTE_DESTROYED );
+      plane.pilot.mChuteState == CHUTE_DESTROYED;
 
-//    Running
-    inputs.push_back(
-      plane.pilot.mIsRunning == true );
+    inputs[baseIndex + DatasetIndices::IsRunning] =
+      plane.pilot.mIsRunning == true;
 
 
-    inputs.push_back(damage);
+    inputs[baseIndex + DatasetIndices::Damage] = damage;
 
-    inputs.push_back(shootCooldown);
-    inputs.push_back(protectionCooldown);
+    inputs[baseIndex + DatasetIndices::ShootCooldown] = shootCooldown;
+    inputs[baseIndex + DatasetIndices::ProtectionCooldown] = protectionCooldown;
+
 
     if ( plane.mHasJumped == false )
     {
-      inputs.push_back(plane.mX);
+      inputs[baseIndex + DatasetIndices::PosX] = plane.mX;
 //      TODO: clamp to ground collision ?
-      inputs.push_back(plane.mY);
+      inputs[baseIndex + DatasetIndices::PosY] = plane.mY;
 
-//      inputs.push_back(plane.mPrevX);
-//      inputs.push_back(plane.mPrevY);
+//      inputs[startIndex + DatasetIndices::PosX] = plane.mPrevX;
+//      inputs[startIndex + DatasetIndices::PosY] = plane.mPrevY;
 
 //      speed range X: -0.434783, 0.434783
 //      speed range Y: -0.423825, 0.434783
 
       float speedX {(plane.mX - plane.mPrevX)};
-      float speedY {(plane.mY - plane.mPrevY) * constants::tickRate};
+      const float speedY = (plane.mY - plane.mPrevY) * constants::tickRate;
 
       if ( plane.mX < 0.25f && plane.mPrevX > 0.75f )
         speedX += 1.0f;
@@ -1343,20 +1339,20 @@ Plane::aiState() const
 
       speedX *= constants::tickRate;
 
-      inputs.push_back(speedX + 0.5f);
-      inputs.push_back(speedY + 0.5f);
+      inputs[baseIndex + DatasetIndices::SpeedX] = speedX + 0.5f;
+      inputs[baseIndex + DatasetIndices::SpeedY] = speedY + 0.5f;
 
 //      TODO: or 360 ?
-      inputs.push_back(plane.mDir / 337.5f);
+      inputs[baseIndex + DatasetIndices::Direction] = plane.mDir / 337.5f;
     }
     else
     {
-      inputs.push_back(plane.pilot.mX);
+      inputs[baseIndex + DatasetIndices::PosX] = plane.pilot.mX;
 //      TODO: clamp to ground collision ?
-      inputs.push_back((0.5f + plane.pilot.mY) / 1.5f);
+      inputs[baseIndex + DatasetIndices::PosY] = (0.5f + plane.pilot.mY) / 1.5f;
 
-//      inputs.push_back(plane.pilot.mPrevX);
-//      inputs.push_back((0.5f + plane.pilot.mPrevY) / 1.5f);
+//      inputs[startIndex + DatasetIndices::PosX]plane.pilot.mPrevX;
+//      inputs[startIndex + DatasetIndices::PosY] = (0.5f + plane.pilot.mPrevY) / 1.5f;
 
 //      speed range X: -0.45, 0.45
 //      speed range Y: -0.448306, 1.597502
@@ -1371,15 +1367,15 @@ Plane::aiState() const
 
       speedX *= constants::tickRate;
 
-      inputs.push_back(speedX + 0.5f);
-      inputs.push_back((speedY + 0.5f) / 2.1f);
+      inputs[baseIndex + DatasetIndices::SpeedX] = speedX + 0.5f;
+      inputs[baseIndex + DatasetIndices::SpeedY] = (speedY + 0.5f) / 2.1f;
 
-      inputs.push_back(0.0f);
+      inputs[baseIndex + DatasetIndices::Direction] = 0.f;
     }
   };
 
-  getPlaneState(*this);
-  getPlaneState(opponentPlane);
+  writePlaneState(*this, AiDatasetIndices::SelfState);
+  writePlaneState(opponentPlane, AiDatasetIndices::OpponentState);
 
 //  TODO: handle pilot death cooldown
   const float deadCooldown =
@@ -1387,26 +1383,26 @@ Plane::aiState() const
     opponentPlane.mDeadCooldown.remainderTime() /
     plane::deadCooldown;
 
-  inputs.push_back(deadCooldown);
+  inputs[AiDatasetIndices::OpponentDeathCooldown] = deadCooldown;
 
-  const size_t maxBullets {3};
-  const auto targetSize = inputs.size() + maxBullets * 3;
-
-  size_t serializedBullets {};
+  size_t processedBullets {};
 
   for ( const auto& bullet : bullets.GetClosestBullets(mX, mY, mType) )
   {
-    if ( ++serializedBullets > maxBullets )
+    namespace DatasetBulletIndices = AiDatasetBulletIndices;
+
+    const size_t baseIndex =
+      AiDatasetIndices::Bullets + processedBullets;
+
+    if ( ++processedBullets > DatasetBulletIndices::BulletCount )
       break;
 
-    inputs.push_back(bullet.x());
-    inputs.push_back(bullet.y());
+    inputs[baseIndex + DatasetBulletIndices::PosX] = bullet.x();
+    inputs[baseIndex + DatasetBulletIndices::PosY] = bullet.y();
 
 //    TODO: or 360 ?
-    inputs.push_back(bullet.dir() / 337.5f);
+    inputs[baseIndex + DatasetBulletIndices::Direction] = bullet.dir() / 337.5f;
   }
-
-  inputs.resize(targetSize);
 
   return inputs;
 }

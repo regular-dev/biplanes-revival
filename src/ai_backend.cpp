@@ -216,7 +216,7 @@ void AI_Backend::initNet()
     using namespace tiny_dnn::layers;
     using namespace tiny_dnn;
 
-    const size_t inputSize = 52;
+    const size_t inputSize = AiDatasetIndices::IndexCount;
     const auto outputSize = static_cast <size_t> (AiAction::ActionCount);
 
     // model

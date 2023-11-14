@@ -148,7 +148,12 @@ AiDataset::removeDuplicates(
 
     for ( size_t i = 0; i < inputLhs.size(); ++i )
     {
-      if ( i < 11 || (i > 15 && i < 27) )
+      const auto baseIndexSelf = AiDatasetIndices::SelfState;
+      const auto baseIndexOpponent = AiDatasetIndices::OpponentState;
+      const auto dynamicStateIndex = AiDatasetPlaneIndices::PosX;
+
+      if (  (i >= baseIndexSelf && i < baseIndexSelf + dynamicStateIndex) ||
+            (i >= baseIndexOpponent && i < baseIndexOpponent + dynamicStateIndex) )
       {
         const auto distance =
           std::sqrt(std::pow(inputLhs[i] - inputRhs[i], 2.f) );

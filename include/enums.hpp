@@ -62,19 +62,6 @@ enum PLANE_PITCH : uint8_t
   PITCH_RIGHT,
 };
 
-enum class AiAction : uint8_t
-{
-  Idle,
-  Accelerate,
-  Decelerate,
-  TurnLeft,
-  TurnRight,
-  Shoot,
-  Jump,
-
-  ActionCount,
-};
-
 enum CHUTE_STATE : uint8_t
 {
   CHUTE_IDLE,
@@ -101,6 +88,83 @@ enum class EVENTS : unsigned char
   PILOT_RESPAWN = 'r',
   PILOT_LAND    = 'l'
 };
+
+
+enum class AiAction : uint8_t
+{
+  Idle,
+  Accelerate,
+  Decelerate,
+  TurnLeft,
+  TurnRight,
+  Shoot,
+  Jump,
+
+  ActionCount,
+};
+
+namespace AiDatasetPlaneIndices
+{
+  enum AiDatasetPlaneIndices : uint8_t
+  {
+//    Actions availability as booleans
+    CanAccelerate,
+    CanDecelerate,
+    CanTurn,
+    CanShoot,
+    CanJump,
+
+//    Logical state as one-hot vector
+    IsDead,
+    IsOnGround,
+    IsTakingOff,
+    IsAirborne,
+    HasJumped,
+    IsChuteOpen,
+    IsChuteDestroyed,
+    IsRunning,
+
+//    Physical state as regular floats
+    Damage,
+    ShootCooldown,
+    ProtectionCooldown,
+
+    PosX,
+    PosY,
+    SpeedX,
+    SpeedY,
+    Direction,
+
+    IndexCount,
+  };
+}
+
+namespace AiDatasetBulletIndices
+{
+  enum AiDatasetBulletIndices : uint8_t
+  {
+    PosX,
+    PosY,
+    Direction,
+
+    IndexCount,
+    BulletCount = 3,
+  };
+}
+
+namespace AiDatasetIndices
+{
+enum AiDatasetIndices : uint8_t
+{
+  SelfState,
+  OpponentState = SelfState + AiDatasetPlaneIndices::IndexCount,
+
+  OpponentDeathCooldown = OpponentState + AiDatasetPlaneIndices::IndexCount,
+  Bullets,
+
+  IndexCount = Bullets + AiDatasetBulletIndices::IndexCount * AiDatasetBulletIndices::BulletCount,
+};
+}
 
 
 namespace MENU_SPECIFY
