@@ -85,7 +85,7 @@ Menu::screen_mp_mmake()
     return;
   }
 
-  switch (mSelectedButton)
+  switch (mSelectedItem)
   {
     case MENU_MP_MMAKE::FIND_GAME:
     {
@@ -172,7 +172,7 @@ Menu::screen_mp_dc_host()
     return;
   }
 
-  switch (mSelectedButton)
+  switch (mSelectedItem)
   {
     case MENU_MP_DC_HOST::HOST_START:
     {
@@ -242,7 +242,7 @@ Menu::screen_mp_dc_join()
   }
 
 
-  switch (mSelectedButton)
+  switch (mSelectedItem)
   {
     case MENU_MP_DC_JOIN::JOIN:
     {

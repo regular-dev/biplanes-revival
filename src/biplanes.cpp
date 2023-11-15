@@ -50,10 +50,6 @@
 using TimeUtils::Duration;
 
 
-Packet localData {};
-Packet opponentData {};
-Packet opponentDataPrev {};
-
 const uint16_t DEFAULT_LOCAL_PORT   = 55555;
 const uint16_t DEFAULT_REMOTE_PORT  = 55555;
 const std::string DEFAULT_SERVER_IP = "127.0.0.1";
@@ -84,9 +80,6 @@ std::map <PLANE_TYPE, Plane> planes
   {PLANE_TYPE::RED, {PLANE_TYPE::RED}},
 };
 
-
-Controls controls_local {};
-Controls controls_opponent {};
 
 Effects effects {};
 BulletSpawner bullets {};
@@ -182,6 +175,7 @@ main(
     while ( SDL_PollEvent(&windowEvent) != 0 )
     {
       queryWindowSize();
+      readKeyboardInput();
       menu.UpdateControls();
     }
 
@@ -263,10 +257,6 @@ game_reset()
     for ( size_t i = 0; i < clouds.size(); i++ )
       clouds[i] = {i % 2, i};
   }
-
-  erasePacket(localData);
-  erasePacket(opponentData);
-  erasePacket(opponentDataPrev);
 
   eventsReset();
 
@@ -405,15 +395,14 @@ game_loop_sp()
 
 
   if ( playerPlane != nullptr )
-  {
-    readLocalInput();
-    processLocalControls(*playerPlane, controls_local);
-  }
+    processPlaneControls(*playerPlane, getLocalControls());
+
 
   aiController.processInput();
 
   if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
     aiController.update();
+
 
   for ( auto& cloud : clouds )
     cloud.Update();
@@ -497,6 +486,7 @@ game_loop_mp()
 
 
 //  GET PACKET
+  Packet opponentData {};
   uint8_t packet[sizeof(Packet)] {};
 
   while ( connection->ReceivePacket( packet, sizeof(packet) ) > 0 )
@@ -509,7 +499,7 @@ game_loop_mp()
     if ( packet[0] != '{' && packet[0] != '[' )
     {
       memcpy( &opponentData, &packet, sizeof(opponentData) );
-      processOpponentData();
+      processOpponentData(opponentData);
     }
 //    TODO: remove these logs in release
     else
@@ -531,8 +521,10 @@ game_loop_mp()
 
 
 //  INPUT
+  Controls controlsLocal {};
+
   if ( game.isPaused == false )
-    readLocalInput();
+    controlsLocal = getLocalControls();
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
@@ -547,15 +539,18 @@ game_loop_mp()
     ? planeBlue
     : planeRed;
 
-  processLocalControls(localPlane, controls_local);
+  processPlaneControls(localPlane, controlsLocal);
   localPlane.Update();
 
   if ( network.isOpponentConnected == true )
   {
-    controls_opponent.pitch = opponentData.pitch;
-    controls_opponent.throttle = opponentData.throttle;
+    const Controls opponentControls
+    {
+      opponentData.pitch,
+      opponentData.throttle,
+    };
 
-    processLocalControls(remotePlane, controls_opponent);
+    processPlaneControls(remotePlane, opponentControls);
     remotePlane.Update();
   }
 
@@ -565,8 +560,6 @@ game_loop_mp()
 
 
 //  SEND PACKET
-  packLocalData();
-
   const Duration packetSendInterval = 1.0 / constants::packetSendRate;
 
   if ( packetSendTime >= packetSendInterval )
@@ -574,10 +567,17 @@ game_loop_mp()
     while ( packetSendTime >= packetSendInterval )
       packetSendTime -= packetSendInterval;
 
+    Packet localData {};
+
+    localData << controlsLocal;
+    localData << localPlane.getNetworkData();
+
+    eventsPack(localData);
+
     memcpy( packet, &localData, sizeof(packet) );
 
     connection->SendPacket( packet, sizeof(packet) );
-    eventsFinishIteration();
+    eventsNewTick();
   }
 
   packetSendTime += deltaTime;

@@ -32,66 +32,44 @@ void
 Menu::UpdateControls()
 {
   auto& game = gameState();
-  const Uint8* keyboardState = SDL_GetKeyboardState({});
 
-  if (  keyboardState[SDL_SCANCODE_RETURN] == 0 &&
-        keyboardState[SDL_SCANCODE_DOWN] == 0 &&
-        keyboardState[SDL_SCANCODE_UP] == 0 &&
-        keyboardState[SDL_SCANCODE_SPACE] == 0 &&
-        keyboardState[SDL_SCANCODE_ESCAPE] == 0 &&
-        keyboardState[SDL_SCANCODE_F1] == 0 &&
-        keyboardState[SDL_SCANCODE_S] == 0 &&
-        keyboardState[SDL_SCANCODE_L] == 0 &&
-        mButtonWasPressed == true )
-    mButtonWasPressed = false;
-
-
-  if ( keyboardState[SDL_SCANCODE_R] == 1 )
-    game.disableRendering = true;
-  else
-    game.disableRendering = false;
-
-
-  if (  keyboardState[SDL_SCANCODE_T] == 1 &&
-        mCurrentRoom == ROOMS::GAME &&
+  if (  mCurrentRoom == ROOMS::GAME &&
         game.gameMode == GAME_MODE::BOT_VS_BOT )
   {
-    game.fastforwardGameLoop = true;
-    setVSync(false);
+    if ( isKeyPressed(SDL_SCANCODE_T) == true )
+    {
+      game.fastforwardGameLoop = true;
+      setVSync(false);
+    }
+
+    if ( isKeyPressed(SDL_SCANCODE_R) == true )
+      game.disableRendering = true;
   }
   else
   {
-    game.fastforwardGameLoop = false;
-    setVSync(game.isVSyncEnabled);
+    if ( isKeyReleased(SDL_SCANCODE_T) == true )
+    {
+      game.fastforwardGameLoop = false;
+      setVSync(game.isVSyncEnabled);
+    }
+
+    if ( isKeyReleased(SDL_SCANCODE_R) == true )
+      game.disableRendering = false;
   }
 
 
   if ( mCurrentRoom == ROOMS::GAME )
   {
-    if ( keyboardState[SDL_SCANCODE_ESCAPE] == 1 && mButtonWasPressed == false )
+    if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
       GoBack();
 
-    else if ( keyboardState[SDL_SCANCODE_ESCAPE] == 0 && mButtonWasPressed == true )
-      mButtonWasPressed = false;
-
-    else if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
+    if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
     {
-      if ( keyboardState[SDL_SCANCODE_S] == 1 && mButtonWasPressed == false )
-      {
+      if ( isKeyPressed(SDL_SCANCODE_S) == true )
         aiController.save();
-        mButtonWasPressed = true;
-      }
-      else if ( keyboardState[SDL_SCANCODE_S] == 0 && mButtonWasPressed == true )
-        mButtonWasPressed = false;
 
-
-      else if ( keyboardState[SDL_SCANCODE_L] == 1 && mButtonWasPressed == false )
-      {
+      else if ( isKeyPressed(SDL_SCANCODE_L) == true )
         aiController.load();
-        mButtonWasPressed = true;
-      }
-      else if ( keyboardState[SDL_SCANCODE_L] == 0 && mButtonWasPressed == true )
-        mButtonWasPressed = false;
     }
 
     return;
@@ -107,41 +85,38 @@ Menu::UpdateControls()
   {
     auto& game = gameState();
 
-    if ( mButtonWasPressed == false )
+    if ( isKeyPressed(SDL_SCANCODE_DOWN) == true )
+      MenuItemNext();
+
+    else if ( isKeyPressed(SDL_SCANCODE_UP) == true )
+      MenuItemPrevious();
+
+    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
+      GoBack();
+
+    else if ( isKeyPressed(SDL_SCANCODE_DELETE) == true )
+      ResetKey();
+
+    else if ( isKeyPressed(SDL_SCANCODE_SPACE) == true )
+      GoBack();
+
+    else if ( isKeyPressed(SDL_SCANCODE_F1) == true &&
+              mCurrentRoom == ROOMS::MENU_MAIN )
     {
-      if ( keyboardState[SDL_SCANCODE_DOWN] == 1 )
-        ButtonDown();
+      setMessage(MESSAGE_TYPE::NONE);
+      ChangeRoom(ROOMS::MENU_RECENT_STATS);
 
-      else if ( keyboardState[SDL_SCANCODE_UP] == 1 )
-        ButtonUp();
-
-      else if ( keyboardState[SDL_SCANCODE_ESCAPE] == 1 )
-        GoBack();
-
-      else if ( keyboardState[SDL_SCANCODE_DELETE] == 1 )
-        ResetKey();
-
-      else if ( keyboardState[SDL_SCANCODE_SPACE] == 1 )
-        GoBack();
-
-      else if ( keyboardState[SDL_SCANCODE_F1] == 1 &&
-                mCurrentRoom == ROOMS::MENU_MAIN )
-      {
-        setMessage(MESSAGE_TYPE::NONE);
-        ChangeRoom(ROOMS::MENU_RECENT_STATS);
-
-        auto& stats = game.stats;
-        calcDerivedStats(stats.recent[PLANE_TYPE::RED]);
-        calcDerivedStats(stats.recent[PLANE_TYPE::BLUE]);
-        calcDerivedStats(stats.total);
-      }
+      auto& stats = game.stats;
+      calcDerivedStats(stats.recent[PLANE_TYPE::RED]);
+      calcDerivedStats(stats.recent[PLANE_TYPE::BLUE]);
+      calcDerivedStats(stats.total);
     }
 
     if ( windowEvent.type == SDL_QUIT && game.isPaused == false )
       game.isExiting = true;
   }
 
-  if ( keyboardState[SDL_SCANCODE_RETURN] == 1 && mButtonWasPressed == false )
+  if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )
     Select();
 }
 
@@ -401,19 +376,14 @@ Menu::ToggleDefiningKey(
 void
 Menu::UpdateDefiningKey()
 {
-  const Uint8* keyboardState = SDL_GetKeyboardState({});
-
-  if (  keyboardState[SDL_SCANCODE_ESCAPE] == 1 ||
-        ( keyboardState[SDL_SCANCODE_RETURN] == 1 &&
-          mButtonWasPressed == false ) )
+  if (  isKeyPressed(SDL_SCANCODE_ESCAPE) == true ||
+        isKeyPressed(SDL_SCANCODE_RETURN) == true )
   {
-    mButtonWasPressed = true;
     ToggleDefiningKey(mKeyToDefine);
     return;
   }
 
-  if (  windowEvent.type == SDL_KEYDOWN &&
-        mButtonWasPressed == false )
+  if ( windowEvent.type == SDL_KEYDOWN )
   {
     const auto newKey = windowEvent.key.keysym.sym;
 
@@ -460,28 +430,20 @@ Menu::UpdateDefiningKey()
     }
 
     mIsDefiningKey = false;
-    mButtonWasPressed = true;
     SDL_FlushEvent(SDL_KEYDOWN);
 
     return;
   }
-
-  if (  keyboardState[SDL_SCANCODE_RETURN] == 0 &&
-        keyboardState[SDL_SCANCODE_ESCAPE] == 0 &&
-        mButtonWasPressed == true )
-    mButtonWasPressed = false;
 }
 
 void
 Menu::ResetKey()
 {
-  mButtonWasPressed = true;
-
   if ( mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS )
     return;
 
 
-  switch (mSelectedButton)
+  switch (mSelectedItem)
   {
     case MENU_SETTINGS_CONTROLS::ACCELERATE:
     {

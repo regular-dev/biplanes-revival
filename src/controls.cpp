@@ -23,6 +23,8 @@
 
 #include <SDL_keyboard.h>
 
+#include <cstring>
+
 
 const SDL_Keycode DEFAULT_THROTTLE_UP   = SDLK_UP;
 const SDL_Keycode DEFAULT_THROTTLE_DOWN = SDLK_DOWN;
@@ -37,6 +39,54 @@ SDL_Keycode TURN_LEFT     = SDLK_LEFT;
 SDL_Keycode TURN_RIGHT    = SDLK_RIGHT;
 SDL_Keycode FIRE          = SDLK_SPACE;
 SDL_Keycode JUMP          = SDLK_LCTRL;
+
+
+struct
+{
+  Uint8 current[SDL_NUM_SCANCODES] {};
+  decltype(current) previous {};
+
+} static keyboardState {};
+
+
+void
+readKeyboardInput()
+{
+  std::memcpy(
+    keyboardState.previous,
+    keyboardState.current,
+    sizeof(keyboardState.previous) );
+
+  std::memcpy(
+    keyboardState.current,
+    SDL_GetKeyboardState({}),
+    sizeof(keyboardState.current) );
+}
+
+bool
+isKeyDown(
+  const SDL_Scancode key )
+{
+  return keyboardState.current[key] == true;
+}
+
+bool
+isKeyPressed(
+  const SDL_Scancode key )
+{
+  return
+    isKeyDown(key) == true &&
+    keyboardState.previous[key] == false;
+}
+
+bool
+isKeyReleased(
+  const SDL_Scancode key )
+{
+  return
+    isKeyDown(key) == false &&
+    keyboardState.previous[key] == true;
+}
 
 
 void
@@ -66,52 +116,54 @@ assignKeyBinding(
   targetBinding = newBinding;
 }
 
-void
-readLocalInput()
+Controls
+getLocalControls()
 {
-  const Uint8* keyboard_state = SDL_GetKeyboardState({});
+  Controls controls {};
 
-  if (  keyboard_state[SDL_GetScancodeFromKey(THROTTLE_UP)] == 1 &&
-        keyboard_state[SDL_GetScancodeFromKey(THROTTLE_DOWN)] == 0 )
-    controls_local.throttle = PLANE_THROTTLE::THROTTLE_INCREASE;
+  if (  isKeyDown(SDL_GetScancodeFromKey(THROTTLE_UP)) == true &&
+        isKeyDown(SDL_GetScancodeFromKey(THROTTLE_DOWN)) == false )
+    controls.throttle = PLANE_THROTTLE::THROTTLE_INCREASE;
 
-  else if ( keyboard_state[SDL_GetScancodeFromKey(THROTTLE_DOWN)] == 1 &&
-            keyboard_state[SDL_GetScancodeFromKey(THROTTLE_UP)] == 0 )
-    controls_local.throttle = PLANE_THROTTLE::THROTTLE_DECREASE;
-
-  else
-    controls_local.throttle = PLANE_THROTTLE::THROTTLE_IDLE;
-
-
-  if (  keyboard_state[SDL_GetScancodeFromKey(TURN_LEFT)] == 1 &&
-        keyboard_state[SDL_GetScancodeFromKey(TURN_RIGHT)] == 0 )
-    controls_local.pitch = PLANE_PITCH::PITCH_LEFT;
-
-  else if ( keyboard_state[SDL_GetScancodeFromKey(TURN_RIGHT)] == 1 &&
-            keyboard_state[SDL_GetScancodeFromKey(TURN_LEFT)] == 0 )
-    controls_local.pitch = PLANE_PITCH::PITCH_RIGHT;
+  else if ( isKeyDown(SDL_GetScancodeFromKey(THROTTLE_DOWN)) == true &&
+            isKeyDown(SDL_GetScancodeFromKey(THROTTLE_UP)) == false )
+    controls.throttle = PLANE_THROTTLE::THROTTLE_DECREASE;
 
   else
-    controls_local.pitch = PLANE_PITCH::PITCH_IDLE;
+    controls.throttle = PLANE_THROTTLE::THROTTLE_IDLE;
+
+
+  if (  isKeyDown(SDL_GetScancodeFromKey(TURN_LEFT)) == true &&
+        isKeyDown(SDL_GetScancodeFromKey(TURN_RIGHT)) == false )
+    controls.pitch = PLANE_PITCH::PITCH_LEFT;
+
+  else if ( isKeyDown(SDL_GetScancodeFromKey(TURN_RIGHT)) == true &&
+            isKeyDown(SDL_GetScancodeFromKey(TURN_LEFT)) == false )
+    controls.pitch = PLANE_PITCH::PITCH_RIGHT;
+
+  else
+    controls.pitch = PLANE_PITCH::PITCH_IDLE;
 
 
 //  SHOOT
-  if ( keyboard_state[SDL_GetScancodeFromKey(FIRE)] == 1 )
-    controls_local.shoot = true;
+  if ( isKeyDown(SDL_GetScancodeFromKey(FIRE)) == true )
+    controls.shoot = true;
   else
-    controls_local.shoot = false;
+    controls.shoot = false;
 
 
 //  EJECT
-  if ( keyboard_state[SDL_GetScancodeFromKey(JUMP)] == 1 )
-    controls_local.jump = true;
+  if ( isKeyDown(SDL_GetScancodeFromKey(JUMP)) == true )
+    controls.jump = true;
   else
-    controls_local.jump = false;
+    controls.jump = false;
+
+  return controls;
 }
 
 
 void
-processLocalControls(
+processPlaneControls(
   Plane& plane,
   const Controls& controls )
 {

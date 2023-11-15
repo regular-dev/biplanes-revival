@@ -37,8 +37,7 @@ class Menu
 
   ROOMS mCurrentRoom {ROOMS::MENU_COPYRIGHT};
   std::map <ROOMS, unsigned char> mButtons {};
-  uint8_t mSelectedButton {};
-  bool mButtonWasPressed {true};
+  uint8_t mSelectedItem {};
 
   float mButtonX {};
   MENU_BUTTON_DIR mButtonDir {MENU_BUTTON_DIR::RIGHT};
@@ -71,8 +70,8 @@ public:
   void UpdateTyping();
   void UpdateDefiningKey();
   void AnimateButton();
-  void ButtonUp();
-  void ButtonDown();
+  void MenuItemNext();
+  void MenuItemPrevious();
   void Select();
   void GoBack();
   void ToggleTyping( const MENU_SPECIFY );

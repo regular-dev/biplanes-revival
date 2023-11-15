@@ -702,9 +702,6 @@ AiController::processInput()
 
     const auto action = static_cast <AiAction> (output);
 
-    processLocalControls(
-      plane,
-      actionToControls(action) );
 
 
     if ( gameState().gameMode != GAME_MODE::BOT_VS_BOT )

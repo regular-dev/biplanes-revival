@@ -151,7 +151,6 @@ Menu::DrawMenu()
       if ( game.autoSkipIntro == true )
       {
         ChangeRoom(ROOMS::MENU_MAIN);
-        mButtonWasPressed = false;
         break;
       }
 
@@ -161,7 +160,6 @@ Menu::DrawMenu()
       {
         mIntroAutoSkipTimer.Start();
         ChangeRoom(ROOMS::MENU_SPLASH);
-        mButtonWasPressed = false;
         break;
       }
 
@@ -176,7 +174,6 @@ Menu::DrawMenu()
       if ( mIntroAutoSkipTimer.isReady() == true )
       {
         ChangeRoom(ROOMS::MENU_MAIN);
-        mButtonWasPressed = false;
         break;
       }
 
@@ -696,7 +693,7 @@ Menu::DrawButton()
   const SDL_FRect buttonRect
   {
     toWindowSpaceX(button::originX),
-    toWindowSpaceY(button::originY + mSelectedButton * button::sizeY),
+    toWindowSpaceY(button::originY + mSelectedItem * button::sizeY),
     scaleToScreenX(button::sizeX),
     scaleToScreenY(button::sizeY),
   };

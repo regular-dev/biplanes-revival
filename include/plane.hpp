@@ -152,8 +152,8 @@ public:
   bool canJump() const;
 
 
-  PlaneData getData() const;
-  void setCoords( const PlaneData& );
+  PlaneNetworkData getNetworkData() const;
+  void setCoords( const PlaneNetworkData& );
   void setDir( const float );
 
 

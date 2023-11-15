@@ -32,7 +32,7 @@
 
 
 static std::deque <unsigned char> eventsLocal( 32, 'n' );
-static bool eventsIterationFinished {true};
+static bool eventsTickFinished {true};
 
 static uint8_t eventCounterLocal {};
 static uint8_t eventCounterRemote {};
@@ -40,30 +40,40 @@ static uint8_t eventCounterRemote {};
 static bool sentGameParams {};
 
 
-void
-erasePacket(
-  Packet& packet )
+Packet& operator << (
+  Packet& packet,
+  const Controls& controls )
 {
-  packet = {};
+  packet.throttle = controls.throttle;
+  packet.pitch    = controls.pitch;
 
-  std::fill(
-    packet.events,
-    packet.events + sizeof(packet.events),
-    'n' );
+  return packet;
+}
+
+Packet& operator << (
+  Packet& packet,
+  const PlaneNetworkData& data )
+{
+  packet.x       = data.x;
+  packet.y       = data.y;
+  packet.dir     = data.dir;
+  packet.pilot_x = data.pilot_x;
+  packet.pilot_y = data.pilot_y;
+
+  return packet;
 }
 
 void
 sendDisconnectMessage()
 {
+  Packet localData {};
   localData.disconnect = true;
 
-  uint8_t packetLocal[sizeof(Packet)];
-  memcpy( packetLocal, &localData, sizeof(packetLocal) );
-
-  localData.disconnect = false;
+  uint8_t packet[sizeof(Packet)];
+  memcpy( packet, &localData, sizeof(packet) );
 
   networkState().connection->SendPacket(
-    packetLocal, sizeof(packetLocal) );
+    packet, sizeof(packet) );
 }
 
 void
@@ -75,11 +85,11 @@ eventPush(
     return;
 
 
-  if ( eventsIterationFinished == true )
+  if ( eventsTickFinished == true )
   {
     eventsLocal.pop_front();
     eventsLocal.push_back(eventCounterLocal);
-    eventsIterationFinished = false;
+    eventsTickFinished = false;
 
     if ( ++eventCounterLocal >= 64 )
       eventCounterLocal = 0;
@@ -91,38 +101,9 @@ eventPush(
 }
 
 void
-eventsPack()
+eventsPack(
+  Packet& packet )
 {
-  for ( uint8_t i = 0; i < 32; i++ )
-    localData.events[i] = eventsLocal.at(i);
-}
-
-void
-eventsReset()
-{
-  eventCounterLocal = 0;
-  eventCounterRemote = 0;
-  eventsIterationFinished = true;
-  sentGameParams = false;
-
-  eventsLocal.clear();
-  eventsLocal.resize( 32, 'n' );
-}
-
-void
-eventsFinishIteration()
-{
-  eventsIterationFinished = true;
-}
-
-void
-packLocalData()
-{
-  localData.throttle = controls_local.throttle;
-  localData.pitch    = controls_local.pitch;
-
-  packPlaneCoords();
-
   if ( sentGameParams == false )
   {
     if ( gameState().isHardcoreEnabled == false )
@@ -131,32 +112,35 @@ packLocalData()
     sentGameParams = true;
   }
 
-  eventsPack();
+  for ( uint8_t i = 0; i < sizeof(packet.events); i++ )
+    packet.events[i] = eventsLocal.at(i);
 }
 
 void
-packPlaneCoords()
+eventsReset()
 {
-  const auto& planeRed = planes.at(PLANE_TYPE::RED);
-  const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  eventCounterLocal = 0;
+  eventCounterRemote = 0;
+  eventsTickFinished = true;
+  sentGameParams = false;
 
-
-  const PlaneData data =
-    planeRed.isLocal() == true
-    ? planeRed.getData()
-    : planeBlue.getData();
-
-  localData.x       = data.x;
-  localData.y       = data.y;
-  localData.dir     = data.dir;
-  localData.pilot_x = data.pilot_x;
-  localData.pilot_y = data.pilot_y;
+  eventsLocal.clear();
+  eventsLocal.resize( 32, 'n' );
 }
 
 void
-processOpponentData()
+eventsNewTick()
 {
-  PlaneData data
+  eventsTickFinished = true;
+}
+
+void
+processOpponentData(
+  const Packet& opponentData )
+{
+  static Packet opponentDataPrev {};
+
+  PlaneNetworkData data
   {
     .dir = opponentData.dir,
     .pilot_x = opponentData.pilot_x,

@@ -33,9 +33,7 @@
 void
 Menu::Select()
 {
-  mButtonWasPressed = true;
-
-  if ( mSelectedButton == mButtons[mCurrentRoom] )
+  if ( mSelectedItem == mButtons[mCurrentRoom] )
   {
     if ( mCurrentRoom == ROOMS::MENU_MAIN )
       gameState().isExiting = true;
@@ -48,7 +46,7 @@ Menu::Select()
   {
     case ROOMS::MENU_MAIN:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MAIN::SINGLEPLAYER:
         {
@@ -88,7 +86,7 @@ Menu::Select()
 
     case ROOMS::MENU_SP:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_SP::SETUP_GAME:
         {
@@ -138,7 +136,7 @@ Menu::Select()
 
     case ROOMS::MENU_SP_SETUP:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_SP_SETUP::START:
         {
@@ -197,7 +195,7 @@ Menu::Select()
 
     case ROOMS::MENU_MP:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MP::MMAKE:
         {
@@ -282,7 +280,7 @@ Menu::Select()
 
     case ROOMS::MENU_MP_MMAKE:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MP_MMAKE::FIND_GAME:
         {
@@ -329,7 +327,7 @@ Menu::Select()
 
     case ROOMS::MENU_MP_DC:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MP_DC::HOST:
         {
@@ -363,7 +361,7 @@ Menu::Select()
 
     case ROOMS::MENU_MP_DC_HOST:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MP_DC_HOST::HOST_START:
         {
@@ -415,7 +413,7 @@ Menu::Select()
     }
     case ROOMS::MENU_MP_DC_JOIN:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_MP_DC_JOIN::JOIN:
         {
@@ -475,7 +473,7 @@ Menu::Select()
 
     case ROOMS::MENU_SETTINGS_CONTROLS:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_SETTINGS_CONTROLS::ACCELERATE:
         {
@@ -521,7 +519,7 @@ Menu::Select()
     }
     case ROOMS::MENU_PAUSE:
     {
-      switch (mSelectedButton)
+      switch (mSelectedItem)
       {
         case MENU_PAUSE::CONTINUE:
         {
@@ -584,8 +582,6 @@ Menu::Select()
 void
 Menu::GoBack()
 {
-  mButtonWasPressed = true;
-
   switch (mCurrentRoom)
   {
     case ROOMS::MENU_COPYRIGHT:
@@ -790,25 +786,21 @@ Menu::GoBack()
 }
 
 void
-Menu::ButtonUp()
+Menu::MenuItemPrevious()
 {
-  mButtonWasPressed = true;
-
-  if ( mSelectedButton > 0 )
-    --mSelectedButton;
+  if ( mSelectedItem > 0 )
+    --mSelectedItem;
   else
-    mSelectedButton = mButtons[mCurrentRoom];
+    mSelectedItem = mButtons[mCurrentRoom];
 }
 
 void
-Menu::ButtonDown()
+Menu::MenuItemNext()
 {
-  mButtonWasPressed = true;
-
-  if ( mSelectedButton < mButtons[mCurrentRoom] )
-    ++mSelectedButton;
+  if ( mSelectedItem < mButtons[mCurrentRoom] )
+    ++mSelectedItem;
   else
-    mSelectedButton = 0;
+    mSelectedItem = 0;
 }
 
 void
@@ -819,8 +811,6 @@ Menu::ReturnToMainMenu()
   networkState().isOpponentConnected = false;
 
   ChangeRoom(ROOMS::MENU_MAIN);
-
-  mButtonWasPressed = false;
 }
 
 void
@@ -828,6 +818,5 @@ Menu::ChangeRoom(
   const ROOMS room )
 {
   mCurrentRoom = room;
-  mSelectedButton = 0;
-  mButtonWasPressed = true;
+  mSelectedItem = 0;
 }

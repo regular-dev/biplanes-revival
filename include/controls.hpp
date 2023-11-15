@@ -38,12 +38,14 @@ struct Controls
 };
 
 
-extern Controls controls_local;
-extern Controls controls_opponent;
+void readKeyboardInput();
 
+bool isKeyDown( const SDL_Scancode );
+bool isKeyPressed( const SDL_Scancode );
+bool isKeyReleased( const SDL_Scancode );
 
-void readLocalInput();
-void processLocalControls( Plane&, const Controls& );
+Controls getLocalControls();
+void processPlaneControls( Plane&, const Controls& );
 
 void assignKeyBinding(
   SDL_Keycode& targetBinding,

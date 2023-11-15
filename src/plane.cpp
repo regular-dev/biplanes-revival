@@ -1019,8 +1019,8 @@ Plane::y() const
 }
 
 // Get coordinates for sending
-PlaneData
-Plane::getData() const
+PlaneNetworkData
+Plane::getNetworkData() const
 {
   return
   {
@@ -1115,7 +1115,7 @@ Plane::canJump() const
 
 void
 Plane::setCoords(
-  const PlaneData& data )
+  const PlaneNetworkData& data )
 {
   mX = data.x;
   mY = data.y;

@@ -23,7 +23,7 @@
 #include <include/enums.hpp>
 
 
-struct PlaneData
+struct PlaneNetworkData
 {
   float x {};
   float y {};
@@ -33,7 +33,7 @@ struct PlaneData
   float pilot_y {};
 
 
-  PlaneData() = default;
+  PlaneNetworkData() = default;
 };
 
 
@@ -54,7 +54,3 @@ struct Packet
 
   Packet() = default;
 };
-
-extern Packet localData;
-extern Packet opponentData;
-extern Packet opponentDataPrev;

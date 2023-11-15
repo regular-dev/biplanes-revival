@@ -27,13 +27,12 @@
 
 
 void eventPush( const EVENTS );
-void eventsPack();
+void eventsPack( Packet& );
 void eventsReset();
-void eventsFinishIteration();
+void eventsNewTick();
 
-void packLocalData();
-void packPlaneCoords();
-void processOpponentData();
-
-void erasePacket( Packet& );
+void processOpponentData( const Packet& );
 void sendDisconnectMessage();
+
+Packet& operator << ( Packet&, const Controls& );
+Packet& operator << ( Packet&, const PlaneNetworkData& );

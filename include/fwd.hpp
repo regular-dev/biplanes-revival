@@ -46,7 +46,7 @@ struct Sounds;
 struct Statistics;
 struct Textures;
 
-struct PlaneData;
+struct PlaneNetworkData;
 struct Packet;
 class MatchMaker;
 
