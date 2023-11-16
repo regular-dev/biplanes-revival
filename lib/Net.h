@@ -986,10 +986,10 @@ namespace net
         ClearData();
 
       if ( received_bytes == 0 )
-        return false;
+        return 0;
 
       if ( received_bytes <= header )
-        return false;
+        return 0;
 
       unsigned int packet_sequence = 0;
       unsigned int packet_ack = 0;
@@ -998,6 +998,9 @@ namespace net
       ReadHeader( packet, packet_sequence, packet_ack, packet_ack_bits );
       reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
       reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
+
+      if ( packet_sequence != reliabilitySystem.GetRemoteSequence() )
+        return 0;
 
       memcpy( data, packet + header, received_bytes - header );
       return received_bytes - header;
