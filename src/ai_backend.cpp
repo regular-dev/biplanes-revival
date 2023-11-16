@@ -20,7 +20,6 @@
 
 #include <include/ai_backend.hpp>
 #include <include/enums.hpp>
-#include <include/utility.hpp>
 
 #include <tiny_dnn/tiny_dnn.h>
 
@@ -29,6 +28,11 @@ AI_Backend::AI_Backend()
 {
     init_rand();
     initNet();
+}
+
+size_t AI_Backend::getTrainedEpochsCount() const
+{
+    return m_epochs_trained;
 }
 
 size_t AI_Backend::getIndexByProb(const std::vector< std::pair< size_t, float > > &probs)
@@ -80,8 +84,8 @@ std::vector<float> AI_Backend::getWeights()
                     out.push_back(*it);
             }
         }
-        } catch(tiny_dnn::nn_error) {
-            continue;
+        } catch(const tiny_dnn::nn_error&) {
+            return {};
         }
     }
 
@@ -91,25 +95,16 @@ std::vector<float> AI_Backend::getWeights()
 void AI_Backend::train(const InputBatch &data, const Labels &lbls,
                        size_t batch_size, size_t epochs)
 {
-    log_message("Begin labeled training...\n");
-    m_mdl->train< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls,
-                                                       batch_size, epochs);
+    m_epochs_trained += epochs;
+    m_mdl->train< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
 }
 
 void AI_Backend::train(const InputBatch &data, const InputBatch &lbls, size_t batch_size, size_t epochs)
 {
-    log_message("Begin training...\n");
+    m_epochs_trained += epochs;
 
     for ( size_t epoch = 0; epoch < epochs; ++epoch )
-    {
-      const auto prev_loss = getLoss(data, lbls);
-      log_message("Loss before training epoch " + std::to_string(epoch) + ": " + std::to_string(prev_loss), "\n");
-
       m_mdl->fit< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
-
-      const auto loss = getLoss(data, lbls);
-      log_message("Loss after training epoch " + std::to_string(epoch) + ": " + std::to_string(loss), "\n");
-    }
 }
 
 float AI_Backend::getLoss(const InputBatch& data, const InputBatch& lbls) const

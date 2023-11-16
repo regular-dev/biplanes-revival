@@ -66,6 +66,7 @@ public:
   bool saveModel(const std::string &path) const;
   bool loadModel(const std::string &path);
 
+  size_t getTrainedEpochsCount() const;
   size_t getIndexByProb(const std::vector< std::pair< size_t, float > > &probs);
   size_t getRandomIndex(const std::vector< size_t> &, const size_t constraint = 0);
 
@@ -77,6 +78,7 @@ protected:
 
   std::random_device m_dev_rand;
   std::default_random_engine m_rand;
+  size_t m_epochs_trained {};
 
   void init_rand();
 };

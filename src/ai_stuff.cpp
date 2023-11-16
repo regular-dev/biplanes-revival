@@ -33,6 +33,65 @@
 #define AI_RED_PATH "assets/red.ai"
 
 
+Controls
+aiActionToControls(
+  const AiAction action )
+{
+  Controls controls {};
+
+  switch (action)
+  {
+    case AiAction::Idle:
+      break;
+
+    case AiAction::Accelerate:
+    {
+      controls.throttle = THROTTLE_INCREASE;
+      break;
+    }
+
+    case AiAction::Decelerate:
+    {
+      controls.throttle = THROTTLE_DECREASE;
+      break;
+    }
+
+    case AiAction::TurnLeft:
+    {
+      controls.pitch = PITCH_LEFT;
+      break;
+    }
+
+    case AiAction::TurnRight:
+    {
+      controls.pitch = PITCH_RIGHT;
+      break;
+    }
+
+    case AiAction::Shoot:
+    {
+      controls.shoot = true;
+      break;
+    }
+
+    case AiAction::Jump:
+    {
+      controls.jump = true;
+      break;
+    }
+
+    default:
+    {
+      log_message("ERROR: Unknown AiAction: "
+        + std::to_string(static_cast <size_t> (action)), "\n");
+      break;
+    }
+  }
+
+  return controls;
+}
+
+
 void
 AiStateMonitor::update(
   const Plane& self,
@@ -59,19 +118,8 @@ AiStateMonitor::update(
 }
 
 void
-AiStateMonitor::reset()
-{
-  const auto winCountBackup = winCount;
-
-  *this = {};
-
-  winCount = winCountBackup;
-}
-
-void
 AiStateMonitor::printState() const
 {
-  log_message("winCount: : " + std::to_string(winCount) + "\n");
   log_message("lifeTime: : " + std::to_string(lifeTime) + "\n");
   log_message("takeoffTime: : " + std::to_string(takeoffTime()) + "\n");
   log_message("airborneTime: : " + std::to_string(airborneTime) + "\n");
@@ -97,6 +145,13 @@ AiStateMonitor::airborneScore() const
   return airborneTime - takeoffTime;
 }
 
+
+void
+AiDataset::push(
+  const AiDatasetEntry& entry )
+{
+  mData.push_back(entry);
+}
 
 void
 AiDataset::push(
@@ -284,6 +339,7 @@ AiDataset::printActionStats() const
     return lhs.second > rhs.second;
   });
 
+
   for ( const auto& [action, count] : actionStats )
   {
     switch (action)
@@ -329,6 +385,8 @@ AiDataset::printActionStats() const
         log_message("jump ");
         break;
       }
+      case AiAction::ActionCount:
+      break;
     }
 
     std::stringstream stream {};
@@ -344,376 +402,151 @@ AiDataset::printActionStats() const
 }
 
 
-void
-AiController::init()
+AiTrainingPhase::~AiTrainingPhase()
 {
-  for ( auto& [planeType, data] : mAiData )
-  {
-    data = {};
-    data.backend = std::make_shared <AI_Backend> ();
-  }
-
-  mRoundDuration.Start();
-  mDeathCounter.Reset();
+  assert(mInputProcessor != nullptr);
+  delete mInputProcessor;
 }
 
 void
-AiController::save()
+AiTrainingPhase::train(
+  AI_Backend& backend,
+  AiDataset& dataset )
 {
-  auto& blueBackend = mAiData[PLANE_TYPE::BLUE].backend;
-  auto& redBackend = mAiData[PLANE_TYPE::RED].backend;
+  dataset.removeDuplicates();
+  dataset.saveEveryNthEntry(3);
+  dataset.shuffle();
 
-  log_message("Saving blue AI model\n");
-  blueBackend->saveModel(AI_BLUE_PATH);
 
-  log_message("Saving red AI model\n");
-  redBackend->saveModel(AI_RED_PATH);
-}
-
-void
-AiController::load()
-{
-  init();
-  restartRound();
-
-  auto& blueBackend = mAiData[PLANE_TYPE::BLUE].backend;
-  auto& redBackend = mAiData[PLANE_TYPE::RED].backend;
-
-  log_message("Loading blue AI model\n");
-
-  if ( blueBackend->loadModel(AI_BLUE_PATH) == false )
-    log_message("ERROR: Failed to load blue AI model '" AI_BLUE_PATH "'\n");
-
-  log_message("Loading red AI model\n");
-
-  if ( redBackend->loadModel(AI_RED_PATH) == false )
-    log_message("ERROR: Failed to load red AI model '" AI_RED_PATH "'\n");
-}
-
-void
-AiController::train()
-{
-  const size_t epochs {1};
   const size_t batchSize {4};
-  const float minLoss {2.0f};
+  const float minLoss {0.01f};
+
+  const auto inputs = dataset.toBatch();
+  const auto labels = dataset.toOneHotLabels();
+
+  size_t epochs = backend.getTrainedEpochsCount();
+
+  float currentLoss = backend.getLoss(inputs, labels);
+  float prevLoss {};
 
 
-  log_message("training epoch " + std::to_string(mEpochsTrained + 1) + "\n");
-
-  for ( auto& [planeType, data] : mAiData )
+  do
   {
-    auto& dataset = data.epochDataset;
+    log_message("Epoch " + std::to_string(epochs++) + " loss: " + std::to_string(currentLoss) + "\n");
 
-    dataset.removeDuplicates();
-    dataset.saveEveryNthEntry(3);
-    dataset.shuffle();
+    prevLoss = currentLoss;
 
-    const auto inputs = dataset.toBatch();
-    const auto labels = dataset.toOneHotLabels();
+    backend.train(
+      inputs, labels,
+      batchSize, 1 );
 
-    float maxLoss {};
-
-    do
-    {
-      maxLoss = data.backend->getLoss(inputs, labels);
-
-      if ( maxLoss < 2.0f )
-        break;
-
-      data.backend->train(
-        inputs, labels,
-        batchSize, 1 );
-    }
-    while ( data.backend->getLoss(inputs, labels) <= maxLoss );
+    currentLoss = backend.getLoss(inputs, labels);
   }
+  while ( currentLoss < prevLoss && currentLoss > minLoss );
 
-  ++mEpochsTrained;
+
+  log_message("Loss after training: " + std::to_string(currentLoss) + "\n");
+
   gameState().deltaTimeResetRequested = true;
 }
 
 void
-AiController::newEpoch()
+AiTrainingPhase::update()
 {
-  for ( auto& [planeType, data] : mAiData )
-  {
-    data.state = {};
-    data.roundDataset = {};
-    data.epochDataset = {};
-  }
+  assert(mInputProcessor != nullptr);
+}
+
+Controls
+AiTrainingPhase::getInput(
+  const Plane& plane )
+{
+  return {};
 }
 
 void
-AiController::restartRound()
+AiTrainingPhase::init()
 {
-  game_reset();
-
-  mRoundDuration.Start();
-  mDeathCounter.Stop();
-  mDeathCounter.Reset();
-
-  for ( auto& [planeType, data] : mAiData )
-  {
-    data.state.reset();
-    data.roundDataset = {};
-  }
 }
 
 void
-AiController::printEpochActionStats()
+AiTrainingPhase::initNewRound()
 {
-  for ( const auto& [planeType, aiData] : mAiData )
-  {
-    log_message(std::to_string(planeType) + " action stats:", "\n");
-    aiData.epochDataset.printActionStats();
-  }
 }
 
 void
-AiController::raiseActionConstraint(
-  AiData& data )
+AiTrainingPhase::save() const
 {
-  if ( data.actionConstraint < static_cast <size_t> (AiAction::ActionCount) - 1 )
-    ++data.actionConstraint;
 }
 
 void
-AiController::lowerActionConstraint(
-  AiData& data )
+AiTrainingPhase::load()
 {
-  if ( data.actionConstraint > 0 )
-    --data.actionConstraint;
-}
-
-void
-AiController::resetActionConstraint(
-  AiData& data )
-{
-  data.actionConstraint = 0;
-}
-
-void
-AiController::randomizeActionConstraint(
-  AiData& data )
-{
-  data.actionConstraint =
-    std::rand() % static_cast <size_t> (AiAction::ActionCount) - 1;
+  init();
+  initNewRound();
 }
 
 bool
-AiController::hasRoundFinished()
+AiTrainingPhase::hasRoundFinished() const
 {
-  if ( mRoundDuration.isReady() == true )
-    return true;
-
-
-  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
-  auto& planeRed = planes.at(PLANE_TYPE::RED);
-
-  if ( planeBlue.isDead() == false && planeRed.isDead() == false )
-    return false;
-
-  if ( mDeathCounter.isCounting() == false )
-    mDeathCounter.Start();
-
-  if (  mDeathCounter.isReady() == true ||
-        ( planeBlue.isDead() == true &&
-          planeRed.isDead() == true ) )
-    return true;
-
   return false;
 }
 
-void
-AiController::evaluateWinner()
+bool
+AiTrainingPhase::hasPhaseFinished() const
 {
-  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
-  auto& planeRed = planes.at(PLANE_TYPE::RED);
-
-  auto& blueData = mAiData[planeBlue.type()];
-  auto& redData = mAiData[planeRed.type()];
-
-  size_t blueScore {};
-  size_t redScore {};
-
-  blueScore += planeBlue.isDead() == false && planeBlue.isAirborne() == true;
-  redScore += planeRed.isDead() == false && planeRed.isAirborne() == true;
-
-  if ( planeBlue.isDead() == true )
-    blueScore = 0;
-
-  if ( planeRed.isDead() == true )
-    redScore = 0;
-
-  if ( blueData.state.airborneScore() <= 0 )
-    blueScore = 0;
-
-  if ( redData.state.airborneScore() <= 0 )
-    redScore = 0;
-
-  const auto spawnHeight = 1.0f - constants::plane::spawnY;
-
-  if ( blueData.state.maxHeight <= spawnHeight )
-  {
-    blueScore = 0;
-    log_message("blue is too low\n");
-  }
-
-  if ( redData.state.maxHeight <= spawnHeight )
-  {
-    redScore = 0;
-    log_message("red is too low\n");
-  }
-
-  log_message("blue/red: " +
-    std::to_string(blueScore) + " " +
-    std::to_string(redScore) + "\n");
-
-
-  if ( mEpochsTrained == 0 )
-  {
-    if ( blueData.state.winCount == 0 && blueScore == 0 )
-    {
-      resetActionConstraint(blueData);
-      blueData.backend->initNet();
-      log_message("BLUE reinit\n");
-    }
-
-    if ( redData.state.winCount == 0 && redScore == 0 )
-    {
-      resetActionConstraint(redData);
-      redData.backend->initNet();
-      log_message("RED reinit\n");
-    }
-  }
-
-  if ( blueScore > redScore )
-  {
-    menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
-    log_message("BLUE wins\n");
-    blueData.state.printState();
-
-    processWinner(blueData);
-    raiseActionConstraint(redData);
-
-    return;
-  }
-
-  if ( redScore > blueScore )
-  {
-    menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
-    log_message("RED wins\n");
-    redData.state.printState();
-
-    processWinner(redData);
-    raiseActionConstraint(blueData);
-
-    return;
-  }
-
-  if (  planeBlue.isDead() == false && blueData.state.maxHeight > spawnHeight &&
-        planeRed.isDead() == false && redData.state.maxHeight > spawnHeight )
-  {
-    menu.setMessage(MESSAGE_TYPE::EVERY_SIDE_WON);
-    log_message("EVERYONE wins\n");
-
-    log_message("blue state:\n");
-    blueData.state.printState();
-    processWinner(blueData);
-
-    log_message("red state:\n");
-    redData.state.printState();
-    processWinner(redData);
-
-    return;
-  }
-
-  menu.setMessage(MESSAGE_TYPE::ROUND_DRAW);
-  log_message("NOBODY wins\n");
-
-  log_message("blue state:\n");
-  blueData.state.printState();
-
-  log_message("red state:\n");
-  redData.state.printState();
-
-  raiseActionConstraint(redData);
-  raiseActionConstraint(blueData);
+  return false;
 }
 
-void
-AiController::processWinner(
-  AiData& aiData )
+bool
+AiTrainingPhase::isReadyForTraining(
+  const Plane& ) const
 {
-  aiData.state.winCount++;
-  resetActionConstraint(aiData);
-
-  if ( aiData.state.winCount <= mWinCountRequirement )
-  {
-    log_message("merging dataset\n");
-    log_message("action stats:\n");
-    aiData.roundDataset.printActionStats();
-    aiData.roundDataset.merge(aiData.epochDataset);
-  }
+  return false;
 }
 
-void
-AiController::processInput()
+
+AiDatasetEntry
+AiInputFilter::filterInput(
+  const std::vector <float>& inputs,
+  const Plane& plane,
+  AI_Backend& backend )
 {
-  for ( auto& [planeType, plane] : planes )
-  {
-    if ( plane.isBot() == false || plane.isDead() == true )
-      continue;
-
-
-    const auto inputs = plane.aiState();
-
 #if false || BIPLANES_CHECK_AI_INPUTS
-    for ( size_t i = 0; i < inputs.size(); ++i )
-      if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
-      {
-        log_message(
-          "plane " + std::to_string(plane.type()),
-          " invalid input " + std::to_string(i) +
-          ": " + std::to_string(inputs[i]), "\n");
+  for ( size_t i = 0; i < inputs.size(); ++i )
+    if ( inputs[i] < 0.0f || inputs[i] > 1.0f )
+    {
+      log_message(
+        "plane " + std::to_string(plane.type()),
+        " invalid input " + std::to_string(i) +
+        ": " + std::to_string(inputs[i]), "\n");
 
-        assert(false);
-      }
+      assert(false);
+    }
 #endif
 
-    auto& data = mAiData[plane.type()];
+//  const auto output = data.backend->predictDistLabel(
+//    {inputs.begin(), inputs.end()},
+//    data.actionConstraint );
 
-//    const auto output = data.backend->predictDistLabel(
-//      {inputs.begin(), inputs.end()},
-//      data.actionConstraint );
+//  auto outputs = data.backend->predictDistLabels(
+//    {inputs.begin(), inputs.end()} );
 
-//    auto outputs = data.backend->predictDistLabels(
-//      {inputs.begin(), inputs.end()} );
+//  const auto output = data.backend->getRandomIndex(
+//    outputs,
+//    data.actionConstraint );
 
-//    const auto output = data.backend->getRandomIndex(
-//      outputs,
-//      data.actionConstraint );
+  auto outputs = backend.predictDistLabelsProb(
+    {inputs.begin(), inputs.end()} );
 
-    auto outputs = data.backend->predictDistLabelsProb(
-      {inputs.begin(), inputs.end()} );
+  filterActions(plane, outputs);
 
-    filterValidActions(plane, outputs);
+  const auto output = backend.getIndexByProb(outputs);
 
-    const auto output = data.backend->getIndexByProb(outputs);
-
-    const auto action = static_cast <AiAction> (output);
-
-
-
-    if ( gameState().gameMode != GAME_MODE::BOT_VS_BOT )
-      continue;
-
-    if ( data.state.winCount < mWinCountRequirement )
-      data.roundDataset.push(inputs, static_cast <size_t> (action));
-  }
+  return {inputs, output};
 }
 
 void
-AiController::filterValidActions(
+AiInputFilter::filterActions(
   const Plane& plane,
   std::vector <size_t>& actions ) const
 {
@@ -755,7 +588,7 @@ AiController::filterValidActions(
 }
 
 void
-AiController::filterValidActions(
+AiInputFilter::filterActions(
   const Plane& plane,
   std::vector <std::pair< size_t, float >>& actions ) const
 {
@@ -796,97 +629,282 @@ AiController::filterValidActions(
   }
 }
 
-Controls
-AiController::actionToControls(
-  const AiAction action ) const
+
+class TakeoffTrainingPhase : public AiTrainingPhase
 {
-  Controls controls {};
-
-  switch (action)
+  struct RoundData
   {
-    case AiAction::Idle:
-      break;
+    AiStateMonitor state {};
+    AiDataset dataset {};
+  };
 
-    case AiAction::Accelerate:
-    {
-      controls.throttle = THROTTLE_INCREASE;
-      break;
-    }
 
-    case AiAction::Decelerate:
-    {
-      controls.throttle = THROTTLE_DECREASE;
-      break;
-    }
+  std::map <PLANE_TYPE, std::shared_ptr <AI_Backend>> mBackends
+  {
+    {PLANE_TYPE::BLUE, std::make_shared <AI_Backend> ()},
+    {PLANE_TYPE::RED, std::make_shared <AI_Backend> ()},
+  };
 
-    case AiAction::TurnLeft:
-    {
-      controls.pitch = PITCH_LEFT;
-      break;
-    }
+  std::map <PLANE_TYPE, std::vector <RoundData>> mRoundData
+  {
+    {PLANE_TYPE::BLUE, {}},
+    {PLANE_TYPE::RED, {}},
+  };
 
-    case AiAction::TurnRight:
-    {
-      controls.pitch = PITCH_RIGHT;
-      break;
-    }
+  Timer mRoundTimeout {1.0};
 
-    case AiAction::Shoot:
-    {
-      controls.shoot = true;
-      break;
-    }
 
-    case AiAction::Jump:
-    {
-      controls.jump = true;
-      break;
-    }
+public:
+  TakeoffTrainingPhase() = default;
 
-    default:
-    {
-      log_message("ERROR: Unknown AiAction: "
-        + std::to_string(static_cast <size_t> (action)), "\n");
-      break;
-    }
-  }
+  void update() override;
+  Controls getInput( const Plane& ) override;
 
-  return controls;
-}
+  void init() override;
+  void initNewRound() override;
+
+  void save() const override;
+  void load() override;
+
+  bool hasRoundFinished() const override;
+  bool hasPhaseFinished() const override;
+
+  bool isReadyForTraining( const Plane& ) const override;
+};
 
 void
-AiController::update()
+TakeoffTrainingPhase::update()
 {
-  mRoundDuration.Update();
-  mDeathCounter.Update();
+  mRoundTimeout.Update();
+
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  auto& blueData = mAiData[planeBlue.type()];
-  auto& redData = mAiData[planeRed.type()];
+  auto& roundDataBlue = mRoundData[planeBlue.type()];
+  auto& roundDataRed = mRoundData[planeRed.type()];
 
-  blueData.state.update(planeBlue, planeRed);
-  redData.state.update(planeRed, planeBlue);
+  roundDataBlue.back().state.update(
+    planeBlue, planeRed );
+
+  roundDataRed.back().state.update(
+    planeRed, planeBlue );
 
 
   if ( hasRoundFinished() == false )
     return;
 
 
-  evaluateWinner();
-
-  if (  blueData.state.winCount >= mWinCountRequirement &&
-        redData.state.winCount >= mWinCountRequirement )
+  for ( const auto& [planeType, plane] : planes )
   {
+    auto& data = mRoundData[planeType];
+
+    std::sort( data.begin(), data.end(),
+    [] ( const RoundData& lhs, const RoundData& rhs )
+    {
+      return lhs.state.takeoffTime() > rhs.state.takeoffTime();
+    });
+
+//    const auto newEnd = std::unique( data.begin(), data.end(),
+//    [] ( const RoundData& lhs, const RoundData& rhs )
+//    {
+//      return lhs.state.takeoffTime() == rhs.state.takeoffTime();
+//    });
+
+//    data.resize(std::distance(data.begin(), newEnd));
+
+    if ( plane.isDead() == false && plane.isAirborne() == false )
+    {
+      log_message("Plane " + std::to_string(planeType) + " takes off too slow\n");
+      mBackends.at(planeType)->initNet();
+      data.clear();
+
+      continue;
+    }
+
+    log_message("Plane " + std::to_string(planeType) + " state:\n");
+    data.back().state.printState();
+
     log_message("\n");
-    printEpochActionStats();
-    train();
-    newEpoch();
-    resetActionConstraint(blueData);
-    resetActionConstraint(redData);
+
+    if ( isReadyForTraining(plane) == false )
+      continue;
+
+
+    log_message("Plane " + std::to_string(planeType) + " action stats:\n");
+    data.back().dataset.printActionStats();
+
+    log_message("\n");
+
+    log_message("Training plane " + std::to_string(planeType) + "\n");
+    train( *mBackends.at(planeType), data.back().dataset );
+
+    data.front() = data.back();
+    data.resize(1);
+
+    log_message("\n");
+  }
+
+  initNewRound();
+}
+
+Controls
+TakeoffTrainingPhase::getInput(
+  const Plane& plane )
+{
+  const auto datasetEntry = mInputProcessor->filterInput(
+    plane.aiState(),
+    plane,
+    *mBackends.at(plane.type()) );
+
+  if ( plane.isAirborne() == false )
+    mRoundData[plane.type()].back().dataset.push(datasetEntry);
+
+  const auto action =
+    static_cast <AiAction> (datasetEntry.output);
+
+  return aiActionToControls(action);
+}
+
+void
+TakeoffTrainingPhase::init()
+{
+  if ( mInputProcessor == nullptr )
+    mInputProcessor = new AiInputFilter();
+
+  for ( auto& [planeType, backend] : mBackends )
+    backend->initNet();
+
+  for ( auto& [planeType, data] : mRoundData )
+    data.clear();
+
+  initNewRound();
+}
+
+void
+TakeoffTrainingPhase::initNewRound()
+{
+  mRoundTimeout.Start();
+
+  for ( auto& [planeType, data] : mRoundData )
+    data.push_back({});
+
+  game_reset();
+}
+
+void
+TakeoffTrainingPhase::save() const
+{
+  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
+  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
+
+  log_message("Saving blue AI model " + std::to_string(blueBackend->getWeights().size()) + "\n");
+  blueBackend->saveModel(AI_BLUE_PATH);
+
+  log_message("Saving red AI model " + std::to_string(redBackend->getWeights().size()) + "\n");
+  redBackend->saveModel(AI_RED_PATH);
+}
+
+void
+TakeoffTrainingPhase::load()
+{
+  init();
+
+  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
+  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
+
+  log_message("Loading blue AI model\n");
+
+  if ( blueBackend->loadModel(AI_BLUE_PATH) == false )
+    log_message("ERROR: Failed to load blue AI model '" AI_BLUE_PATH "'\n");
+
+  log_message("Blue AI model weights: " + std::to_string(blueBackend->getWeights().size()) + "\n");
+
+  log_message("Loading red AI model\n");
+
+  if ( redBackend->loadModel(AI_RED_PATH) == false )
+    log_message("ERROR: Failed to load red AI model '" AI_RED_PATH "'\n");
+
+  log_message("Red AI model weights: " + std::to_string(redBackend->getWeights().size()) + "\n");
+}
+
+bool
+TakeoffTrainingPhase::hasRoundFinished() const
+{
+  return mRoundTimeout.isReady();
+}
+
+bool
+TakeoffTrainingPhase::hasPhaseFinished() const
+{
+  return false;
+}
+
+bool
+TakeoffTrainingPhase::isReadyForTraining(
+  const Plane& plane ) const
+{
+  auto& data = mRoundData.at(plane.type());
+
+  size_t records {};
+  size_t takeoffTimePrev {};
+
+  for ( const auto& round : data )
+  {
+    const auto takeoffTimeNew = round.state.takeoffTime();
+    records += takeoffTimeNew < takeoffTimePrev;
+
+    log_message("takeoffTimePrev " + std::to_string(takeoffTimePrev) + " ");
+    log_message("takeoffTimeNew " + std::to_string(takeoffTimeNew) + "\n");
+
+    takeoffTimePrev = takeoffTimeNew;
   }
 
   log_message("\n");
-  restartRound();
+
+  return data.size() >= 10 || records > 3;
+}
+
+
+void
+AiController::init()
+{
+  if ( mTrainingPhase == nullptr )
+    mTrainingPhase = new TakeoffTrainingPhase();
+
+  mTrainingPhase->init();
+}
+
+void
+AiController::save()
+{
+  mTrainingPhase->save();
+}
+
+void
+AiController::load()
+{
+  mTrainingPhase->load();
+}
+
+void
+AiController::update()
+{
+  assert(mTrainingPhase != nullptr);
+
+  mTrainingPhase->update();
+}
+
+void
+AiController::processInput()
+{
+  assert(mTrainingPhase != nullptr);
+
+  for ( auto& [planeType, plane] : planes )
+  {
+    if ( plane.isDead() == false && plane.isBot() == true )
+      processPlaneControls(
+        plane,
+        mTrainingPhase->getInput(plane) );
+  }
 }

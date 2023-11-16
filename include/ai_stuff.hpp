@@ -30,9 +30,11 @@
 #include <cstddef>
 
 
+Controls aiActionToControls( const AiAction );
+
+
 struct AiStateMonitor
 {
-  size_t winCount {};
   size_t lifeTime {};
   size_t airborneTime {};
   size_t ejectedTime {};
@@ -42,7 +44,6 @@ struct AiStateMonitor
   AiStateMonitor() = default;
 
   void update( const Plane& self, const Plane& opponent );
-  void reset();
 
   void printState() const;
 
@@ -69,6 +70,8 @@ public:
   AiDataset() = default;
 
 
+  void push( const AiDatasetEntry& );
+
   void push(
     const std::vector <float>& inputs,
     const size_t output );
@@ -76,7 +79,7 @@ public:
   void merge( AiDataset& target );
 
   void shuffle();
-  void removeDuplicates( const float margin = 0.001f );
+  void removeDuplicates( const float margin = 0.0025f );
   void dropEveryNthEntry( const size_t n );
   void saveEveryNthEntry( const size_t n );
 
@@ -90,55 +93,61 @@ public:
 };
 
 
-struct AiData
+class AiInputFilter
 {
-  AiStateMonitor state {};
-
-  AiDataset roundDataset {};
-  AiDataset epochDataset {};
-
-  std::shared_ptr <AI_Backend> backend {};
-
-  size_t actionConstraint {};
+public:
+  AiInputFilter() = default;
+  virtual ~AiInputFilter() = default;
 
 
-  AiData() = default;
+  virtual AiDatasetEntry filterInput(
+    const std::vector <float>& inputs,
+    const Plane&,
+    AI_Backend& );
+
+  virtual void filterActions(
+    const Plane&,
+    std::vector <size_t>& ) const;
+
+  virtual void filterActions(
+    const Plane&,
+    std::vector <std::pair< size_t, float >>& ) const;
+};
+
+
+class AiTrainingPhase
+{
+protected:
+  AiInputFilter* mInputProcessor {};
+
+
+public:
+  AiTrainingPhase() = default;
+  virtual ~AiTrainingPhase();
+
+
+  void train( AI_Backend&, AiDataset& );
+
+  virtual void update();
+  virtual Controls getInput( const Plane& );
+
+  virtual void init();
+  virtual void initNewRound();
+
+  virtual void save() const;
+  virtual void load();
+
+
+  virtual bool hasRoundFinished() const;
+  virtual bool hasPhaseFinished() const;
+
+  virtual bool isReadyForTraining( const Plane& ) const;
 };
 
 
 class AiController
 {
-  std::map <PLANE_TYPE, AiData> mAiData
-  {
-    {PLANE_TYPE::BLUE, {}},
-    {PLANE_TYPE::RED, {}},
-  };
-
-  Timer mRoundDuration {5.0};
-  Timer mDeathCounter {1.0};
-
-  const static size_t mWinCountRequirement {3};
-  size_t mEpochsTrained {};
-
-
-  void train();
-  void newEpoch();
-  void restartRound();
-  void printEpochActionStats();
-
-  void raiseActionConstraint( AiData& );
-  void lowerActionConstraint( AiData& );
-  void resetActionConstraint( AiData& );
-  void randomizeActionConstraint( AiData& );
-
-  bool hasRoundFinished();
-  void evaluateWinner();
-  void processWinner( AiData& );
-
-  void filterValidActions( const Plane&, std::vector <size_t>& ) const;
-  void filterValidActions( const Plane&, std::vector <std::pair< size_t, float >>& ) const;
-  Controls actionToControls( const AiAction ) const;
-
+  AiTrainingPhase* mTrainingPhase {};
 
 public:
   AiController() = default;
