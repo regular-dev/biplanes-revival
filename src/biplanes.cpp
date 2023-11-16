@@ -454,10 +454,11 @@ game_loop_mp()
       if ( network.isOpponentConnected == true )
       {
         network.isOpponentConnected = false;
+        network.flowControl->Reset();
 
         if ( network.nodeType == SRV_CLI::SERVER )
         {
-          network.flowControl->Reset();
+          connection->Listen();
           menu.setMessage(MESSAGE_TYPE::CLIENT_DISCONNECTED);
           game_reset();
         }
@@ -493,16 +494,16 @@ game_loop_mp()
   {
     if (  network.connectionChanged == false &&
           network.isOpponentConnected == false )
-    {
       network.connectionChanged = true;
-      opponentData = {};
-    }
 
 //    drop JSON packets sent by MatchMaker p2p accept
     if ( packet[0] != '{' && packet[0] != '[' )
     {
-      memcpy( &opponentData, &packet, sizeof(opponentData) );
-      processOpponentData(opponentData);
+      if ( opponentData.disconnect == false )
+      {
+        memcpy( &opponentData, &packet, sizeof(opponentData) );
+        processOpponentData(opponentData);
+      }
     }
 //    TODO: remove these logs in release
     else
