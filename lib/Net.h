@@ -977,17 +977,23 @@ namespace net
     {
       const int header = 12;
       unsigned char packet[header+size];
+
       int received_bytes = Connection::ReceivePacket( packet, size + header );
+
       if ( received_bytes == 0 )
         return false;
+
       if ( received_bytes <= header )
         return false;
+
       unsigned int packet_sequence = 0;
       unsigned int packet_ack = 0;
       unsigned int packet_ack_bits = 0;
+
       ReadHeader( packet, packet_sequence, packet_ack, packet_ack_bits );
       reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
       reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
+
       memcpy( data, packet + header, received_bytes - header );
       return received_bytes - header;
     }

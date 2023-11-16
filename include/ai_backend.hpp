@@ -59,8 +59,8 @@ public:
 
   Label predictLabel(const EvalInput&) const;
   Label predictDistLabel(const EvalInput&, size_t constraint = 0); // not const cause of rand_engine
-  std::vector <size_t> predictDistLabels(const EvalInput&); // not const cause of rand_engine
-  std::vector <std::pair <size_t, float>> predictDistLabelsProb(const EvalInput&); // not const cause of rand_engine
+  std::vector <size_t> predictDistLabels(const EvalInput&) const;
+  std::vector <std::pair <size_t, float>> predictDistLabelsProb(const EvalInput&) const;
   Labels predictBatchLabels(const InputBatch&) const;
 
   bool saveModel(const std::string &path) const;

@@ -58,10 +58,10 @@ size_t AI_Backend::getIndexByProb(const std::vector< std::pair< size_t, float > 
 
 size_t AI_Backend::getRandomIndex(const std::vector< size_t >& labels, const size_t constraint)
 {
-  std::uniform_int_distribution<> dis(0,
-    constraint < labels.size()
-    ? constraint
-    : labels.size() - 1);
+    std::uniform_int_distribution<> dis(0,
+      constraint < labels.size()
+      ? constraint
+      : labels.size() - 1);
 
     return labels.at(dis(m_rand));
 }
@@ -141,7 +141,7 @@ AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t const
     return getIndexByProb(out_sorted);
 }
 
-std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in)
+std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in) const
 {
   const auto mdl_out = m_mdl->predict(in);
 
@@ -168,7 +168,7 @@ std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in)
   return result;
 }
 
-std::vector <std::pair< size_t, float >> AI_Backend::predictDistLabelsProb(const EvalInput &in)
+std::vector <std::pair< size_t, float >> AI_Backend::predictDistLabelsProb(const EvalInput &in) const
 {
   const auto mdl_out = m_mdl->predict(in);
 
