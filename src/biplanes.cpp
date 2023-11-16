@@ -480,6 +480,15 @@ game_loop_mp()
         game_reset();
       }
     }
+    else
+    {
+      if (  network.flowControl->IsConnectionStable() == false &&
+            menu.currentMessage() == MESSAGE_TYPE::NONE )
+        menu.setMessage(MESSAGE_TYPE::CONNECTION_UNSTABLE);
+
+      else if ( menu.currentMessage() == MESSAGE_TYPE::CONNECTION_UNSTABLE )
+        menu.setMessage(MESSAGE_TYPE::NONE);
+    }
   }
 
 

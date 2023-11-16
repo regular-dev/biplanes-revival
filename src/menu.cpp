@@ -131,6 +131,12 @@ Menu::currentRoom() const
   return mCurrentRoom;
 }
 
+MESSAGE_TYPE
+Menu::currentMessage() const
+{
+  return mCurrentMessage;
+}
+
 
 void
 Menu::DrawMenu()
@@ -429,6 +435,12 @@ Menu::DrawMenu()
     case MESSAGE_TYPE::CONNECTION_TIMED_OUT:
     {
       draw_text( "Connection timed out!", 0, 0 );
+      break;
+    }
+
+    case MESSAGE_TYPE::CONNECTION_UNSTABLE:
+    {
+      draw_text( "Connection is unstable...", 0, 0 );
       break;
     }
 

@@ -1148,9 +1148,9 @@ namespace net
             }
         }
 
-        float GetSendRate()
+        bool IsConnectionStable() const
         {
-            return mode == Good ? 30.0f : 10.0f;
+            return mode == Good;
         }
 
     private:

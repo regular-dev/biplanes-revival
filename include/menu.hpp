@@ -117,6 +117,7 @@ public:
   bool isDefiningKey() const;
 
   ROOMS currentRoom() const;
+  MESSAGE_TYPE currentMessage() const;
 };
 
 extern class Menu menu;
