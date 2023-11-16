@@ -33,28 +33,6 @@ Menu::UpdateControls()
 {
   auto& game = gameState();
 
-  if (  mCurrentRoom == ROOMS::GAME &&
-        game.gameMode == GAME_MODE::BOT_VS_BOT )
-  {
-    if ( isKeyPressed(SDL_SCANCODE_T) == true )
-    {
-      game.fastforwardGameLoop = true;
-      setVSync(false);
-    }
-    else if ( isKeyReleased(SDL_SCANCODE_T) == true )
-    {
-      game.fastforwardGameLoop = false;
-      setVSync(game.isVSyncEnabled);
-    }
-
-    if ( isKeyPressed(SDL_SCANCODE_R) == true )
-      game.disableRendering = true;
-
-    else if ( isKeyReleased(SDL_SCANCODE_R) == true )
-      game.disableRendering = false;
-  }
-
-
   if ( mCurrentRoom == ROOMS::GAME )
   {
     if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
@@ -67,10 +45,32 @@ Menu::UpdateControls()
         game.fastforwardGameLoop = false;
         setVSync(game.isVSyncEnabled);
       }
+
+      return;
     }
 
-    if (  game.gameMode == GAME_MODE::BOT_VS_BOT )
+
+    if ( game.gameMode == GAME_MODE::BOT_VS_BOT )
     {
+      if ( isKeyPressed(SDL_SCANCODE_T) == true )
+      {
+        game.fastforwardGameLoop = true;
+        setVSync(false);
+      }
+      else if ( isKeyReleased(SDL_SCANCODE_T) == true )
+      {
+        game.fastforwardGameLoop = false;
+        setVSync(game.isVSyncEnabled);
+      }
+
+
+      if ( isKeyPressed(SDL_SCANCODE_R) == true )
+        game.disableRendering = true;
+
+      else if ( isKeyReleased(SDL_SCANCODE_R) == true )
+        game.disableRendering = false;
+
+
       if ( isKeyPressed(SDL_SCANCODE_S) == true )
         aiController.save();
 
