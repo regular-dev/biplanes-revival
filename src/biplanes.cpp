@@ -486,14 +486,17 @@ game_loop_mp()
 
 
 //  GET PACKET
-  Packet opponentData {};
+  static Packet opponentData {};
   uint8_t packet[sizeof(Packet)] {};
 
   while ( connection->ReceivePacket( packet, sizeof(packet) ) > 0 )
   {
     if (  network.connectionChanged == false &&
           network.isOpponentConnected == false )
+    {
       network.connectionChanged = true;
+      opponentData = {};
+    }
 
 //    drop JSON packets sent by MatchMaker p2p accept
     if ( packet[0] != '{' && packet[0] != '[' )
@@ -513,7 +516,7 @@ game_loop_mp()
   if ( opponentData.disconnect == true )
   {
     network.connectionChanged = true;
-    opponentData.disconnect = false;
+    opponentData = {};
   }
 
   for ( auto& cloud : clouds )
