@@ -37,6 +37,8 @@ static bool eventsTickFinished {true};
 static uint8_t eventCounterLocal {};
 static uint8_t eventCounterRemote {};
 
+static Packet opponentDataPrev {};
+
 static bool sentGameParams {};
 
 
@@ -119,6 +121,7 @@ eventsPack(
 void
 eventsReset()
 {
+  opponentDataPrev = {};
   eventCounterLocal = 0;
   eventCounterRemote = 0;
   eventsTickFinished = true;
@@ -138,8 +141,6 @@ void
 processOpponentData(
   const Packet& opponentData )
 {
-  static Packet opponentDataPrev {};
-
   PlaneNetworkData data
   {
     .dir = opponentData.dir,
