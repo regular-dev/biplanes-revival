@@ -505,21 +505,10 @@ game_loop_mp()
           network.isOpponentConnected == false )
       network.connectionChanged = true;
 
-//    drop JSON packets sent by MatchMaker p2p accept
-    if ( packet[0] != '{' && packet[0] != '[' )
-    {
-      if ( opponentData.disconnect == false )
-      {
-        memcpy( &opponentData, &packet, sizeof(opponentData) );
-        processOpponentData(opponentData);
-      }
-    }
-//    TODO: remove these logs in release
-    else
-    {
-      log_message("Discarding JSON packet: ");
-      log_message("'", (const char*) packet, "'");
-    }
+    memcpy( &opponentData, &packet, sizeof(opponentData) );
+
+    if ( opponentData.disconnect == false )
+      processOpponentData(opponentData);
   }
 
 
