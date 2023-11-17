@@ -506,10 +506,12 @@ game_loop_mp()
           network.isOpponentConnected == false )
       network.connectionChanged = true;
 
+    const auto opponentDataPrev = opponentData;
+
     memcpy( &opponentData, &packet, sizeof(opponentData) );
 
     if ( opponentData.disconnect == false )
-      processOpponentData(opponentData);
+      processOpponentData(opponentData, opponentDataPrev);
   }
 
 

@@ -31,7 +31,7 @@ void eventsPack( Packet& );
 void eventsReset();
 void eventsNewTick();
 
-void processOpponentData( const Packet& );
+void processOpponentData( const Packet&, const Packet& prev );
 void sendDisconnectMessage();
 
 Packet& operator << ( Packet&, const Controls& );
