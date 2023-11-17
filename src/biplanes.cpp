@@ -482,12 +482,13 @@ game_loop_mp()
     }
     else
     {
-      if (  network.flowControl->IsConnectionStable() == false &&
-            menu.currentMessage() == MESSAGE_TYPE::NONE )
+      if ( network.flowControl->IsConnectionStable() == true )
+      {
+        if ( menu.currentMessage() == MESSAGE_TYPE::CONNECTION_UNSTABLE )
+          menu.setMessage(MESSAGE_TYPE::NONE);
+      }
+      else if ( menu.currentMessage() == MESSAGE_TYPE::NONE )
         menu.setMessage(MESSAGE_TYPE::CONNECTION_UNSTABLE);
-
-      else if ( menu.currentMessage() == MESSAGE_TYPE::CONNECTION_UNSTABLE )
-        menu.setMessage(MESSAGE_TYPE::NONE);
     }
   }
 
