@@ -26,19 +26,19 @@
 #include <cstring>
 
 
-const SDL_Keycode DEFAULT_THROTTLE_UP   = SDLK_UP;
-const SDL_Keycode DEFAULT_THROTTLE_DOWN = SDLK_DOWN;
-const SDL_Keycode DEFAULT_TURN_LEFT     = SDLK_LEFT;
-const SDL_Keycode DEFAULT_TURN_RIGHT    = SDLK_RIGHT;
-const SDL_Keycode DEFAULT_FIRE          = SDLK_SPACE;
-const SDL_Keycode DEFAULT_JUMP          = SDLK_LCTRL;
+const SDL_Scancode DEFAULT_THROTTLE_UP   = SDL_SCANCODE_UP;
+const SDL_Scancode DEFAULT_THROTTLE_DOWN = SDL_SCANCODE_DOWN;
+const SDL_Scancode DEFAULT_TURN_LEFT     = SDL_SCANCODE_LEFT;
+const SDL_Scancode DEFAULT_TURN_RIGHT    = SDL_SCANCODE_RIGHT;
+const SDL_Scancode DEFAULT_FIRE          = SDL_SCANCODE_SPACE;
+const SDL_Scancode DEFAULT_JUMP          = SDL_SCANCODE_LCTRL;
 
-SDL_Keycode THROTTLE_UP   = SDLK_UP;
-SDL_Keycode THROTTLE_DOWN = SDLK_DOWN;
-SDL_Keycode TURN_LEFT     = SDLK_LEFT;
-SDL_Keycode TURN_RIGHT    = SDLK_RIGHT;
-SDL_Keycode FIRE          = SDLK_SPACE;
-SDL_Keycode JUMP          = SDLK_LCTRL;
+SDL_Scancode THROTTLE_UP   = DEFAULT_THROTTLE_UP;
+SDL_Scancode THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
+SDL_Scancode TURN_LEFT     = DEFAULT_TURN_LEFT;
+SDL_Scancode TURN_RIGHT    = DEFAULT_TURN_RIGHT;
+SDL_Scancode FIRE          = DEFAULT_FIRE;
+SDL_Scancode JUMP          = DEFAULT_JUMP;
 
 
 struct
@@ -91,8 +91,8 @@ isKeyReleased(
 
 void
 assignKeyBinding(
-  SDL_Keycode& targetBinding,
-  const SDL_Keycode newBinding )
+  SDL_Scancode& targetBinding,
+  const SDL_Scancode newBinding )
 {
   if ( newBinding == THROTTLE_UP )
     THROTTLE_UP = targetBinding;
@@ -121,24 +121,24 @@ getLocalControls()
 {
   Controls controls {};
 
-  if (  isKeyDown(SDL_GetScancodeFromKey(THROTTLE_UP)) == true &&
-        isKeyDown(SDL_GetScancodeFromKey(THROTTLE_DOWN)) == false )
+  if (  isKeyDown(THROTTLE_UP) == true &&
+        isKeyDown(THROTTLE_DOWN) == false )
     controls.throttle = PLANE_THROTTLE::THROTTLE_INCREASE;
 
-  else if ( isKeyDown(SDL_GetScancodeFromKey(THROTTLE_DOWN)) == true &&
-            isKeyDown(SDL_GetScancodeFromKey(THROTTLE_UP)) == false )
+  else if ( isKeyDown(THROTTLE_DOWN) == true &&
+            isKeyDown(THROTTLE_UP) == false )
     controls.throttle = PLANE_THROTTLE::THROTTLE_DECREASE;
 
   else
     controls.throttle = PLANE_THROTTLE::THROTTLE_IDLE;
 
 
-  if (  isKeyDown(SDL_GetScancodeFromKey(TURN_LEFT)) == true &&
-        isKeyDown(SDL_GetScancodeFromKey(TURN_RIGHT)) == false )
+  if (  isKeyDown(TURN_LEFT) == true &&
+        isKeyDown(TURN_RIGHT) == false )
     controls.pitch = PLANE_PITCH::PITCH_LEFT;
 
-  else if ( isKeyDown(SDL_GetScancodeFromKey(TURN_RIGHT)) == true &&
-            isKeyDown(SDL_GetScancodeFromKey(TURN_LEFT)) == false )
+  else if ( isKeyDown(TURN_RIGHT) == true &&
+            isKeyDown(TURN_LEFT) == false )
     controls.pitch = PLANE_PITCH::PITCH_RIGHT;
 
   else
@@ -146,14 +146,14 @@ getLocalControls()
 
 
 //  SHOOT
-  if ( isKeyDown(SDL_GetScancodeFromKey(FIRE)) == true )
+  if ( isKeyDown(FIRE) == true )
     controls.shoot = true;
   else
     controls.shoot = false;
 
 
 //  EJECT
-  if ( isKeyDown(SDL_GetScancodeFromKey(JUMP)) == true )
+  if ( isKeyDown(JUMP) == true )
     controls.jump = true;
   else
     controls.jump = false;

@@ -85,7 +85,7 @@ Menu::UpdateControls()
     UpdateTyping();
 
   else if ( mIsDefiningKey == true )
-    UpdateDefiningKey();
+    return UpdateDefiningKey();
 
   else
   {
@@ -102,9 +102,6 @@ Menu::UpdateControls()
 
     else if ( isKeyPressed(SDL_SCANCODE_DELETE) == true )
       ResetKey();
-
-    else if ( isKeyPressed(SDL_SCANCODE_SPACE) == true )
-      GoBack();
 
     else if ( isKeyPressed(SDL_SCANCODE_F1) == true &&
               mCurrentRoom == ROOMS::MENU_MAIN )
@@ -367,7 +364,7 @@ Menu::UpdateTyping()
 
 void
 Menu::ToggleDefiningKey(
-  const MENU_SETTINGS_CONTROLS action_to_define )
+  const MENU_SETTINGS_CONTROLS actionToDefine )
 {
   if ( mIsDefiningKey == true )
   {
@@ -376,7 +373,7 @@ Menu::ToggleDefiningKey(
   }
 
   mIsDefiningKey = true;
-  mKeyToDefine = action_to_define;
+  mKeyToDefine = actionToDefine;
 }
 
 void
@@ -389,9 +386,10 @@ Menu::UpdateDefiningKey()
     return;
   }
 
-  if ( windowEvent.type == SDL_KEYDOWN )
+  if (  windowEvent.type == SDL_KEYDOWN &&
+        windowEvent.key.repeat == 0 )
   {
-    const auto newKey = windowEvent.key.keysym.sym;
+    const auto newKey = windowEvent.key.keysym.scancode;
 
     switch (mKeyToDefine)
     {
@@ -453,37 +451,37 @@ Menu::ResetKey()
   {
     case MENU_SETTINGS_CONTROLS::ACCELERATE:
     {
-      THROTTLE_UP = DEFAULT_THROTTLE_UP;
+      assignKeyBinding(THROTTLE_UP, DEFAULT_THROTTLE_UP);
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::DECELERATE:
     {
-      THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
+      assignKeyBinding(THROTTLE_DOWN, DEFAULT_THROTTLE_DOWN);
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::LEFT:
     {
-      TURN_LEFT = DEFAULT_TURN_LEFT;
+      assignKeyBinding(TURN_LEFT, DEFAULT_TURN_LEFT);
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::RIGHT:
     {
-      TURN_RIGHT = DEFAULT_TURN_RIGHT;
+      assignKeyBinding(TURN_RIGHT, DEFAULT_TURN_RIGHT);
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::SHOOT:
     {
-      FIRE = DEFAULT_FIRE;
+      assignKeyBinding(FIRE, DEFAULT_FIRE);
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::EJECT:
     {
-      JUMP = DEFAULT_JUMP;
+      assignKeyBinding(JUMP, DEFAULT_JUMP);
       break;
     }
 

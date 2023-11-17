@@ -23,7 +23,7 @@
 #include <include/fwd.hpp>
 #include <include/enums.hpp>
 
-#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 
 
 struct Controls
@@ -48,20 +48,20 @@ Controls getLocalControls();
 void processPlaneControls( Plane&, const Controls& );
 
 void assignKeyBinding(
-  SDL_Keycode& targetBinding,
-  const SDL_Keycode newBinding );
+  SDL_Scancode& targetBinding,
+  const SDL_Scancode newBinding );
 
 
-extern const SDL_Keycode DEFAULT_THROTTLE_UP;
-extern const SDL_Keycode DEFAULT_THROTTLE_DOWN;
-extern const SDL_Keycode DEFAULT_TURN_LEFT;
-extern const SDL_Keycode DEFAULT_TURN_RIGHT;
-extern const SDL_Keycode DEFAULT_FIRE;
-extern const SDL_Keycode DEFAULT_JUMP;
+extern const SDL_Scancode DEFAULT_THROTTLE_UP;
+extern const SDL_Scancode DEFAULT_THROTTLE_DOWN;
+extern const SDL_Scancode DEFAULT_TURN_LEFT;
+extern const SDL_Scancode DEFAULT_TURN_RIGHT;
+extern const SDL_Scancode DEFAULT_FIRE;
+extern const SDL_Scancode DEFAULT_JUMP;
 
-extern SDL_Keycode THROTTLE_UP;
-extern SDL_Keycode THROTTLE_DOWN;
-extern SDL_Keycode TURN_LEFT;
-extern SDL_Keycode TURN_RIGHT;
-extern SDL_Keycode FIRE;
-extern SDL_Keycode JUMP;
+extern SDL_Scancode THROTTLE_UP;
+extern SDL_Scancode THROTTLE_DOWN;
+extern SDL_Scancode TURN_LEFT;
+extern SDL_Scancode TURN_RIGHT;
+extern SDL_Scancode FIRE;
+extern SDL_Scancode JUMP;

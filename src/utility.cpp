@@ -176,23 +176,42 @@ settingsParse(
   {
     auto& jsonControls = jsonValue["Controls"].get <picojson::object> ();
 
-    try { FIRE = jsonControls.at( "FIRE" ).get <double> (); }
+    try { FIRE = (SDL_Scancode) jsonControls.at( "FIRE" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { JUMP = jsonControls.at( "JUMP" ).get <double> (); }
+    try { JUMP = (SDL_Scancode) jsonControls.at( "JUMP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_DOWN = jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
+    try { THROTTLE_DOWN = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_UP = jsonControls.at( "THROTTLE_UP" ).get <double> (); }
+    try { THROTTLE_UP = (SDL_Scancode) jsonControls.at( "THROTTLE_UP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_LEFT = jsonControls.at( "TURN_LEFT" ).get <double> (); }
+    try { TURN_LEFT = (SDL_Scancode) jsonControls.at( "TURN_LEFT" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_RIGHT = jsonControls.at( "TURN_RIGHT" ).get <double> (); }
+    try { TURN_RIGHT = (SDL_Scancode) jsonControls.at( "TURN_RIGHT" ).get <double> (); }
     catch ( const std::exception& ) {};
+
+
+    if ( FIRE >= SDL_NUM_SCANCODES )
+      FIRE = DEFAULT_FIRE;
+
+    if ( JUMP >= SDL_NUM_SCANCODES )
+      JUMP = DEFAULT_JUMP;
+
+    if ( THROTTLE_DOWN >= SDL_NUM_SCANCODES )
+      THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
+
+    if ( THROTTLE_UP >= SDL_NUM_SCANCODES )
+      THROTTLE_UP = DEFAULT_THROTTLE_UP;
+
+    if ( TURN_LEFT >= SDL_NUM_SCANCODES )
+      TURN_LEFT = DEFAULT_TURN_LEFT;
+
+    if ( TURN_RIGHT >= SDL_NUM_SCANCODES )
+      TURN_RIGHT = DEFAULT_TURN_RIGHT;
   }
   catch ( const std::exception& ) {};
 

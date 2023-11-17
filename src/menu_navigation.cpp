@@ -411,6 +411,7 @@ Menu::Select()
 
       break;
     }
+
     case ROOMS::MENU_MP_DC_JOIN:
     {
       switch (mSelectedItem)
@@ -517,6 +518,7 @@ Menu::Select()
 
       break;
     }
+
     case ROOMS::MENU_PAUSE:
     {
       switch (mSelectedItem)

@@ -766,17 +766,17 @@ Menu::screen_settings()
 
   draw_text( "Controls            ",        0.250f, 0.2855f );
   draw_text( "Accelerate          ",        0.025f, 0.2855f + 0.0721f );
-  draw_text( SDL_GetKeyName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
+  draw_text( SDL_GetScancodeName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
   draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( SDL_GetKeyName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( SDL_GetScancodeName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Turn Anti-Clockwise ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( SDL_GetKeyName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( SDL_GetScancodeName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Turn Clockwise      ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 3.f );
-  draw_text( SDL_GetKeyName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( SDL_GetScancodeName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Fire                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 4.f );
-  draw_text( SDL_GetKeyName(FIRE),          0.700f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( SDL_GetScancodeName(FIRE),          0.700f, 0.2855f + 0.0721f + button::sizeY * 4.f );
   draw_text( "Eject               ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 5.f );
-  draw_text( SDL_GetKeyName(JUMP),          0.700f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+  draw_text( SDL_GetScancodeName(JUMP),          0.700f, 0.2855f + 0.0721f + button::sizeY * 5.f );
   draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 6.f );
 
   if ( menu.isDefiningKey() == true )
