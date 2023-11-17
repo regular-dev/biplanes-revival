@@ -70,6 +70,7 @@ sendDisconnectMessage()
 {
   Packet localData {};
   localData.disconnect = true;
+  eventsPack(localData);
 
   uint8_t packet[sizeof(Packet)];
   memcpy( packet, &localData, sizeof(packet) );
@@ -171,16 +172,16 @@ processOpponentData(
 
   if ( eventsChanged == true )
   {
-    bool eventNewIteration = true;
+    bool foundNewEventIndex {};
 
     for ( uint8_t i = 0;
           i < sizeof(opponentData.events);
           ++i )
     {
-      if ( eventNewIteration == true )
+      if ( foundNewEventIndex == false )
       {
         if ( opponentData.events[i] == eventCounterRemote )
-          eventNewIteration = false;
+          foundNewEventIndex = true;
 
         continue;
       }
@@ -285,29 +286,29 @@ processOpponentData(
       }
     }
 
-    if ( eventNewIteration == false )
+    if ( foundNewEventIndex == true )
     {
-      const auto& events = opponentData.events;
-
-      std::string str {events, events + sizeof(events)};
-
-      for ( size_t i = 0; i < str.size(); ++i )
-      {
-        if ( str[i] >= 'A' )
-          continue;
-
-        const auto eventId = std::to_string(str[i]);
-
-        str.erase(i, 1);
-        str.insert(i, eventId);
-        i += eventId.size() - 1;
-      }
-
-      log_message("events: '", str, "'\n");
+      if ( ++eventCounterRemote >= 64 )
+        eventCounterRemote = 0;
     }
+    else
+    {
+      const std::string eventBufferStr
+      {
+        opponentData.events,
+        opponentData.events + sizeof(Packet::events)
+      };
 
-    if ( ++eventCounterRemote >= 64 )
-      eventCounterRemote = 0;
+      const std::string emptyEventBufferStr
+        { sizeof(Packet::events), 'n' };
+
+      if ( eventBufferStr != emptyEventBufferStr )
+      {
+        log_message("NETWORK: Events desynchronization detected!\n");
+        log_message("NETWORK: Expected opponent event index " + std::to_string(eventCounterRemote) + "\n");
+        log_message("NETWORK: Opponent event buffer: '" + eventBufferStr + "'\n");
+      }
+    }
   }
 
   opponentDataPrev = opponentData;

@@ -978,12 +978,7 @@ namespace net
       const int header = 12;
       unsigned char packet[header+size];
 
-      const bool wasConnected = IsConnected();
-
       int received_bytes = Connection::ReceivePacket( packet, size + header );
-
-      if ( IsConnected() != wasConnected )
-        ClearData();
 
       if ( received_bytes == 0 )
         return 0;
