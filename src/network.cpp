@@ -297,8 +297,8 @@ processOpponentData(
         opponentData.events + sizeof(Packet::events)
       };
 
-      const std::string emptyEventBufferStr
-        { sizeof(Packet::events), 'n' };
+      const std::string emptyEventBufferStr(
+        sizeof(Packet::events), 'n' );
 
       if ( eventBufferStr != emptyEventBufferStr )
       {
