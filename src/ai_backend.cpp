@@ -107,9 +107,23 @@ void AI_Backend::train(const InputBatch &data, const InputBatch &lbls, size_t ba
       m_mdl->fit< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
 }
 
+void AI_Backend::train(const InputBatch& states, const EvalInput& rewards, size_t batch, size_t epochs)
+{
+}
+
 float AI_Backend::getLoss(const InputBatch& data, const InputBatch& lbls) const
 {
     return m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls) / data.size();
+}
+
+float AI_Backend::getLoss(const InputBatch& states, const EvalInput& rewards) const
+{
+  return 1.0f;
+}
+
+float AI_Backend::predictReward(const EvalInput& ) const
+{
+  return 0.0f;
 }
 
 AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t constraint)
