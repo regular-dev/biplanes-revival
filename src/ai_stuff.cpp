@@ -92,57 +92,153 @@ aiActionToControls(
 }
 
 
-void
-AiStateMonitor::update(
-  const Plane& self,
-  const Plane& opponent )
+float
+calcReward(
+  const std::vector <float>& inputs,
+  const AiAction output )
 {
-  if ( self.isDead() == true )
-    return;
+  namespace PlaneIndices = AiDatasetPlaneIndices;
 
-  ++lifeTime;
+  const auto selfIndex = AiDatasetIndices::SelfState;
 
-  if ( self.hasJumped() == true )
+  const bool canAccelerate =
+    inputs.at(selfIndex + PlaneIndices::CanAccelerate) > 0.5f;
+
+  const bool canDecelerate =
+    inputs.at(selfIndex + PlaneIndices::CanDecelerate) > 0.5f;
+
+  const bool canTurn =
+    inputs.at(selfIndex + PlaneIndices::CanTurn) > 0.5f;
+
+  const bool canShoot =
+    inputs.at(selfIndex + PlaneIndices::CanShoot) > 0.5f;
+
+  const bool canJump =
+    inputs.at(selfIndex + PlaneIndices::CanJump) > 0.5f;
+
+
+  const bool isOnGround =
+    inputs.at(selfIndex + PlaneIndices::IsOnGround) > 0.5f;
+
+
+  switch (output)
   {
-    ++ejectedTime;
-    return;
+    case AiAction::Idle:
+    {
+      if ( isOnGround == true )
+        return 0.0f;
+
+      break;
+    }
+
+    case AiAction::Accelerate:
+    {
+      if ( canAccelerate == false )
+        return 0.0f;
+
+      break;
+    }
+
+    case AiAction::Decelerate:
+    {
+      if ( canDecelerate == false )
+        return 0.0f;
+
+      break;
+    }
+
+    case AiAction::TurnLeft:
+    case AiAction::TurnRight:
+    {
+      if ( canTurn == false )
+        return 0.0f;
+
+      break;
+    }
+
+    case AiAction::Shoot:
+    {
+      if ( canShoot == false )
+        return 0.0f;
+
+      break;
+    }
+
+    case AiAction::Jump:
+    {
+      if ( canJump == false )
+        return 0.0f;
+
+      break;
+    }
+
+    default:
+      break;
   }
 
-  if ( self.isAirborne() == true )
+  return 1.0f;
+}
+
+std::vector <float>
+calcRewards(
+  const std::vector <float>& inputs,
+  const std::vector <AiAction>& actions )
+{
+  std::vector <float> rewards {};
+
+  for ( size_t action = 0;
+        action < static_cast <size_t> (AiAction::ActionCount);
+        ++action )
   {
-    ++airborneTime;
+    const auto reward = calcReward(
+      inputs, static_cast <AiAction> (action) );
 
-//    y is inverted
-    maxHeight = std::max(maxHeight, 1.0f - self.y());
+    rewards.push_back(reward);
   }
+
+  return rewards;
 }
 
-void
-AiStateMonitor::printState() const
+std::vector <AiRewardedAction>
+predictActionRewards(
+  const std::vector <float>& inputs,
+  const AI_Backend& backend )
 {
-  log_message("lifeTime: : " + std::to_string(lifeTime) + "\n");
-  log_message("takeoffTime: : " + std::to_string(takeoffTime()) + "\n");
-  log_message("airborneTime: : " + std::to_string(airborneTime) + "\n");
-  log_message("airborneScore: : " + std::to_string(airborneScore()) + "\n");
-  log_message("ejectedTime: : " + std::to_string(ejectedTime) + "\n");
-  log_message("max height: " + std::to_string(maxHeight) + "\n");
+  std::vector <AiRewardedAction> rewards {};
+
+  AiDatasetEntry stateEntry {inputs};
+
+  for ( size_t action = 0;
+        action < static_cast <size_t> (AiAction::ActionCount);
+        ++action )
+  {
+    stateEntry.action = static_cast <AiAction> (action);
+
+    const auto state = stateEntry.merge();
+
+    const auto reward = backend.predictReward(
+      {state.begin(), state.end()} );
+
+    rewards.push_back({stateEntry.action, reward});
+  }
+
+  return rewards;
 }
 
-int64_t
-AiStateMonitor::takeoffTime() const
+
+std::vector <float>
+AiDatasetEntry::merge() const
 {
-  return lifeTime - airborneTime;
-}
+  auto state = inputs;
 
-int64_t
-AiStateMonitor::airborneScore() const
-{
-  const int64_t takeoffTime = lifeTime - airborneTime;
+  const auto stateSize =
+    inputs.size() + static_cast <size_t> (AiAction::ActionCount);
 
-  if ( takeoffTime > 0.5 * constants::tickRate )
-    return -1;
+  state.resize(stateSize);
 
-  return airborneTime - takeoffTime;
+  state[inputs.size() + static_cast <size_t> (action)] = 1.0f;
+
+  return state;
 }
 
 
@@ -156,9 +252,9 @@ AiDataset::push(
 void
 AiDataset::push(
   const std::vector <float>& inputs,
-  const size_t output )
+  const AiAction action )
 {
-  mData.push_back({inputs, output});
+  mData.push_back({inputs, action});
 }
 
 void
@@ -276,47 +372,54 @@ AiDataset::size() const
   return mData.size();
 }
 
-AI_Backend::InputBatch
-AiDataset::toBatch() const
+AiRewardDataset
+AiDataset::toRewardDataset() const
 {
-  AI_Backend::InputBatch batch {};
-  batch.reserve(mData.size());
+  if ( mData.size() < 2 )
+    return {};
 
-  for ( const auto& state : mData )
-    batch.push_back(
-      {state.inputs.begin(), state.inputs.end()} );
 
-  return batch;
-}
+  const float discountFactor = 1.0f;
 
-AI_Backend::InputBatch
-AiDataset::toOneHotLabels() const
-{
-  AI_Backend::InputBatch labels {};
-  labels.reserve(mData.size());
+  AiRewardDataset result {};
 
-  for ( const auto& state : mData )
+  for ( size_t i = 0; i < mData.size() - 1; ++i )
   {
-    AI_Backend::EvalInput labelsVector (
-      static_cast <size_t> (AiAction::ActionCount));
+    auto& currentEntry = mData[i];
+    auto& nextEntry = mData[i + 1];
 
-    labelsVector[state.output] = 1.0f;
-    labels.push_back(labelsVector);
+    const AI_Backend::EvalInput state
+    {
+      currentEntry.inputs.begin(),
+      currentEntry.inputs.end()
+    };
+
+    const std::vector <AiAction> actions
+    {
+      AiAction::Idle,
+      AiAction::Accelerate,
+      AiAction::Decelerate,
+      AiAction::TurnLeft,
+      AiAction::TurnRight,
+      AiAction::Shoot,
+      AiAction::Jump,
+    };
+
+    const auto rewards = calcRewards(
+      nextEntry.inputs, actions );
+
+    const auto maxReward = *std::max_element(
+      rewards.begin(), rewards.end() );
+
+    const auto reward =
+      calcReward(currentEntry.inputs, currentEntry.action) +
+      discountFactor * maxReward;
+
+    result.states.push_back(state);
+    result.rewards.push_back(reward);
   }
 
-  return labels;
-}
-
-AI_Backend::Labels
-AiDataset::toLabels() const
-{
-  AI_Backend::Labels labels {};
-  labels.reserve(mData.size());
-
-  for ( const auto& state : mData )
-    labels.push_back(state.output);
-
-  return labels;
+  return result;
 }
 
 void
@@ -325,7 +428,7 @@ AiDataset::printActionStats() const
   std::map <AiAction, size_t> actionStatsMap {};
 
   for ( const auto& entry : mData )
-    actionStatsMap[static_cast <AiAction> (entry.output)]++;
+    actionStatsMap[entry.action]++;
 
 
   std::vector <std::pair <AiAction, size_t>> actionStats {};
@@ -421,12 +524,14 @@ AiTrainingPhase::train(
   const size_t batchSize {4};
   const float minLoss {0.01f};
 
-  const auto inputs = dataset.toBatch();
-  const auto labels = dataset.toOneHotLabels();
+  const auto rewardDataset = dataset.toRewardDataset();
 
   size_t epochs = backend.getTrainedEpochsCount();
 
-  float currentLoss = backend.getLoss(inputs, labels);
+  float currentLoss = backend.getLoss(
+    rewardDataset.states,
+    rewardDataset.rewards );
+
   float prevLoss {};
 
 
@@ -437,10 +542,13 @@ AiTrainingPhase::train(
     prevLoss = currentLoss;
 
     backend.train(
-      inputs, labels,
+      rewardDataset.states,
+      rewardDataset.rewards,
       batchSize, 1 );
 
-    currentLoss = backend.getLoss(inputs, labels);
+    currentLoss = backend.getLoss(
+      rewardDataset.states,
+      rewardDataset.rewards );
   }
   while ( currentLoss < prevLoss && currentLoss > minLoss );
 
@@ -524,25 +632,28 @@ AiInputFilter::filterInput(
     }
 #endif
 
-//  const auto output = data.backend->predictDistLabel(
-//    {inputs.begin(), inputs.end()},
-//    data.actionConstraint );
 
-//  auto outputs = data.backend->predictDistLabels(
-//    {inputs.begin(), inputs.end()} );
+  auto rewards = predictActionRewards(
+    inputs, backend );
 
-//  const auto output = data.backend->getRandomIndex(
-//    outputs,
-//    data.actionConstraint );
+  std::sort( rewards.begin(), rewards.end(),
+  [] ( const AiRewardedAction& lhs, const AiRewardedAction& rhs )
+  {
+    return lhs.reward > rhs.reward;
+  });
 
-  auto outputs = backend.predictDistLabelsProb(
-    {inputs.begin(), inputs.end()} );
+  std::vector <size_t> outputs {};
+
+  for ( const auto& rewardedAction : rewards )
+    outputs.push_back(
+      static_cast <size_t> (rewardedAction.action) );
 
   filterActions(plane, outputs);
 
-  const auto output = backend.getIndexByProb(outputs);
+  const auto action =
+    static_cast <AiAction> (outputs.front());
 
-  return {inputs, output};
+  return {inputs, action};
 }
 
 void
@@ -630,22 +741,15 @@ AiInputFilter::filterActions(
 }
 
 
-class TakeoffTrainingPhase : public AiTrainingPhase
+class QLearningPhase : public AiTrainingPhase
 {
-  struct RoundData
-  {
-    AiStateMonitor state {};
-    AiDataset dataset {};
-  };
-
-
   std::map <PLANE_TYPE, std::shared_ptr <AI_Backend>> mBackends
   {
     {PLANE_TYPE::BLUE, std::make_shared <AI_Backend> ()},
     {PLANE_TYPE::RED, std::make_shared <AI_Backend> ()},
   };
 
-  std::map <PLANE_TYPE, std::vector <RoundData>> mRoundData
+  std::map <PLANE_TYPE, AiDataset> mData
   {
     {PLANE_TYPE::BLUE, {}},
     {PLANE_TYPE::RED, {}},
@@ -655,7 +759,7 @@ class TakeoffTrainingPhase : public AiTrainingPhase
 
 
 public:
-  TakeoffTrainingPhase() = default;
+  QLearningPhase() = default;
 
   void update() override;
   Controls getInput( const Plane& ) override;
@@ -673,22 +777,13 @@ public:
 };
 
 void
-TakeoffTrainingPhase::update()
+QLearningPhase::update()
 {
   mRoundTimeout.Update();
 
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
-
-  auto& roundDataBlue = mRoundData[planeBlue.type()];
-  auto& roundDataRed = mRoundData[planeRed.type()];
-
-  roundDataBlue.back().state.update(
-    planeBlue, planeRed );
-
-  roundDataRed.back().state.update(
-    planeRed, planeBlue );
 
 
   if ( hasRoundFinished() == false )
@@ -697,50 +792,21 @@ TakeoffTrainingPhase::update()
 
   for ( const auto& [planeType, plane] : planes )
   {
-    auto& data = mRoundData[planeType];
-
-    std::sort( data.begin(), data.end(),
-    [] ( const RoundData& lhs, const RoundData& rhs )
-    {
-      return lhs.state.takeoffTime() > rhs.state.takeoffTime();
-    });
-
-//    const auto newEnd = std::unique( data.begin(), data.end(),
-//    [] ( const RoundData& lhs, const RoundData& rhs )
-//    {
-//      return lhs.state.takeoffTime() == rhs.state.takeoffTime();
-//    });
-
-//    data.resize(std::distance(data.begin(), newEnd));
-
-    if ( plane.isDead() == false && plane.isAirborne() == false )
-    {
-      log_message("Plane " + std::to_string(planeType) + " takes off too slow\n");
-      mBackends.at(planeType)->initNet();
-      data.clear();
-
-      continue;
-    }
-
-    log_message("Plane " + std::to_string(planeType) + " state:\n");
-    data.back().state.printState();
-
-    log_message("\n");
+    auto& dataset = mData[planeType];
 
     if ( isReadyForTraining(plane) == false )
       continue;
 
 
     log_message("Plane " + std::to_string(planeType) + " action stats:\n");
-    data.back().dataset.printActionStats();
+    dataset.printActionStats();
 
     log_message("\n");
 
     log_message("Training plane " + std::to_string(planeType) + "\n");
-    train( *mBackends.at(planeType), data.back().dataset );
+    train( *mBackends.at(planeType), dataset );
 
-    data.front() = data.back();
-    data.resize(1);
+    dataset = {};
 
     log_message("\n");
   }
@@ -749,7 +815,7 @@ TakeoffTrainingPhase::update()
 }
 
 Controls
-TakeoffTrainingPhase::getInput(
+QLearningPhase::getInput(
   const Plane& plane )
 {
   const auto datasetEntry = mInputProcessor->filterInput(
@@ -757,17 +823,13 @@ TakeoffTrainingPhase::getInput(
     plane,
     *mBackends.at(plane.type()) );
 
-  if ( plane.isAirborne() == false )
-    mRoundData[plane.type()].back().dataset.push(datasetEntry);
+  mData[plane.type()].push(datasetEntry);
 
-  const auto action =
-    static_cast <AiAction> (datasetEntry.output);
-
-  return aiActionToControls(action);
+  return aiActionToControls(datasetEntry.action);
 }
 
 void
-TakeoffTrainingPhase::init()
+QLearningPhase::init()
 {
   if ( mInputProcessor == nullptr )
     mInputProcessor = new AiInputFilter();
@@ -775,25 +837,24 @@ TakeoffTrainingPhase::init()
   for ( auto& [planeType, backend] : mBackends )
     backend->initNet();
 
-  for ( auto& [planeType, data] : mRoundData )
-    data.clear();
+  for ( auto& [planeType, data] : mData )
+    data = {};
 
   initNewRound();
 }
 
 void
-TakeoffTrainingPhase::initNewRound()
+QLearningPhase::initNewRound()
 {
   mRoundTimeout.Start();
 
-  for ( auto& [planeType, data] : mRoundData )
-    data.push_back({});
+//  TODO: reset dataset
 
   game_reset();
 }
 
 void
-TakeoffTrainingPhase::save() const
+QLearningPhase::save() const
 {
   auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
   auto& redBackend = mBackends.at(PLANE_TYPE::RED);
@@ -806,7 +867,7 @@ TakeoffTrainingPhase::save() const
 }
 
 void
-TakeoffTrainingPhase::load()
+QLearningPhase::load()
 {
   init();
 
@@ -829,235 +890,21 @@ TakeoffTrainingPhase::load()
 }
 
 bool
-TakeoffTrainingPhase::hasRoundFinished() const
+QLearningPhase::hasRoundFinished() const
 {
   return mRoundTimeout.isReady();
 }
 
 bool
-TakeoffTrainingPhase::hasPhaseFinished() const
-{
-//  TODO: test plane takeoff time
-  return false;
-}
-
-bool
-TakeoffTrainingPhase::isReadyForTraining(
-  const Plane& plane ) const
-{
-  auto& data = mRoundData.at(plane.type());
-
-  size_t records {};
-  size_t takeoffTimePrev {};
-
-  for ( const auto& round : data )
-  {
-    const auto takeoffTimeNew = round.state.takeoffTime();
-    records += takeoffTimeNew < takeoffTimePrev;
-
-    log_message("takeoffTimePrev " + std::to_string(takeoffTimePrev) + " ");
-    log_message("takeoffTimeNew " + std::to_string(takeoffTimeNew) + "\n");
-
-    takeoffTimePrev = takeoffTimeNew;
-  }
-
-  log_message("\n");
-
-  return data.size() >= 10 || records > 3;
-}
-
-
-class FlyingTrainingPhase : public AiTrainingPhase
-{
-  struct RoundData
-  {
-    AiStateMonitor state {};
-    AiDataset dataset {};
-  };
-
-
-  std::map <PLANE_TYPE, std::shared_ptr <AI_Backend>> mBackends
-  {
-    {PLANE_TYPE::BLUE, std::make_shared <AI_Backend> ()},
-    {PLANE_TYPE::RED, std::make_shared <AI_Backend> ()},
-  };
-
-  std::map <PLANE_TYPE, std::vector <RoundData>> mRoundData
-  {
-    {PLANE_TYPE::BLUE, {}},
-    {PLANE_TYPE::RED, {}},
-  };
-
-  Timer mRoundTimeout {1.0};
-
-
-public:
-  FlyingTrainingPhase() = default;
-
-  void update() override;
-  Controls getInput( const Plane& ) override;
-
-  void init() override;
-  void initNewRound() override;
-
-  void save() const override;
-  void load() override;
-
-  bool hasRoundFinished() const override;
-  bool hasPhaseFinished() const override;
-
-  bool isReadyForTraining( const Plane& ) const override;
-};
-
-void
-FlyingTrainingPhase::update()
-{
-  mRoundTimeout.Update();
-
-  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
-  auto& planeRed = planes.at(PLANE_TYPE::RED);
-
-  auto& roundDataBlue = mRoundData[planeBlue.type()];
-  auto& roundDataRed = mRoundData[planeRed.type()];
-
-  roundDataBlue.back().state.update(
-    planeBlue, planeRed );
-
-  roundDataRed.back().state.update(
-    planeRed, planeBlue );
-
-
-  if ( hasRoundFinished() == false )
-    return;
-
-
-  for ( const auto& [planeType, plane] : planes )
-  {
-    auto& data = mRoundData[planeType];
-
-
-    if ( isReadyForTraining(plane) == false )
-      continue;
-
-
-    log_message("Plane " + std::to_string(planeType) + " action stats:\n");
-    data.back().dataset.printActionStats();
-
-    log_message("\n");
-
-    log_message("Training plane " + std::to_string(planeType) + "\n");
-    train( *mBackends.at(planeType), data.back().dataset );
-  }
-
-  initNewRound();
-}
-
-Controls
-FlyingTrainingPhase::getInput(
-  const Plane& plane )
-{
-  const auto datasetEntry = mInputProcessor->filterInput(
-    plane.aiState(),
-    plane,
-    *mBackends.at(plane.type()) );
-
-  mRoundData[plane.type()].back().dataset.push(datasetEntry);
-
-  const auto action =
-    static_cast <AiAction> (datasetEntry.output);
-
-  return aiActionToControls(action);
-}
-
-void
-FlyingTrainingPhase::init()
-{
-  if ( mInputProcessor == nullptr )
-    mInputProcessor = new AiInputFilter();
-
-  for ( auto& [planeType, backend] : mBackends )
-    backend->initNet();
-
-  for ( auto& [planeType, data] : mRoundData )
-    data.clear();
-
-  initNewRound();
-}
-
-void
-FlyingTrainingPhase::initNewRound()
-{
-  mRoundTimeout.Start();
-
-  for ( auto& [planeType, data] : mRoundData )
-  {
-    data.clear();
-    data.push_back({});
-  }
-
-  game_reset();
-}
-
-void
-FlyingTrainingPhase::save() const
-{
-  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
-  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
-
-  log_message("Saving blue AI model " + std::to_string(blueBackend->getWeights().size()) + "\n");
-  blueBackend->saveModel(AI_BLUE_PATH);
-
-  log_message("Saving red AI model " + std::to_string(redBackend->getWeights().size()) + "\n");
-  redBackend->saveModel(AI_RED_PATH);
-}
-
-void
-FlyingTrainingPhase::load()
-{
-  init();
-
-  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
-  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
-
-  log_message("Loading blue AI model\n");
-
-  if ( blueBackend->loadModel(AI_BLUE_PATH) == false )
-    log_message("ERROR: Failed to load blue AI model '" AI_BLUE_PATH "'\n");
-
-  log_message("Blue AI model weights: " + std::to_string(blueBackend->getWeights().size()) + "\n");
-
-  log_message("Loading red AI model\n");
-
-  if ( redBackend->loadModel(AI_RED_PATH) == false )
-    log_message("ERROR: Failed to load red AI model '" AI_RED_PATH "'\n");
-
-  log_message("Red AI model weights: " + std::to_string(redBackend->getWeights().size()) + "\n");
-}
-
-bool
-FlyingTrainingPhase::hasRoundFinished() const
-{
-  for ( const auto& [planeType, plane] : planes )
-    if ( plane.isDead() == true || plane.stats().plane_hits > 0 )
-      return true;
-
-  return mRoundTimeout.isReady();
-}
-
-bool
-FlyingTrainingPhase::hasPhaseFinished() const
+QLearningPhase::hasPhaseFinished() const
 {
   return false;
 }
 
 bool
-FlyingTrainingPhase::isReadyForTraining(
+QLearningPhase::isReadyForTraining(
   const Plane& plane ) const
 {
-  return
-    plane.isDead() == false &&
-    plane.isAirborne() == true &&
-    plane.stats().plane_hits > 0;
 }
 
 
@@ -1065,7 +912,7 @@ void
 AiController::init()
 {
   if ( mTrainingPhase == nullptr )
-    mTrainingPhase = new TakeoffTrainingPhase();
+    mTrainingPhase = new QLearningPhase();
 
   mTrainingPhase->init();
 }

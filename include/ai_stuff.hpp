@@ -33,32 +33,53 @@
 Controls aiActionToControls( const AiAction );
 
 
-struct AiStateMonitor
+struct AiRewardDatasetEntry
 {
-  size_t lifeTime {};
-  size_t airborneTime {};
-  size_t ejectedTime {};
-  float maxHeight {};
+  std::vector <float> state {};
+  float reward {};
+
+  AiRewardDatasetEntry() = default;
+};
 
 
-  AiStateMonitor() = default;
+struct AiRewardDataset
+{
+  AI_Backend::InputBatch states {};
+  AI_Backend::EvalInput rewards {};
 
-  void update( const Plane& self, const Plane& opponent );
-
-  void printState() const;
-
-  int64_t takeoffTime() const;
-  int64_t airborneScore() const;
+  AiRewardDataset() = default;
 };
 
 
 struct AiDatasetEntry
 {
   std::vector <float> inputs {};
-  size_t output {};
+  AiAction action {};
 
   AiDatasetEntry() = default;
+
+
+  std::vector <float> merge() const;
 };
+
+struct AiRewardedAction
+{
+  AiAction action {};
+  float reward {};
+};
+
+
+float calcReward(
+  const std::vector <float>& inputs,
+  const AiAction output );
+
+std::vector <float> calcRewards(
+  const std::vector <float>& inputs,
+  const std::vector <AiAction>& outputs );
+
+std::vector <AiRewardedAction> predictActionRewards(
+  const std::vector <float>& inputs,
+  const AI_Backend& );
 
 
 class AiDataset
@@ -74,7 +95,7 @@ public:
 
   void push(
     const std::vector <float>& inputs,
-    const size_t output );
+    const AiAction );
 
   void merge( AiDataset& target );
 
@@ -85,9 +106,7 @@ public:
 
   size_t size() const;
 
-  AI_Backend::InputBatch toBatch() const;
-  AI_Backend::InputBatch toOneHotLabels() const;
-  AI_Backend::Labels toLabels() const;
+  AiRewardDataset toRewardDataset() const;
 
   void printActionStats() const;
 };
