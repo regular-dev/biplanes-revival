@@ -837,6 +837,7 @@ TakeoffTrainingPhase::hasRoundFinished() const
 bool
 TakeoffTrainingPhase::hasPhaseFinished() const
 {
+//  TODO: test plane takeoff time
   return false;
 }
 
@@ -863,6 +864,200 @@ TakeoffTrainingPhase::isReadyForTraining(
   log_message("\n");
 
   return data.size() >= 10 || records > 3;
+}
+
+
+class FlyingTrainingPhase : public AiTrainingPhase
+{
+  struct RoundData
+  {
+    AiStateMonitor state {};
+    AiDataset dataset {};
+  };
+
+
+  std::map <PLANE_TYPE, std::shared_ptr <AI_Backend>> mBackends
+  {
+    {PLANE_TYPE::BLUE, std::make_shared <AI_Backend> ()},
+    {PLANE_TYPE::RED, std::make_shared <AI_Backend> ()},
+  };
+
+  std::map <PLANE_TYPE, std::vector <RoundData>> mRoundData
+  {
+    {PLANE_TYPE::BLUE, {}},
+    {PLANE_TYPE::RED, {}},
+  };
+
+  Timer mRoundTimeout {1.0};
+
+
+public:
+  FlyingTrainingPhase() = default;
+
+  void update() override;
+  Controls getInput( const Plane& ) override;
+
+  void init() override;
+  void initNewRound() override;
+
+  void save() const override;
+  void load() override;
+
+  bool hasRoundFinished() const override;
+  bool hasPhaseFinished() const override;
+
+  bool isReadyForTraining( const Plane& ) const override;
+};
+
+void
+FlyingTrainingPhase::update()
+{
+  mRoundTimeout.Update();
+
+  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+  auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+  auto& roundDataBlue = mRoundData[planeBlue.type()];
+  auto& roundDataRed = mRoundData[planeRed.type()];
+
+  roundDataBlue.back().state.update(
+    planeBlue, planeRed );
+
+  roundDataRed.back().state.update(
+    planeRed, planeBlue );
+
+
+  if ( hasRoundFinished() == false )
+    return;
+
+
+  for ( const auto& [planeType, plane] : planes )
+  {
+    auto& data = mRoundData[planeType];
+
+
+    if ( isReadyForTraining(plane) == false )
+      continue;
+
+
+    log_message("Plane " + std::to_string(planeType) + " action stats:\n");
+    data.back().dataset.printActionStats();
+
+    log_message("\n");
+
+    log_message("Training plane " + std::to_string(planeType) + "\n");
+    train( *mBackends.at(planeType), data.back().dataset );
+  }
+
+  initNewRound();
+}
+
+Controls
+FlyingTrainingPhase::getInput(
+  const Plane& plane )
+{
+  const auto datasetEntry = mInputProcessor->filterInput(
+    plane.aiState(),
+    plane,
+    *mBackends.at(plane.type()) );
+
+  mRoundData[plane.type()].back().dataset.push(datasetEntry);
+
+  const auto action =
+    static_cast <AiAction> (datasetEntry.output);
+
+  return aiActionToControls(action);
+}
+
+void
+FlyingTrainingPhase::init()
+{
+  if ( mInputProcessor == nullptr )
+    mInputProcessor = new AiInputFilter();
+
+  for ( auto& [planeType, backend] : mBackends )
+    backend->initNet();
+
+  for ( auto& [planeType, data] : mRoundData )
+    data.clear();
+
+  initNewRound();
+}
+
+void
+FlyingTrainingPhase::initNewRound()
+{
+  mRoundTimeout.Start();
+
+  for ( auto& [planeType, data] : mRoundData )
+  {
+    data.clear();
+    data.push_back({});
+  }
+
+  game_reset();
+}
+
+void
+FlyingTrainingPhase::save() const
+{
+  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
+  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
+
+  log_message("Saving blue AI model " + std::to_string(blueBackend->getWeights().size()) + "\n");
+  blueBackend->saveModel(AI_BLUE_PATH);
+
+  log_message("Saving red AI model " + std::to_string(redBackend->getWeights().size()) + "\n");
+  redBackend->saveModel(AI_RED_PATH);
+}
+
+void
+FlyingTrainingPhase::load()
+{
+  init();
+
+  auto& blueBackend = mBackends.at(PLANE_TYPE::BLUE);
+  auto& redBackend = mBackends.at(PLANE_TYPE::RED);
+
+  log_message("Loading blue AI model\n");
+
+  if ( blueBackend->loadModel(AI_BLUE_PATH) == false )
+    log_message("ERROR: Failed to load blue AI model '" AI_BLUE_PATH "'\n");
+
+  log_message("Blue AI model weights: " + std::to_string(blueBackend->getWeights().size()) + "\n");
+
+  log_message("Loading red AI model\n");
+
+  if ( redBackend->loadModel(AI_RED_PATH) == false )
+    log_message("ERROR: Failed to load red AI model '" AI_RED_PATH "'\n");
+
+  log_message("Red AI model weights: " + std::to_string(redBackend->getWeights().size()) + "\n");
+}
+
+bool
+FlyingTrainingPhase::hasRoundFinished() const
+{
+  for ( const auto& [planeType, plane] : planes )
+    if ( plane.isDead() == true || plane.stats().plane_hits > 0 )
+      return true;
+
+  return mRoundTimeout.isReady();
+}
+
+bool
+FlyingTrainingPhase::hasPhaseFinished() const
+{
+  return false;
+}
+
+bool
+FlyingTrainingPhase::isReadyForTraining(
+  const Plane& plane ) const
+{
+  return
+    plane.isDead() == false &&
+    plane.isAirborne() == true &&
+    plane.stats().plane_hits > 0;
 }
 
 
