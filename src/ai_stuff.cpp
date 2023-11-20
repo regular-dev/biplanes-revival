@@ -100,6 +100,7 @@ calcReward(
   namespace PlaneIndices = AiDatasetPlaneIndices;
 
   const auto selfIndex = AiDatasetIndices::SelfState;
+  const auto opponentIndex = AiDatasetIndices::OpponentState;
 
   const bool canAccelerate =
     inputs.at(selfIndex + PlaneIndices::CanAccelerate) > 0.5f;
@@ -117,8 +118,15 @@ calcReward(
     inputs.at(selfIndex + PlaneIndices::CanJump) > 0.5f;
 
 
+  const bool isDead =
+    inputs.at(selfIndex + PlaneIndices::IsDead) > 0.5f;
+
   const bool isOnGround =
     inputs.at(selfIndex + PlaneIndices::IsOnGround) > 0.5f;
+
+
+  if ( isDead == true )
+    return 0.0f;
 
 
   switch (output)
@@ -405,15 +413,15 @@ AiDataset::toRewardDataset() const
       AiAction::Jump,
     };
 
-    const auto rewards = calcRewards(
+    const auto nextRewards = calcRewards(
       nextEntry.inputs, actions );
 
-    const auto maxReward = *std::max_element(
-      rewards.begin(), rewards.end() );
+    const auto nextReward = *std::max_element(
+      nextRewards.begin(), nextRewards.end() );
 
     const auto reward =
       calcReward(currentEntry.inputs, currentEntry.action) +
-      discountFactor * maxReward;
+      discountFactor * nextReward;
 
     result.states.push_back(state);
     result.rewards.push_back(reward);
@@ -631,6 +639,9 @@ AiInputFilter::filterInput(
       assert(false);
     }
 #endif
+
+  if ( plane.isDead() == true )
+    return {{}, AiAction::Idle};
 
 
   auto rewards = predictActionRewards(
@@ -905,6 +916,7 @@ bool
 QLearningPhase::isReadyForTraining(
   const Plane& plane ) const
 {
+  return false;
 }
 
 
@@ -944,7 +956,7 @@ AiController::processInput()
 
   for ( auto& [planeType, plane] : planes )
   {
-    if ( plane.isDead() == false && plane.isBot() == true )
+    if ( plane.isBot() == true )
       processPlaneControls(
         plane,
         mTrainingPhase->getInput(plane) );
