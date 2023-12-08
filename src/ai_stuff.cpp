@@ -682,7 +682,7 @@ AiInputFilter::filterInput(
     outputs.push_back(
       static_cast <size_t> (rewardedAction.action) );
 
-  filterActions(plane, outputs);
+//  filterActions(plane, outputs);
 
   const auto action =
     static_cast <AiAction> (outputs.front());
