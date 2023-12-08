@@ -18,6 +18,7 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "tiny_dnn/lossfunctions/loss_function.h"
 #include <include/ai_backend.hpp>
 #include <include/enums.hpp>
 
@@ -33,41 +34,6 @@ AI_Backend::AI_Backend()
 size_t AI_Backend::getTrainedEpochsCount() const
 {
     return m_epochs_trained;
-}
-
-size_t AI_Backend::getIndexByProb(const std::vector< std::pair< size_t, float > > &probs)
-{
-    auto sum = 0.0;
-
-    for (auto &it : probs)
-        sum += it.second;
-
-    std::uniform_real_distribution<> dis(0.0, sum);
-
-    float p = dis(m_rand);
-
-    float cur_pos = 0.0;
-
-    int idx = 0;
-    for (size_t i = 0; i < probs.size(); ++i) {
-        if (p >= cur_pos && p < cur_pos + probs[i].second) {
-            idx = probs[i].first;
-            break;
-        }
-        cur_pos += probs[i].second;
-    }
-
-    return idx;
-}
-
-size_t AI_Backend::getRandomIndex(const std::vector< size_t >& labels, const size_t constraint)
-{
-    std::uniform_int_distribution<> dis(0,
-      constraint < labels.size()
-      ? constraint
-      : labels.size() - 1);
-
-    return labels.at(dis(m_rand));
 }
 
 std::vector<float> AI_Backend::getWeights()
@@ -92,121 +58,23 @@ std::vector<float> AI_Backend::getWeights()
     return out;
 }
 
-void AI_Backend::train(const InputBatch &data, const Labels &lbls,
+void AI_Backend::train(const InputBatch &data, const InputBatch &lbls,
                        size_t batch_size, size_t epochs)
-{
-    m_epochs_trained += epochs;
-    m_mdl->train< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
-}
-
-void AI_Backend::train(const InputBatch &data, const InputBatch &lbls, size_t batch_size, size_t epochs)
 {
     m_epochs_trained += epochs;
 
     for ( size_t epoch = 0; epoch < epochs; ++epoch )
-      m_mdl->fit< tiny_dnn::cross_entropy, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
-}
-
-void AI_Backend::train(const InputBatch& states, const EvalInput& rewards, size_t batch, size_t epochs)
-{
+      m_mdl->fit< tiny_dnn::mse, Optimizer >(*m_opt, data, lbls, batch_size, epochs);
 }
 
 float AI_Backend::getLoss(const InputBatch& data, const InputBatch& lbls) const
 {
-    return m_mdl->get_loss< tiny_dnn::cross_entropy >(data, lbls) / data.size();
+    return m_mdl->get_loss< tiny_dnn::mse >(data, lbls) / data.size();
 }
 
-float AI_Backend::getLoss(const InputBatch& states, const EvalInput& rewards) const
+float AI_Backend::predictReward(const EvalInput& in ) const
 {
-  return 1.0f;
-}
-
-float AI_Backend::predictReward(const EvalInput& ) const
-{
-  return 0.0f;
-}
-
-AI_Backend::Label AI_Backend::predictDistLabel(const EvalInput &in, size_t constraint)
-{
-    const auto mdl_out = m_mdl->predict(in);
-
-    using pair_action_t = std::pair< size_t, float >;
-
-    std::vector< pair_action_t > out_sorted;
-    out_sorted.reserve( mdl_out.size() );
-
-    for (size_t i = 0; i < mdl_out.size(); ++i)
-        out_sorted.push_back( {i, mdl_out[i]} );
-
-    std::sort(out_sorted.begin(), out_sorted.end(),
-              [ ] (pair_action_t &a1, pair_action_t &a2)
-    {
-        return a1.second > a2.second;
-    });
-
-    if (constraint > 0 && constraint < out_sorted.size())
-        out_sorted = { out_sorted.begin(), out_sorted.begin() + constraint };
-
-    return getIndexByProb(out_sorted);
-}
-
-std::vector <size_t> AI_Backend::predictDistLabels(const EvalInput &in) const
-{
-  const auto mdl_out = m_mdl->predict(in);
-
-  using pair_action_t = std::pair< size_t, float >;
-
-  std::vector< pair_action_t > out_sorted;
-  out_sorted.reserve( mdl_out.size() );
-
-  for (size_t i = 0; i < mdl_out.size(); ++i)
-      out_sorted.push_back( {i, mdl_out[i]} );
-
-  std::sort(out_sorted.begin(), out_sorted.end(),
-            [ ] (pair_action_t &a1, pair_action_t &a2)
-  {
-      return a1.second > a2.second;
-  });
-
-  std::vector <size_t> result {};
-  result.reserve(out_sorted.size());
-
-  for ( const auto& [action, prob] : out_sorted )
-    result.push_back(action);
-
-  return result;
-}
-
-std::vector <std::pair< size_t, float >> AI_Backend::predictDistLabelsProb(const EvalInput &in) const
-{
-  const auto mdl_out = m_mdl->predict(in);
-
-  using pair_action_t = std::pair< size_t, float >;
-
-  std::vector< pair_action_t > out_sorted;
-  out_sorted.reserve( mdl_out.size() );
-
-  for (size_t i = 0; i < mdl_out.size(); ++i)
-      out_sorted.push_back( {i, mdl_out[i]} );
-
-  std::sort(out_sorted.begin(), out_sorted.end(),
-            [ ] (pair_action_t &a1, pair_action_t &a2)
-  {
-      return a1.second > a2.second;
-  });
-
-  return out_sorted;
-}
-
-AI_Backend::Labels AI_Backend::predictBatchLabels(const InputBatch &in) const
-{
-    auto out = Labels( in.size() );
-
-    for (auto i = 0; i < in.size(); ++i) {
-        out[i] = m_mdl->predict_label( in[i] );
-    }
-
-    return out;
+    return m_mdl->predict(in).at(0);
 }
 
 bool AI_Backend::saveModel(const std::string &path) const
@@ -225,8 +93,8 @@ void AI_Backend::initNet()
     using namespace tiny_dnn::layers;
     using namespace tiny_dnn;
 
-    const size_t inputSize = AiDatasetIndices::IndexCount;
-    const auto outputSize = static_cast <size_t> (AiAction::ActionCount);
+    const size_t inputSize = AiDatasetIndices::IndexCount + size_t(AiAction::ActionCount);
+    const auto outputSize = 1;
 
     // model
     m_mdl = std::make_shared< network< sequential > >();
@@ -234,8 +102,7 @@ void AI_Backend::initNet()
     *m_mdl << fc(inputSize, 256) << relu()
            << fc(256, 128) << relu() << dropout(128, 0.2)
            << fc(128, 64) << relu() << dropout(64, 0.2)
-           << fc(64, outputSize)
-           << softmax_layer(outputSize);
+           << fc(64, outputSize) << sigmoid();
 
     // optimizer
     m_opt = std::make_shared< RMSprop >();

@@ -45,7 +45,7 @@ struct AiRewardDatasetEntry
 struct AiRewardDataset
 {
   AI_Backend::InputBatch states {};
-  AI_Backend::EvalInput rewards {};
+  AI_Backend::InputBatch rewards {};
 
   AiRewardDataset() = default;
 };
@@ -106,7 +106,7 @@ public:
 
   size_t size() const;
 
-  AiRewardDataset toRewardDataset() const;
+  AiRewardDataset toRewardDataset( const AI_Backend& ) const;
 
   void printActionStats() const;
 };

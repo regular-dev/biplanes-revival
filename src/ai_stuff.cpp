@@ -207,6 +207,32 @@ calcRewards(
   return rewards;
 }
 
+std::vector <float>
+predictRewards(
+  const std::vector <float>& inputs,
+  const AI_Backend& backend )
+{
+  std::vector <float> rewards {};
+
+  AiDatasetEntry stateEntry {inputs};
+
+  for ( size_t action = 0;
+        action < static_cast <size_t> (AiAction::ActionCount);
+        ++action )
+  {
+    stateEntry.action = static_cast <AiAction> (action);
+
+    const auto state = stateEntry.merge();
+
+    const auto reward = backend.predictReward(
+      {state.begin(), state.end()} );
+
+    rewards.push_back(reward);
+  }
+
+  return rewards;
+}
+
 std::vector <AiRewardedAction>
 predictActionRewards(
   const std::vector <float>& inputs,
@@ -381,7 +407,8 @@ AiDataset::size() const
 }
 
 AiRewardDataset
-AiDataset::toRewardDataset() const
+AiDataset::toRewardDataset(
+  const AI_Backend& backend ) const
 {
   if ( mData.size() < 2 )
     return {};
@@ -396,11 +423,7 @@ AiDataset::toRewardDataset() const
     auto& currentEntry = mData[i];
     auto& nextEntry = mData[i + 1];
 
-    const AI_Backend::EvalInput state
-    {
-      currentEntry.inputs.begin(),
-      currentEntry.inputs.end()
-    };
+    const auto state = currentEntry.merge();
 
     const std::vector <AiAction> actions
     {
@@ -413,8 +436,8 @@ AiDataset::toRewardDataset() const
       AiAction::Jump,
     };
 
-    const auto nextRewards = calcRewards(
-      nextEntry.inputs, actions );
+    const auto nextRewards = predictRewards(
+      nextEntry.inputs, backend );
 
     const auto nextReward = *std::max_element(
       nextRewards.begin(), nextRewards.end() );
@@ -423,8 +446,8 @@ AiDataset::toRewardDataset() const
       calcReward(currentEntry.inputs, currentEntry.action) +
       discountFactor * nextReward;
 
-    result.states.push_back(state);
-    result.rewards.push_back(reward);
+    result.states.push_back({state.cbegin(), state.cend()});
+    result.rewards.push_back({reward});
   }
 
   return result;
@@ -532,7 +555,7 @@ AiTrainingPhase::train(
   const size_t batchSize {4};
   const float minLoss {0.01f};
 
-  const auto rewardDataset = dataset.toRewardDataset();
+  const auto rewardDataset = dataset.toRewardDataset(backend);
 
   size_t epochs = backend.getTrainedEpochsCount();
 
@@ -640,8 +663,8 @@ AiInputFilter::filterInput(
     }
 #endif
 
-  if ( plane.isDead() == true )
-    return {{}, AiAction::Idle};
+//  if ( plane.isDead() == true )
+//    return {{}, AiAction::Idle};
 
 
   auto rewards = predictActionRewards(
@@ -768,6 +791,9 @@ class QLearningPhase : public AiTrainingPhase
 
   Timer mRoundTimeout {1.0};
 
+  size_t mCurrentRound {};
+  const size_t mRoundsPerGeneration {10};
+
 
 public:
   QLearningPhase() = default;
@@ -793,13 +819,11 @@ QLearningPhase::update()
   mRoundTimeout.Update();
 
 
-  auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
-  auto& planeRed = planes.at(PLANE_TYPE::RED);
-
-
   if ( hasRoundFinished() == false )
     return;
 
+
+  bool newGeneration {};
 
   for ( const auto& [planeType, plane] : planes )
   {
@@ -818,9 +842,13 @@ QLearningPhase::update()
     train( *mBackends.at(planeType), dataset );
 
     dataset = {};
+    newGeneration = true;
 
     log_message("\n");
   }
+
+  if ( newGeneration == true )
+    mCurrentRound = 0;
 
   initNewRound();
 }
@@ -852,14 +880,13 @@ QLearningPhase::init()
     data = {};
 
   initNewRound();
+  mCurrentRound = 0;
 }
 
 void
 QLearningPhase::initNewRound()
 {
   mRoundTimeout.Start();
-
-//  TODO: reset dataset
 
   game_reset();
 }
@@ -916,7 +943,7 @@ bool
 QLearningPhase::isReadyForTraining(
   const Plane& plane ) const
 {
-  return false;
+  return mCurrentRound >= mRoundsPerGeneration;
 }
 
 

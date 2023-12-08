@@ -50,29 +50,16 @@ public:
 
   void initNet();
 
-  void train(const InputBatch&, const Labels&,
-             size_t batch_size, size_t epochs);
-
   void train(const InputBatch&, const InputBatch& lbls, size_t batch_size, size_t epochs);
 
-  void train(const InputBatch& states, const EvalInput& rewards, size_t batch, size_t epochs);
-
   float getLoss(const InputBatch&, const InputBatch& lbls) const;
-  float getLoss(const InputBatch& states, const EvalInput& rewards) const;
 
   float predictReward( const EvalInput& state ) const;
-  Label predictLabel(const EvalInput&) const;
-  Label predictDistLabel(const EvalInput&, size_t constraint = 0); // not const cause of rand_engine
-  std::vector <size_t> predictDistLabels(const EvalInput&) const;
-  std::vector <std::pair <size_t, float>> predictDistLabelsProb(const EvalInput&) const;
-  Labels predictBatchLabels(const InputBatch&) const;
 
   bool saveModel(const std::string &path) const;
   bool loadModel(const std::string &path);
 
   size_t getTrainedEpochsCount() const;
-  size_t getIndexByProb(const std::vector< std::pair< size_t, float > > &probs);
-  size_t getRandomIndex(const std::vector< size_t> &, const size_t constraint = 0);
 
   std::vector< float > getWeights();
 
