@@ -414,7 +414,7 @@ AiDataset::toRewardDataset(
     return {};
 
 
-  const float discountFactor = 1.0f;
+  const float discountFactor = 0.1f;
 
   AiRewardDataset result {};
 
@@ -443,7 +443,7 @@ AiDataset::toRewardDataset(
       nextRewards.begin(), nextRewards.end() );
 
     const auto reward =
-      calcReward(currentEntry.inputs, currentEntry.action) +
+      (1.0f - discountFactor) * calcReward(currentEntry.inputs, currentEntry.action) +
       discountFactor * nextReward;
 
     result.states.push_back({state.cbegin(), state.cend()});
