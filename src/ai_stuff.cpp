@@ -823,6 +823,7 @@ QLearningPhase::update()
     return;
 
 
+  ++mCurrentRound;
   bool newGeneration {};
 
   for ( const auto& [planeType, plane] : planes )
