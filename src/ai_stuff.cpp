@@ -201,6 +201,8 @@ calcRewards(
     const auto reward = calcReward(
       inputs, static_cast <AiAction> (action) );
 
+    assert(reward >= 0.0f && reward <= 1.0f);
+
     rewards.push_back(reward);
   }
 
@@ -226,6 +228,8 @@ predictRewards(
 
     const auto reward = backend.predictReward(
       {state.begin(), state.end()} );
+
+    assert(reward >= 0.0f && reward <= 1.0f);
 
     rewards.push_back(reward);
   }
@@ -333,6 +337,8 @@ AiDataset::removeDuplicates(
 
     for ( size_t i = 0; i < inputLhs.size(); ++i )
     {
+      assert(inputRhs[i] >= 0.0f && inputRhs[i] <= 1.0f);
+
       const auto baseIndexSelf = AiDatasetIndices::SelfState;
       const auto baseIndexOpponent = AiDatasetIndices::OpponentState;
       const auto dynamicStateIndex = AiDatasetPlaneIndices::PosX;
@@ -357,6 +363,12 @@ AiDataset::removeDuplicates(
         std::pow(inputLhs[i] - inputRhs[i], 2.f));
 
       if ( distance > margin )
+      {
+        discardElement = false;
+        break;
+      }
+
+      if ( mData[iLhs].action != mData[iLhs + 1].action )
       {
         discardElement = false;
         break;
@@ -391,7 +403,7 @@ void
 AiDataset::saveEveryNthEntry(
   const size_t n )
 {
-  if ( mData.empty() == true )
+  if ( mData.empty() == true || mData.size() < n )
     return;
 
 
@@ -446,9 +458,13 @@ AiDataset::toRewardDataset(
       (1.0f - discountFactor) * calcReward(currentEntry.inputs, currentEntry.action) +
       discountFactor * nextReward;
 
+    assert(reward >= 0.0f && reward <= 1.0f);
+
     result.states.push_back({state.cbegin(), state.cend()});
     result.rewards.push_back({reward});
   }
+
+  assert(result.states.size() == result.rewards.size());
 
   return result;
 }
@@ -575,7 +591,8 @@ AiTrainingPhase::train(
     backend.train(
       rewardDataset.states,
       rewardDataset.rewards,
-      batchSize, 1 );
+      std::min(batchSize, rewardDataset.rewards.size()),
+      1 );
 
     currentLoss = backend.getLoss(
       rewardDataset.states,
