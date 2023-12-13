@@ -806,7 +806,13 @@ class QLearningPhase : public AiTrainingPhase
     {PLANE_TYPE::RED, {}},
   };
 
-  Timer mRoundTimeout {1.0};
+  std::map <PLANE_TYPE, float> mRewards
+  {
+    {PLANE_TYPE::BLUE, {}},
+    {PLANE_TYPE::RED, {}},
+  };
+
+  Timer mRoundTimeout {3.0};
 
   size_t mCurrentRound {};
   const size_t mRoundsPerGeneration {10};
@@ -882,6 +888,17 @@ QLearningPhase::getInput(
 
   mData[plane.type()].push(datasetEntry);
 
+  const auto reward = calcReward(
+    datasetEntry.inputs,
+    datasetEntry.action );
+
+  mRewards[plane.type()] += (-1.0f + reward * 2.0f);
+  log_message(
+    "plane " + std::to_string(plane.type()) +
+    ": " + std::to_string((size_t) (datasetEntry.action)) +
+    ": " + std::to_string(reward) +
+    "/" + std::to_string(mRewards[plane.type()]) + "\n");
+
   return aiActionToControls(datasetEntry.action);
 }
 
@@ -905,6 +922,9 @@ void
 QLearningPhase::initNewRound()
 {
   mRoundTimeout.Start();
+
+  mRewards[PLANE_TYPE::BLUE] = 0.0f;
+  mRewards[PLANE_TYPE::RED] = 0.0f;
 
   game_reset();
 }
