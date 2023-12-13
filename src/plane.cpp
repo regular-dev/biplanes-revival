@@ -664,7 +664,10 @@ Plane::TakeOffStart()
     return;
 
   mIsTakingOff = true;
-  mDir = mType == PLANE_TYPE::RED ? 270.0f : 90.0f;
+
+  mDir = mType == PLANE_TYPE::BLUE
+    ? constants::plane::takeoffDirectionBlue
+    : constants::plane::takeoffDirectionRed;
 }
 
 void

@@ -136,6 +136,9 @@ namespace constants
 
     static constexpr float spawnRotationBlue {67.5f};
     static constexpr float spawnRotationRed {292.5f};
+
+    static constexpr float takeoffDirectionBlue {90.f};
+    static constexpr float takeoffDirectionRed {270.f};
   }
 
 
