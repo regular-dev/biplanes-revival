@@ -750,7 +750,7 @@ Plane::Explode()
     std::sin(mDir * M_PI / 180.f);
 
   const auto sparkSpeedFactor =
-    mSpeed / mMaxSpeedVar;
+    mSpeed / constants::plane::maxSpeedBoosted;
 
   const auto sparkDirOffset =
     spark::dirOffset * sparkDirFactor * sparkSpeedFactor;
