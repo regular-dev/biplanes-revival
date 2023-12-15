@@ -81,7 +81,7 @@ public:
   std::vector <Bullet> GetClosestBullets(
     const float x,
     const float y,
-    const PLANE_TYPE ) const;
+    const PLANE_TYPE target ) const;
 };
 
 extern class BulletSpawner bullets;

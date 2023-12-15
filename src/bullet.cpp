@@ -280,13 +280,13 @@ std::vector <Bullet>
 BulletSpawner::GetClosestBullets(
   const float x,
   const float y,
-  const PLANE_TYPE notFiredBy ) const
+  const PLANE_TYPE target ) const
 {
   std::vector <Bullet> result {};
 
   for ( const auto& bullet : mInstances )
   {
-    if ( bullet.firedBy() != notFiredBy )
+    if ( bullet.firedBy() != target )
       result.push_back(bullet);
   }
 
