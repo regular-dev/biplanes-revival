@@ -212,6 +212,8 @@ main(
         deltaTime = ticks * tickInterval;
       }
 
+      readKeyboardInput();
+
       if ( game.disableRendering == true )
         continue;
 
