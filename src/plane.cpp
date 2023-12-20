@@ -1545,19 +1545,28 @@ Plane::randomizeState()
 
   else if ( mIsDead == false )
   {
-//    TODO: cooldowns
-
     if ( mIsOnGround == false )
     {
-      mPitchCooldown;
-      mShootCooldown;
+      mPitchCooldown.SetNewRemainder(mPitchCooldown.timeout() * uniformFloat(randomizer));
+      mShootCooldown.SetNewRemainder(mShootCooldown.timeout() * uniformFloat(randomizer));
+
+      mPitchCooldown.Continue();
+      mShootCooldown.Continue();
     }
 
-    mProtection;
+    if ( mShootCooldown.isReady() == false )
+      mProtection.Stop();
+
+    else
+    {
+      mProtection.SetNewRemainder(mProtection.timeout() * uniformFloat(randomizer));
+      mProtection.Continue();
+    }
   }
   else
   {
-    mDeadCooldown;
+    mDeadCooldown.SetNewRemainder(mDeadCooldown.timeout() * uniformFloat(randomizer));
+    mDeadCooldown.Continue();
   }
 
 
