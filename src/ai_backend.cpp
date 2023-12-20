@@ -84,6 +84,7 @@ bool AI_Backend::saveModel(const std::string &path) const
 
 bool AI_Backend::loadModel(const std::string &path)
 {
+    m_epochs_trained = 0;
     return m_mdl->load(path);
 }
 
@@ -109,6 +110,8 @@ void AI_Backend::initNet()
 
     m_opt->alpha = 3e-4;
     m_opt->mu = 0.9;
+
+    m_epochs_trained = 0;
 }
 
 void AI_Backend::init_rand()
