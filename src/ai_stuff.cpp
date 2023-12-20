@@ -98,9 +98,11 @@ calcReward(
   const AiAction output )
 {
   namespace PlaneIndices = AiDatasetPlaneIndices;
+  namespace BulletIndices = AiDatasetBulletIndices;
 
   const auto selfIndex = AiDatasetIndices::SelfState;
   const auto opponentIndex = AiDatasetIndices::OpponentState;
+
 
   const bool canAccelerate =
     inputs.at(selfIndex + PlaneIndices::CanAccelerate) > 0.5f;
@@ -124,6 +126,9 @@ calcReward(
   const bool isOnGround =
     inputs.at(selfIndex + PlaneIndices::IsOnGround) > 0.5f;
 
+  const auto damage =
+    inputs.at(selfIndex + PlaneIndices::Damage);
+
 
   if ( isDead == true )
     return 0.0f;
@@ -134,7 +139,7 @@ calcReward(
     case AiAction::Idle:
     {
       if ( isOnGround == true )
-        return 0.0f;
+        return 0.4f;
 
       break;
     }
@@ -142,7 +147,7 @@ calcReward(
     case AiAction::Accelerate:
     {
       if ( canAccelerate == false )
-        return 0.0f;
+        return 0.45f;
 
       break;
     }
@@ -150,7 +155,7 @@ calcReward(
     case AiAction::Decelerate:
     {
       if ( canDecelerate == false )
-        return 0.0f;
+        return 0.45f;
 
       break;
     }
@@ -159,7 +164,7 @@ calcReward(
     case AiAction::TurnRight:
     {
       if ( canTurn == false )
-        return 0.0f;
+        return 0.45f;
 
       break;
     }
@@ -167,7 +172,7 @@ calcReward(
     case AiAction::Shoot:
     {
       if ( canShoot == false )
-        return 0.0f;
+        return 0.45f;
 
       break;
     }
@@ -175,6 +180,9 @@ calcReward(
     case AiAction::Jump:
     {
       if ( canJump == false )
+        return 0.45f;
+
+      if ( damage * constants::plane::maxHp < 1.0f )
         return 0.0f;
 
       break;
@@ -184,7 +192,50 @@ calcReward(
       break;
   }
 
-  return 1.0f;
+  const auto opponendIsDead =
+    inputs.at(opponentIndex + PlaneIndices::IsDead);
+
+  const auto opponentDamage =
+    inputs.at(opponentIndex + PlaneIndices::Damage);
+
+  if ( opponendIsDead < 0.5f && opponentDamage > 0.0f )
+    return 0.5f + 0.5f * opponentDamage;
+
+
+  float dodgeReward {};
+
+  const auto selfX = inputs.at(selfIndex + PlaneIndices::PosX);
+  const auto selfY = inputs.at(selfIndex + PlaneIndices::PosY);
+
+  for ( size_t i = 0; i < BulletIndices::BulletCount; ++i )
+  {
+    const size_t bulletIndex =
+      AiDatasetIndices::Bullets + i;
+
+    const auto bulletX =
+      inputs.at(bulletIndex + BulletIndices::PosX);
+
+    const auto bulletY =
+      inputs.at(bulletIndex + BulletIndices::PosY);
+
+    if ( bulletX == 0.0f && bulletY == 0.0f )
+      continue;
+
+
+    const auto distance = sqrt(
+      pow(bulletX - selfX, 2.f) +
+      pow(bulletY - selfY, 2.f) );
+
+    dodgeReward += distance / sqrt(2.0f);
+  }
+
+  dodgeReward /= BulletIndices::BulletCount;
+
+  if ( dodgeReward > 0.0f )
+    return 0.5f + 0.5f * dodgeReward;
+
+
+  return 0.5f;
 }
 
 std::vector <float>
@@ -426,7 +477,7 @@ AiDataset::toRewardDataset(
     return {};
 
 
-  const float discountFactor = 0.1f;
+  const float discountFactor = 0.6f;
 
   AiRewardDataset result {};
 
@@ -535,8 +586,9 @@ AiDataset::printActionStats() const
         log_message("jump ");
         break;
       }
+
       case AiAction::ActionCount:
-      break;
+        break;
     }
 
     std::stringstream stream {};
@@ -815,7 +867,7 @@ class QLearningPhase : public AiTrainingPhase
   Timer mRoundTimeout {3.0};
 
   size_t mCurrentRound {};
-  const size_t mRoundsPerGeneration {10};
+  const size_t mRoundsPerGeneration {3};
 
 
 public:
@@ -927,6 +979,9 @@ QLearningPhase::initNewRound()
   mRewards[PLANE_TYPE::RED] = 0.0f;
 
   game_reset();
+
+  for ( auto& [planeType, plane] : planes )
+    plane.randomizeState();
 }
 
 void
