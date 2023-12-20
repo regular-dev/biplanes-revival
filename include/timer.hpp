@@ -35,10 +35,16 @@ public:
   void Update();
   void Start();
   void Stop();
+  void Pause();
+  void Continue();
   void Reset();
+
   void SetNewTimeout( const float );
+  void SetNewRemainder( const float );
 
   float remainderTime() const;
+  float timeout() const;
+
   bool isReady() const;
   bool isCounting() const;
 };

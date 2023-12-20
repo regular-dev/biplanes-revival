@@ -63,6 +63,18 @@ Timer::Stop()
 }
 
 void
+Timer::Pause()
+{
+  mIsCounting = false;
+}
+
+void
+Timer::Continue()
+{
+  mIsCounting = true;
+}
+
+void
 Timer::Reset()
 {
   mCounter = mTimeout;
@@ -75,10 +87,24 @@ Timer::SetNewTimeout(
   mTimeout = timeout;
 }
 
+void
+Timer::SetNewRemainder(
+  const float remainder )
+{
+  mCounter = remainder;
+}
+
+
 float
 Timer::remainderTime() const
 {
   return mCounter;
+}
+
+float
+Timer::timeout() const
+{
+  return mTimeout;
 }
 
 bool
