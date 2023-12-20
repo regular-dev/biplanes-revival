@@ -35,6 +35,7 @@
 #include <include/variables.hpp>
 
 #include <cmath>
+#include <random>
 
 
 Plane::Plane(
@@ -1408,4 +1409,289 @@ Plane::aiState() const
   }
 
   return inputs;
+}
+
+
+static std::minstd_rand0 randomizer {std::random_device{}()};
+static std::uniform_real_distribution <float> uniformFloat (0.0f, 1.0f);
+
+void
+Plane::randomizeState()
+{
+  namespace plane = constants::plane;
+  namespace barn = constants::barn;
+
+
+  mIsDead = uniformFloat(randomizer) > 0.5f;
+
+  mIsOnGround = mIsDead == true
+    ? false
+    : uniformFloat(randomizer) > 0.5f;
+
+  mIsTakingOff = mIsOnGround == false
+    ? false
+    : uniformFloat(randomizer) > 0.5f;
+
+  mHasJumped = mIsOnGround == true
+    ? false
+//    : uniformFloat(randomizer) > 0.5f;
+    : mIsDead == true;
+
+  mHp = mIsDead == true
+    ? 0
+    : std::round(uniformFloat(randomizer) * plane::maxHp);
+
+
+  if ( mIsDead == true )
+    mDir = 0.0f;
+
+  else if ( mIsTakingOff == true )
+  {
+    if ( mType == PLANE_TYPE::BLUE )
+      mDir = plane::takeoffDirectionBlue;
+    else
+      mDir = plane::takeoffDirectionRed;
+  }
+
+  else if ( mIsOnGround == true )
+  {
+    if ( mType == PLANE_TYPE::BLUE )
+      mDir = plane::spawnRotationBlue;
+    else
+      mDir = plane::spawnRotationRed;
+  }
+
+  else
+    mDir = plane::pitchStep * std::round(
+      uniformFloat(randomizer) * 337.5f / plane::pitchStep );
+
+
+  if ( mIsDead == true )
+  {
+    mX = 0.0f;
+    mY = 0.0f;
+    mSpeed = 0.0f;
+    mMaxSpeedVar = plane::maxSpeedBase;
+  }
+
+  else if ( mIsOnGround == true )
+  {
+    mY = plane::spawnY;
+
+    if ( mIsTakingOff == true )
+    {
+      float xOffset {};
+      float xRange {};
+
+      if ( mType == PLANE_TYPE::BLUE )
+      {
+        xOffset = plane::spawnBlueX;
+        xRange = barn::planeCollisionX - xOffset;
+      }
+      else
+      {
+        xOffset = barn::planeCollisionX + barn::sizeX;
+        xRange = plane::spawnRedX - xOffset;
+      }
+
+      mX = xOffset + xRange * uniformFloat(randomizer);
+
+      const auto speedMin =
+        0.85f * plane::acceleration / constants::tickRate;
+
+      const auto speedRange = plane::maxSpeedBase - speedMin;
+
+      mSpeed = speedMin + speedRange * uniformFloat(randomizer);
+      mMaxSpeedVar = plane::maxSpeedBase;
+    }
+    else
+    {
+      mSpeed = 0.0f;
+      mMaxSpeedVar = plane::maxSpeedBase;
+
+      if ( mType == PLANE_TYPE::BLUE )
+        mX = plane::spawnBlueX;
+      else
+        mX = plane::spawnRedX;
+    }
+  }
+  else
+  {
+    mX = uniformFloat(randomizer);
+
+    float yRange {};
+
+    if ( mX < barn::planeCollisionX || mX > barn::planeCollisionX + barn::sizeX )
+      yRange = plane::groundCollision;
+    else
+      yRange = barn::planeCollisionY;
+
+    mY = yRange * uniformFloat(randomizer);
+
+    mSpeed = plane::maxSpeedBoosted * uniformFloat(randomizer);
+
+    mMaxSpeedVar = mSpeed > plane::maxSpeedBase
+      ? mSpeed
+      : plane::maxSpeedBase;
+  }
+
+
+  mPrevX = mX;
+  mPrevY = mY;
+
+
+  if ( mHasJumped == true )
+    pilot.randomizeState();
+
+  else if ( mIsDead == false )
+  {
+//    TODO: cooldowns
+
+    if ( mIsOnGround == false )
+    {
+      mPitchCooldown;
+      mShootCooldown;
+    }
+
+    mProtection;
+  }
+  else
+  {
+    mDeadCooldown;
+  }
+
+
+  for ( float bulletCount = 4 * uniformFloat(randomizer);
+        bulletCount >= 1.0f;
+        bulletCount -= 1.0f )
+  {
+    namespace bullet = constants::bullet;
+
+    float bulletX;
+    const auto bulletY = bullet::groundCollision * uniformFloat(randomizer);
+
+    if ( bulletY <= barn::bulletCollisionY )
+      bulletX = uniformFloat(randomizer);
+    {
+      float xOffset {};
+      float xRange {};
+
+      if ( uniformFloat(randomizer) <= 0.5f )
+        xRange = barn::bulletCollisionX;
+      else
+      {
+        xOffset = barn::bulletCollisionX + barn::bulletCollisionSizeX;
+        xRange = 1.0f - xOffset;
+      }
+
+      bulletX = xOffset + xRange * uniformFloat(randomizer);
+    }
+
+    const auto bulletDir = plane::pitchStep * std::round(
+      uniformFloat(randomizer) * 337.5f / plane::pitchStep );
+
+    bullets.SpawnBullet(
+      bulletX, bulletY,
+      bulletDir,
+      mType );
+  }
+}
+
+void
+Plane::Pilot::randomizeState()
+{
+  namespace pilot = constants::pilot;
+
+
+//  mIsDead = uniformFloat(randomizer) > 0.5f;
+  mIsDead = false;
+
+  mIsRunning = mIsDead == true
+    ? false
+    : uniformFloat(randomizer) > 0.5f;
+
+  mIsChuteOpen = mIsDead == true
+    ? false
+    : mIsRunning == true
+      ? false
+      : uniformFloat(randomizer) > 0.5f;
+
+
+  mX = uniformFloat(randomizer);
+  mY = pilot::groundCollision * uniformFloat(randomizer);
+  mPrevX = mX;
+  mPrevY = mY;
+
+  if ( mIsDead == true )
+  {
+    mDir = 0;
+    mSpeed = 0.0f;
+    mVSpeed = 0.0f;
+    mGravity = 0.0f;
+    mChuteState = CHUTE_STATE::CHUTE_NONE;
+
+    return;
+  }
+
+  if ( mIsRunning == true || mIsChuteOpen == true )
+    mChuteState = CHUTE_STATE::CHUTE_IDLE;
+
+  else
+  {
+    const auto chuteState =
+      3.0f * uniformFloat(randomizer);
+
+    mChuteState = chuteState >= 2.0f
+      ? CHUTE_STATE::CHUTE_DESTROYED
+      : chuteState >= 1.0f
+        ? CHUTE_STATE::CHUTE_IDLE
+        : CHUTE_STATE::CHUTE_NONE;
+  }
+
+
+  if ( mIsRunning == true )
+  {
+    namespace barn = constants::barn;
+
+    mSpeed = 0.0f;
+    mVSpeed = 0.0f;
+    mGravity = 0.0f;
+
+    mDir = uniformFloat(randomizer) > 0.5f
+      ? 270.f
+      : 90.f;
+
+    float xOffset {};
+    float xRange {};
+
+    if ( uniformFloat(randomizer) <= 0.5f )
+      xRange = barn::pilotCollisionLeftX;
+    else
+    {
+      xOffset = barn::pilotCollisionRightX;
+      xRange = 1.0f - xOffset;
+    }
+
+    mX = xOffset + xRange * uniformFloat(randomizer);
+    mY = constants::pilot::groundCollision;
+  }
+  else
+  {
+    namespace plane = constants::plane;
+
+    if ( mIsChuteOpen == true )
+      mGravity = pilot::chute::gravity;
+    else
+      mGravity = pilot::gravity;
+
+    mSpeed = pilot::ejectSpeed;
+    mVSpeed = mSpeed * cos( mDir * M_PI / 180.0 );
+
+    mDir = plane::pitchStep * std::round(
+      uniformFloat(randomizer) * 337.5f / plane::pitchStep );
+  }
+
+
+  mPrevX = mX;
+  mPrevY = mY;
 }

@@ -125,6 +125,8 @@ public:
 
 //  Utility methods for AI
   std::vector <float> aiState() const;
+  void randomizeState();
+
   SDL_Point getClosestCollision() const;
   float getDistanceToPoint( const SDL_Point& ) const;
   float getSpeedDir() const;
@@ -250,6 +252,8 @@ public:
     void FallSurvive();
     void Rescue();
     void Respawn();
+
+    void randomizeState();
 
     bool isDead() const;
     bool isHit( const float, const float ) const;
