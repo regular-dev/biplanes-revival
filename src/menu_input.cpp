@@ -114,9 +114,6 @@ Menu::UpdateControls()
       calcDerivedStats(stats.recent[PLANE_TYPE::BLUE]);
       calcDerivedStats(stats.total);
     }
-
-    if ( windowEvent.type == SDL_QUIT && game.isPaused == false )
-      game.isExiting = true;
   }
 
   if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )

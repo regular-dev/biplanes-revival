@@ -174,6 +174,12 @@ main(
 
     while ( SDL_PollEvent(&windowEvent) != 0 )
     {
+      if ( windowEvent.type == SDL_QUIT )
+      {
+        game.isExiting = true;
+        break;
+      }
+
       queryWindowSize();
       readKeyboardInput();
       menu.UpdateControls();
