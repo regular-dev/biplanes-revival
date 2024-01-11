@@ -219,7 +219,8 @@ class nodes {
 
     try {
       for (auto n : nodes_) {
-        n->save(fs);
+        if (n->layer_type() != "dropout")
+          n->save(fs);
       }
     } catch (...) {
       fs.close();
@@ -240,7 +241,8 @@ class nodes {
 
     try {
       for (auto n : nodes_) {
-        n->load(fs);
+        if (n->layer_type() != "dropout")
+          n->load(fs);
       }
     } catch (...) {
       return false;
