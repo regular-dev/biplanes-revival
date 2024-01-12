@@ -217,9 +217,8 @@ Plane::Pilot::Move(
   if ( mIsChuteOpen == true )
   {
     mChuteState = static_cast <CHUTE_STATE> (inputDir);
-    mX += moveDir * chute::speed * deltaTime;
+    mMoveSpeed = moveDir * chute::speed;
 
-    CoordinatesClamp();
     return;
   }
 
@@ -227,9 +226,7 @@ Plane::Pilot::Move(
     return;
 
   mDir = moveDir == PLANE_PITCH::PITCH_LEFT ? 90 : 270;
-  mX += moveDir * pilot::runSpeed * deltaTime;
-
-  CoordinatesClamp();
+  mMoveSpeed = moveDir * pilot::runSpeed;
 
   if ( mRunAnim.isReady() == false )
     return;
@@ -244,6 +241,8 @@ Plane::Pilot::Move(
 void
 Plane::Pilot::MoveIdle()
 {
+  mMoveSpeed = 0.0f;
+
   if ( mIsRunning == true )
   {
     mRunAnim.Stop();
@@ -280,6 +279,7 @@ Plane::Pilot::Bail(
   mGravity = pilot::gravity;
   mSpeed = pilot::ejectSpeed;
   mVSpeed = mSpeed * cos( mDir * M_PI / 180.0 );
+  mMoveSpeed = 0.0f;
 
 
   if ( gameState().isRoundFinished == false )
@@ -338,6 +338,7 @@ Plane::Pilot::FallUpdate()
   if ( mSpeed > 0.0f )
     mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
 
+  mX += mMoveSpeed * deltaTime;
 
 //  TODO: do something with this magic mess
 
@@ -438,12 +439,9 @@ Plane::Pilot::RunUpdate()
     return;
 
 
-  if ( mX < 0.0f )
-    mX = 1.0f;
+  mX += mMoveSpeed * deltaTime;
 
-  else if ( mX > 1.0f )
-    mX = 0.0f;
-
+  CoordinatesClamp();
 
   if ( plane->mIsLocal == false )
     return;

@@ -197,6 +197,7 @@ public:
 
     float mSpeed {};
     float mVSpeed {};
+    float mMoveSpeed {};
     float mGravity {};
 
     int8_t mFallFrame {};
