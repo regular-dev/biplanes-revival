@@ -1237,16 +1237,15 @@ getAngleRelative(
 }
 
 std::vector <float>
-Plane::aiState() const
+Plane::aiState(
+  const Plane& opponentPlane,
+  const BulletSpawner& bulletSpawner ) const
 {
   namespace plane = constants::plane;
 
 
   std::vector <float> inputs {};
   inputs.resize(AiDatasetIndices::IndexCount);
-
-  const auto& opponentPlane =
-    planes.at(static_cast <PLANE_TYPE> (!mType));
 
 
   const auto writePlaneState =
@@ -1391,7 +1390,7 @@ Plane::aiState() const
 
   size_t processedBullets {};
 
-  for ( const auto& bullet : bullets.GetClosestBullets(mX, mY, mType) )
+  for ( const auto& bullet : bulletSpawner.GetClosestBullets(mX, mY, mType) )
   {
     namespace DatasetBulletIndices = AiDatasetBulletIndices;
 

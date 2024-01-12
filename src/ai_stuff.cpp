@@ -933,8 +933,11 @@ Controls
 QLearningPhase::getInput(
   const Plane& plane )
 {
+  const auto& opponentPlane =
+      planes.at(static_cast <PLANE_TYPE> (!plane.type()));
+
   const auto datasetEntry = mInputProcessor->filterInput(
-    plane.aiState(),
+    plane.aiState(opponentPlane, bullets),
     plane,
     *mBackends.at(plane.type()) );
 
