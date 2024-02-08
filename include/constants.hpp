@@ -120,9 +120,17 @@ namespace constants
     static constexpr float groundCollision {182.f / baseHeight};
 
     static constexpr float pitchStep {22.5f};
+
     static constexpr float acceleration {0.5f};
+    static constexpr float deceleration {0.5f * acceleration};
+    static constexpr float takeoffAcceleration {0.85f * acceleration};
+    static constexpr float takeoffDeceleration {0.75f * acceleration};
+    static constexpr float diveAcceleration {0.2f * acceleration};
+    static constexpr float abandonedDeceleration {0.2f * acceleration};
+
     static constexpr float maxSpeedBase {0.303f};
     static constexpr float maxSpeedBoosted {0.43478f};
+    static constexpr float maxSpeedAbandoned {0.5f * maxSpeedBase};
 
     static constexpr double deadCooldown {3.0};
     static constexpr double spawnProtectionCooldown {2.0};

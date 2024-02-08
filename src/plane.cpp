@@ -218,7 +218,7 @@ Plane::Accelerate()
     if ( mIsTakingOff == false )
       TakeOffStart();
 
-    mSpeed += 0.85f * plane::acceleration * deltaTime;
+    mSpeed += plane::takeoffAcceleration * deltaTime;
 
     return;
   }
@@ -252,12 +252,12 @@ Plane::Decelerate()
 
   if ( mIsTakingOff == true )
   {
-    mSpeed -= 0.75f * plane::acceleration * deltaTime;
+    mSpeed -= plane::takeoffDeceleration * deltaTime;
     return;
   }
 
 
-  mSpeed -= 0.5f * plane::acceleration * deltaTime;
+  mSpeed -= plane::deceleration * deltaTime;
 
 
   if ( mSpeed < 0.0f )
@@ -401,7 +401,7 @@ Plane::SpeedUpdate()
   {
     if ( mSpeed < plane::maxSpeedBoosted )
     {
-      mSpeed += 0.2f * plane::acceleration * deltaTime;
+      mSpeed += plane::diveAcceleration * deltaTime;
 
       if ( mSpeed > mMaxSpeedVar )
       {
@@ -520,8 +520,8 @@ Plane::AbandonedUpdate()
     return;
 
 
-  if ( mSpeed > 0.5f * plane::maxSpeedBase )
-    mSpeed -= 0.2f * plane::acceleration * deltaTime;
+  if ( mSpeed > plane::maxSpeedAbandoned )
+    mSpeed -= plane::abandonedDeceleration * deltaTime;
 
 
   if ( mPitchCooldown.isReady() == false )
