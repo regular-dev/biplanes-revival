@@ -69,13 +69,6 @@ Menu::UpdateControls()
 
       else if ( isKeyReleased(SDL_SCANCODE_R) == true )
         game.disableRendering = false;
-
-
-      if ( isKeyPressed(SDL_SCANCODE_S) == true )
-        aiController.save();
-
-      else if ( isKeyPressed(SDL_SCANCODE_L) == true )
-        aiController.load();
     }
 
     return;

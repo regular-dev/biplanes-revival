@@ -124,7 +124,6 @@ public:
 
 
 //  Utility methods for AI
-  std::vector <float> aiState( const Plane& opponent, const BulletSpawner& ) const;
   void randomizeState();
 
   SDL_Point getClosestCollision() const;

@@ -12,11 +12,6 @@ if (WIN32)
   option(${TARGET}_DISABLE_CONSOLE "${TARGET}: Don't show console window" ON)
 endif()
 
-# tiny-dnn
-set(USE_SERIALIZER OFF CACHE BOOL "" FORCE)
-set(USE_IMAGE_API OFF CACHE BOOL "" FORCE)
-set(USE_DOUBLE OFF CACHE BOOL "" FORCE)
-
 
 set_target_properties(${TARGET} PROPERTIES
   CXX_STANDARD_REQUIRED ON
@@ -105,15 +100,9 @@ target_sources(${TARGET} PRIVATE
   src/zeppelin.cpp
   include/zeppelin.hpp
 
-  src/ai_backend.cpp
-  include/ai_backend.hpp
-
   src/ai_stuff.cpp
   include/ai_stuff.hpp
 )
-
-
-add_subdirectory(lib/tiny-dnn)
 
 
 include(FetchContent)
@@ -156,7 +145,6 @@ target_link_libraries(${TARGET} PUBLIC
   SDL2::Main
   SDL2::Image
   SDL2::Mixer
-  tiny_dnn
   TimeUtils::TimeUtils
 )
 

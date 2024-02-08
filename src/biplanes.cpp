@@ -304,9 +304,6 @@ game_init_sp()
   aiController = {};
   aiController.init();
 
-  if ( gameState().gameMode == GAME_MODE::HUMAN_VS_BOT )
-    aiController.load();
-
   log_message( "\nLOG: Singleplayer game initialized successfully!\n\n" );
 
   menu.setMessage(MESSAGE_TYPE::SUCCESSFULL_CONNECTION);
@@ -405,8 +402,6 @@ game_loop_sp()
   if ( playerPlane != nullptr )
     processPlaneControls(*playerPlane, getLocalControls());
 
-
-  aiController.processInput();
 
   if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
     aiController.update();
