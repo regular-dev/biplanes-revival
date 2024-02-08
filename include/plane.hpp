@@ -87,7 +87,7 @@ public:
 
   void SpeedUpdate();
   void CoordinatesUpdate();
-  void CoordinatesClamp();
+  void CoordinatesWrap();
   void CollisionsUpdate();
   void TakeOffUpdate();
   void AbandonedUpdate();
@@ -234,7 +234,7 @@ public:
     void FallUpdate();
     void RunUpdate();
     void DeathUpdate();
-    void CoordinatesClamp();
+    void CoordinatesWrap();
     void AnimationsUpdate();
     void AnimationsReset();
     void FallAnimUpdate();

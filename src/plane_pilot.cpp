@@ -317,12 +317,9 @@ Plane::Pilot::ChuteUnlock()
 }
 
 void
-Plane::Pilot::CoordinatesClamp()
+Plane::Pilot::CoordinatesWrap()
 {
-  if ( mX < 0.0f )
-    mX += 1.0f;
-  else if ( mX > 1.0f )
-    mX -= 1.0f;
+  mX = std::fmod( std::fmod(mX, 1.0f) + 1.0f, 1.0f );
 }
 
 void
@@ -403,10 +400,9 @@ Plane::Pilot::FallUpdate()
     mSpeed = 0.0f;
 
 
-  if ( mSpeed < 0.0f )
-    mSpeed = 0.0f;
+  mSpeed = std::max(mSpeed, 0.0f);
 
-  CoordinatesClamp();
+  CoordinatesWrap();
 
 
 //  THINK: autoland remote pilot ?
@@ -441,7 +437,7 @@ Plane::Pilot::RunUpdate()
 
   mX += mMoveSpeed * deltaTime;
 
-  CoordinatesClamp();
+  CoordinatesWrap();
 
   if ( plane->mIsLocal == false )
     return;

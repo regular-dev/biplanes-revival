@@ -235,8 +235,7 @@ Plane::Accelerate()
     else
       mSpeed += 0.75f * plane::acceleration * deltaTime;
 
-    if ( mSpeed > mMaxSpeedVar )
-      mSpeed = mMaxSpeedVar;
+    mSpeed = std::min(mSpeed, mMaxSpeedVar);
   }
 }
 
@@ -259,18 +258,9 @@ Plane::Decelerate()
 
   mSpeed -= plane::deceleration * deltaTime;
 
+  mSpeed = std::max(mSpeed, 0.0f);
 
-  if ( mSpeed < 0.0f )
-    mSpeed = 0.0f;
-
-  if ( mMaxSpeedVar <= plane::maxSpeedBase )
-    return;
-
-
-  mMaxSpeedVar = mSpeed;
-
-  if ( mMaxSpeedVar < plane::maxSpeedBase )
-    mMaxSpeedVar = plane::maxSpeedBase;
+  mMaxSpeedVar = std::max(mSpeed, plane::maxSpeedBase);
 }
 
 void
@@ -387,11 +377,10 @@ Plane::SpeedUpdate()
       mMaxSpeedVar = mSpeed;
     }
 
-    if ( mMaxSpeedVar < plane::maxSpeedBase )
-      mMaxSpeedVar = plane::maxSpeedBase;
+    mMaxSpeedVar = std::max(
+      mMaxSpeedVar, plane::maxSpeedBase );
 
-    if ( mSpeed < 0.0f )
-      mSpeed = 0.0f;
+    mSpeed = std::max(mSpeed, 0.0f);
 
     return;
   }
@@ -405,13 +394,10 @@ Plane::SpeedUpdate()
 
       if ( mSpeed > mMaxSpeedVar )
       {
-        mMaxSpeedVar = mSpeed;
+        mMaxSpeedVar = std::min(
+          mSpeed, plane::maxSpeedBoosted );
 
-        if ( mMaxSpeedVar > plane::maxSpeedBoosted )
-        {
-          mMaxSpeedVar = plane::maxSpeedBoosted;
-          mSpeed = mMaxSpeedVar;
-        }
+        mSpeed = mMaxSpeedVar;
       }
 
       return;
@@ -445,20 +431,15 @@ Plane::CoordinatesUpdate()
       mY += ( mMaxSpeedVar - mSpeed ) * deltaTime;
   }
 
-  CoordinatesClamp();
+  CoordinatesWrap();
 }
 
 void
-Plane::CoordinatesClamp()
+Plane::CoordinatesWrap()
 {
-  if ( mX > 1.0f )
-    mX -= 1.0f;
-  else if ( mX < 0.0f )
-    mX += 1.0f;
+  mX = std::fmod( std::fmod(mX, 1.0f) + 1.0f, 1.0f );
 
-
-  if ( mY < 0.0f )
-    mY = 0.0f;
+  mY = std::max(mY, 0.0f);
 }
 
 void

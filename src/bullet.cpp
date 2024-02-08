@@ -68,13 +68,9 @@ Bullet::Update()
 
   if ( collidesWithScreenBorder == true )
   {
-    if ( mX > 1.0f )
-      mX = 1.0f;
-    else if ( mX < 0.0f )
-      mX = 0.0f;
+    mX = std::clamp(mX, 0.0f, 1.0f);
 
-    if ( mY < 0.0f )
-      mY = 0.0f;
+    mY = std::max(mY, 0.0f);
 
     return Destroy();
   }
