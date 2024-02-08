@@ -234,7 +234,7 @@ class nodes {
     std::fstream fs(filepath, std::fstream::in | std::fstream::binary);
 
     if ( !fs.is_open() ) {
-      std::cerr << "Couldn't open file " << filepath << " to save weights\n";
+      std::cerr << "Couldn't open file " << filepath << " to load weights\n";
       return false;
     }
 

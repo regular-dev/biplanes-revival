@@ -82,8 +82,26 @@ bool AI_Backend::saveModel(const std::string &path) const
     return m_mdl->save(path);
 }
 
+static void fixModelDropout(AI_Backend& backend)
+{
+    const size_t inputSize = AiDatasetIndices::IndexCount + size_t(AiAction::ActionCount);
+    constexpr size_t outputSize = 1;
+
+//    Train 1 epoch on zeroed dataset
+    backend.train(
+        {tiny_dnn::vec_t(inputSize, 0.f)},
+        {tiny_dnn::vec_t(outputSize, 0.f)},
+        1, 1);
+}
+
 bool AI_Backend::loadModel(const std::string &path)
 {
+//    --- BUG ---
+//    Model needs to be trained at least once
+//    for the dropout to load correctly
+    fixModelDropout(*this);
+//    --- END-BUG ---
+
     m_epochs_trained = 0;
     return m_mdl->load(path);
 }
@@ -101,8 +119,10 @@ void AI_Backend::initNet()
     m_mdl = std::make_shared< network< sequential > >();
 
     *m_mdl << fc(inputSize, 256) << relu()
-           << fc(256, 128) << relu() << dropout(128, 0.2)
-           << fc(128, 64) << relu() << dropout(64, 0.2)
+           << fc(256, 128) << relu()
+           << dropout(128, 0.2)
+           << fc(128, 64) << relu()
+           << dropout(64, 0.2)
            << fc(64, outputSize) << sigmoid();
 
     // optimizer
