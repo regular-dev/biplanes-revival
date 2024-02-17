@@ -56,9 +56,6 @@ Plane::Update()
     eventPush(EVENTS::PLANE_RESPAWN);
   }
 
-  mPrevX = mX;
-  mPrevY = mY;
-
   SpeedUpdate();
   CoordinatesUpdate();
   CollisionsUpdate();
@@ -418,6 +415,8 @@ Plane::CoordinatesUpdate()
     return;
 
 
+  const SDL_FPoint currentPos {mX, mY};
+
 //  Change coordinates
   mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
 
@@ -430,6 +429,12 @@ Plane::CoordinatesUpdate()
     if ( mSpeed < mMaxSpeedVar )
       mY += ( mMaxSpeedVar - mSpeed ) * deltaTime;
   }
+
+  mSpeedVec =
+  {
+    (mX - currentPos.x) * constants::tickRate,
+    (mY - currentPos.y) * constants::tickRate,
+  };
 
   CoordinatesWrap();
 }
@@ -776,9 +781,8 @@ Plane::Explode()
 
 
   mX = 0.0f;
-  mPrevX = 0.0f;
   mY = 0.0f;
-  mPrevY = 0.0f;
+  mSpeedVec = {};
 }
 
 void
@@ -813,6 +817,7 @@ Plane::Respawn()
   mIsTakingOff = false;
   mSpeed = 0.0f;
   mMaxSpeedVar = plane::maxSpeedBase;
+  mSpeedVec = {};
 
   mDeadCooldown.Stop();
   mPitchCooldown.Stop();
@@ -828,9 +833,6 @@ Plane::Respawn()
   mDir = mType == PLANE_TYPE::BLUE
     ? plane::spawnRotationBlue
     : plane::spawnRotationRed;
-
-  mPrevX = mX;
-  mPrevY = mY;
 
   mHasJumped = false;
 

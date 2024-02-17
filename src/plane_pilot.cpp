@@ -48,9 +48,6 @@ Plane::Pilot::setPlane(
 void
 Plane::Pilot::Update()
 {
-  mPrevX = mX;
-  mPrevY = mY;
-
   FallUpdate();
   RunUpdate();
   HitboxUpdate();
@@ -267,8 +264,6 @@ Plane::Pilot::Bail(
 
   mX = planeX;
   mY = planeY;
-  mPrevX = mX;
-  mPrevY = mY;
   mDir = bailDir;
 
   if ( mDir < 0 )
@@ -331,6 +326,8 @@ Plane::Pilot::FallUpdate()
   if ( mIsDead == true || mIsRunning == true )
     return;
 
+
+  const SDL_FPoint currentPos {mX, mY};
 
   if ( mSpeed > 0.0f )
     mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
@@ -402,6 +399,12 @@ Plane::Pilot::FallUpdate()
 
   mSpeed = std::max(mSpeed, 0.0f);
 
+  mSpeedVec =
+  {
+    (mX - currentPos.x) * constants::tickRate,
+    (mY - currentPos.y) * constants::tickRate,
+  };
+
   CoordinatesWrap();
 
 
@@ -435,7 +438,15 @@ Plane::Pilot::RunUpdate()
     return;
 
 
+  const SDL_FPoint currentPos {mX, mY};
+
   mX += mMoveSpeed * deltaTime;
+
+  mSpeedVec =
+  {
+    (mX - currentPos.x) * constants::tickRate,
+    (mY - currentPos.y) * constants::tickRate,
+  };
 
   CoordinatesWrap();
 
@@ -692,6 +703,7 @@ Plane::Pilot::Death()
   mSpeed = 0.0f;
   mVSpeed = 0.0f;
   mGravity = 0.0f;
+  mSpeedVec = {};
   mChuteState = CHUTE_STATE::CHUTE_NONE;
 }
 
@@ -757,6 +769,7 @@ Plane::Pilot::FallSurvive()
   mSpeed = 0.0f;
   mVSpeed = 0.0f;
   mGravity = 0.0f;
+  mSpeedVec = {};
   mChuteState = CHUTE_STATE::CHUTE_IDLE;
 }
 
@@ -789,6 +802,7 @@ Plane::Pilot::Respawn()
   mGravity = 0.0f;
   mSpeed = 0.0f;
   mVSpeed = 0.0f;
+  mSpeedVec = {};
 
   AnimationsReset();
 }

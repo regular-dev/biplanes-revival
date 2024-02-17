@@ -42,12 +42,11 @@ class Plane
 
   float mX {};
   float mY {};
-  float mPrevX {};
-  float mPrevY {};
   float mDir {};
 
   float mSpeed {};
   float mMaxSpeedVar {};
+  SDL_FPoint mSpeedVec {};
 
   Timer mPitchCooldown {0.0f};
   Timer mShootCooldown {0.0f};
@@ -115,6 +114,8 @@ public:
 
   PLANE_TYPE type() const;
   uint8_t score() const;
+  uint8_t hp() const;
+  float protectionRemainder() const;
 
   void setLocal( const bool );
   bool isLocal() const;
@@ -188,14 +189,13 @@ public:
 
     float mX {};
     float mY {};
-    float mPrevX {};
-    float mPrevY {};
     int16_t mDir {};
 
     float mSpeed {};
     float mVSpeed {};
     float mMoveSpeed {};
     float mGravity {};
+    SDL_FPoint mSpeedVec {};
 
     int8_t mFallFrame {};
     Timer mFallAnim {0.0f};
