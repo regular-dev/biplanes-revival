@@ -134,6 +134,7 @@ Plane::Draw() const
     setRenderColor(colors::bulletHitbox);
     SDL_RenderDrawRectF( gRenderer, &hitbox );
 
+
     const SDL_FRect planeCenter
     {
       toWindowSpaceX(mX - 0.05f * plane::sizeX),
@@ -149,16 +150,13 @@ Plane::Draw() const
 
   if ( mHasJumped == false && gameState().debug.aiInputs == true )
   {
-    setRenderColor(colors::bulletHitbox);
-
-    SDL_Point dot = getClosestCollision();
-
+    setRenderColor(colors::planeHitbox);
     SDL_RenderDrawLine(
       gRenderer,
       toWindowSpaceX(mX),
       toWindowSpaceY(mY),
-      toWindowSpaceX(dot.x),
-      toWindowSpaceY(dot.y) );
+      toWindowSpaceX(mX + mSpeedVec.x * constants::tickRate),
+      toWindowSpaceY(mY + mSpeedVec.y * constants::tickRate) );
   }
 }
 
@@ -432,8 +430,8 @@ Plane::CoordinatesUpdate()
 
   mSpeedVec =
   {
-    (mX - currentPos.x) * constants::tickRate,
-    (mY - currentPos.y) * constants::tickRate,
+    mX - currentPos.x,
+    mY - currentPos.y,
   };
 
   CoordinatesWrap();

@@ -186,16 +186,13 @@ Plane::Pilot::Draw() const
 
   if ( gameState().debug.aiInputs == true )
   {
-    SDL_Point dot = getClosestCollision();
-
-//    TODO: choose more suitable color
-    setRenderColor(colors::bulletHitbox);
+    setRenderColor(colors::planeHitbox);
     SDL_RenderDrawLine(
       gRenderer,
       toWindowSpaceX(mX),
       toWindowSpaceY(mY),
-      toWindowSpaceX(dot.x),
-      toWindowSpaceY(dot.y) );
+      toWindowSpaceX(mX + mSpeedVec.x * constants::tickRate),
+      toWindowSpaceY(mY + mSpeedVec.y * constants::tickRate) );
   }
 }
 
@@ -401,8 +398,8 @@ Plane::Pilot::FallUpdate()
 
   mSpeedVec =
   {
-    (mX - currentPos.x) * constants::tickRate,
-    (mY - currentPos.y) * constants::tickRate,
+    mX - currentPos.x,
+    mY - currentPos.y,
   };
 
   CoordinatesWrap();
@@ -444,8 +441,8 @@ Plane::Pilot::RunUpdate()
 
   mSpeedVec =
   {
-    (mX - currentPos.x) * constants::tickRate,
-    (mY - currentPos.y) * constants::tickRate,
+    mX - currentPos.x,
+    mY - currentPos.y,
   };
 
   CoordinatesWrap();
