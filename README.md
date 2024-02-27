@@ -3,8 +3,8 @@
 It's a PC recreation of an old cellphone game "Bluetooth Biplanes"
 (originally developed by Morpheme Ltd. in 2004)
 
-## Gameplay video
-## [![Biplanes Revival PC Gameplay](https://img.youtube.com/vi/mIgMNh6gGXs/sddefault.jpg)](https://youtu.be/mIgMNh6gGXs "Biplanes Revival PC Gameplay")
+## Gameplay video:
+[![Biplanes Revival PC Gameplay](https://img.youtube.com/vi/mIgMNh6gGXs/sddefault.jpg)](https://youtu.be/mIgMNh6gGXs "Biplanes Revival PC Gameplay")
 
 ## Features:
 
