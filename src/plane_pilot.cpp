@@ -638,12 +638,18 @@ Plane::Pilot::ChuteIsHit(
 float
 Plane::Pilot::x() const
 {
+  if ( plane->hasJumped() == false )
+    return plane->x();
+
   return mX;
 }
 
 float
 Plane::Pilot::y() const
 {
+  if ( plane->hasJumped() == false )
+    return plane->y();
+
   return mY;
 }
 
