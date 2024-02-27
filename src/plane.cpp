@@ -965,6 +965,22 @@ Plane::score() const
   return mScore;
 }
 
+uint8_t
+Plane::hp() const
+{
+  return mHp;
+}
+
+float
+Plane::protectionRemainder() const
+{
+  if (  isDead() == false ||
+        mHasJumped == false )
+    return 0.0f;
+
+  return mProtection.remainderTime();
+}
+
 void
 Plane::setLocal(
   const bool local )
@@ -1001,6 +1017,30 @@ float
 Plane::y() const
 {
   return mY;
+}
+
+float
+Plane::dir() const
+{
+  return mDir;
+}
+
+float
+Plane::speed() const
+{
+  return mSpeed;
+}
+
+float
+Plane::maxSpeed() const
+{
+  return mMaxSpeedVar;
+}
+
+SDL_FPoint
+Plane::speedVector() const
+{
+  return mSpeedVec;
 }
 
 // Get coordinates for sending

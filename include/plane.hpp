@@ -126,6 +126,11 @@ public:
 
   float x() const;
   float y() const;
+  float dir() const;
+
+  float speed() const;
+  float maxSpeed() const;
+  SDL_FPoint speedVector() const;
 
 
   bool isHit( const float, const float ) const;
