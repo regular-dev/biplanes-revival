@@ -124,15 +124,6 @@ public:
   bool isBot() const;
 
 
-//  Utility methods for AI
-  SDL_Point getClosestCollision() const;
-  float getDistanceToPoint( const SDL_Point& ) const;
-  float getSpeedDir() const;
-  float getSpeed() const;
-  float getAngleRelative( const float, const float ) const;
-//
-
-
   float x() const;
   float y() const;
 
