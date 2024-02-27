@@ -29,64 +29,6 @@
 
 
 
-Controls
-aiActionToControls(
-  const AiAction action )
-{
-  Controls controls {};
-
-  switch (action)
-  {
-    case AiAction::Idle:
-      break;
-
-    case AiAction::Accelerate:
-    {
-      controls.throttle = THROTTLE_INCREASE;
-      break;
-    }
-
-    case AiAction::Decelerate:
-    {
-      controls.throttle = THROTTLE_DECREASE;
-      break;
-    }
-
-    case AiAction::TurnLeft:
-    {
-      controls.pitch = PITCH_LEFT;
-      break;
-    }
-
-    case AiAction::TurnRight:
-    {
-      controls.pitch = PITCH_RIGHT;
-      break;
-    }
-
-    case AiAction::Shoot:
-    {
-      controls.shoot = true;
-      break;
-    }
-
-    case AiAction::Jump:
-    {
-      controls.jump = true;
-      break;
-    }
-
-    default:
-    {
-      log_message("ERROR: Unknown AiAction: "
-        + std::to_string(static_cast <size_t> (action)), "\n");
-      break;
-    }
-  }
-
-  return controls;
-}
-
 
 void
 AiController::init()

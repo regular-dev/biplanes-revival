@@ -29,7 +29,6 @@
 #include <cstddef>
 
 
-Controls aiActionToControls( const AiAction );
 
 
 class AiController
