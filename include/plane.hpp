@@ -171,6 +171,8 @@ public:
     void TurnIdle();
     void Shoot();
     void Jump();
+
+    void ExecuteAiAction( const AiAction );
   };
 
   class Pilot

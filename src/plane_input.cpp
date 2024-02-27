@@ -82,3 +82,41 @@ Plane::Input::Jump()
   else
     plane->Jump();
 }
+
+void
+Plane::Input::ExecuteAiAction(
+  const AiAction action )
+{
+  switch (action)
+  {
+    case AiAction::Idle:
+      break;
+
+    case AiAction::Accelerate:
+      Accelerate();
+      break;
+
+    case AiAction::Decelerate:
+      Decelerate();
+      break;
+
+    case AiAction::TurnLeft:
+      TurnLeft();
+      break;
+
+    case AiAction::TurnRight:
+      TurnRight();
+      break;
+
+    case AiAction::Shoot:
+      Shoot();
+      break;
+
+    case AiAction::Jump:
+      Jump();
+      break;
+
+    default:
+      break;
+  }
+}
