@@ -1,17 +1,22 @@
 /*
+  https://github.com/holycattle/space_invaders/blob/master/sdlhelper/SDL_Vector.h
+
   Original Vector class definition by Miguel Gomez, which was written for an article called "C++ Data Structures for Rigid-Body Physics", and can be found in http://www.gamasutra.com/view/feature/131761/c_data_structures_for_rigidbody_.php?page=2
 */
 
-#include <math.h>
+#include <cmath>
 
-typedef float Scalar;
 
 class SDL_Vector {
+
+  typedef float Scalar;
+
   public:
-    Scalar x,y,z;
-    SDL_Vector():
-      x(0), y(0), z(0) {}
-    SDL_Vector( const Scalar& a, const Scalar& b, const Scalar& c ):
+    Scalar x {}, y {}, z {};
+
+    SDL_Vector() = default;
+
+    SDL_Vector( const Scalar& a, const Scalar& b, const Scalar& c = 0.f ):
       x(a), y(b), z(c) {}
 
     Scalar& operator[] (const long i) {
@@ -28,13 +33,6 @@ class SDL_Vector {
 
     const SDL_Vector operator - () const {
       return SDL_Vector( -x, -y, -z );
-    }
-
-    const SDL_Vector& operator = ( const SDL_Vector& v ) {
-      x = v.x;
-      y = v.y;
-      z = v.z;
-      return *this;
     }
 
     const SDL_Vector& operator += ( const SDL_Vector& v ) {
@@ -111,7 +109,13 @@ class SDL_Vector {
     //length
 
     const Scalar length() const {
-      return (Scalar)sqrt( (double)this->dot(*this) );
+      return std::sqrt( this->dot(*this) );
+    }
+
+    //length_squared
+
+    const Scalar length_squared() const {
+      return this->dot(*this);
     }
 
     //unit vector
@@ -124,9 +128,5 @@ class SDL_Vector {
 
     void normalize() {
       (*this) /= length();
-    }
-
-    const bool nearlyEquals( const SDL_Vector& v, const Scalar e ) const {
-      return fabs(x-v.x);
     }
 };
