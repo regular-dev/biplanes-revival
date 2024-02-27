@@ -29,10 +29,63 @@
 #include <cstddef>
 
 
+class AiState
+{
+  float mPriority {};
+  float mSensitivity {};
+
+
+public:
+  AiState( const float sensitivity );
+
+  virtual void update(
+    const Plane& self,
+    const Plane& opponent,
+    const std::vector <Bullet>& opponentBullets );
+
+  virtual std::vector <AiAction> actions(
+    const Plane& self,
+    const Plane& opponent,
+    const std::vector <Bullet>& opponentBullets ) const;
+
+  void resetPriority( const float newPriority = 0.f );
+
+  float priority() const;
+
+
+protected:
+  void updatePriority( const float priority );
+};
+
+
+class AiStateController
+{
+  std::vector <AiState*> mStates {};
+  AiState* mCurrentState {};
+
+public:
+  AiStateController() = default;
+
+  void init();
+
+  void update(
+    const Plane& self,
+    const Plane& opponent,
+    const std::vector <Bullet>& opponentBullets );
+
+  const AiState* currentState() const;
+};
 
 
 class AiController
 {
+  std::map <PLANE_TYPE, AiStateController> mStateController
+  {
+    {PLANE_TYPE::BLUE, {}},
+    {PLANE_TYPE::RED, {}},
+  };
+
+
 public:
   AiController() = default;
 

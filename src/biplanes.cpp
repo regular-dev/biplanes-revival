@@ -402,9 +402,7 @@ game_loop_sp()
   if ( playerPlane != nullptr )
     processPlaneControls(*playerPlane, getLocalControls());
 
-
-  if ( gameState().gameMode == GAME_MODE::BOT_VS_BOT )
-    aiController.update();
+  aiController.update();
 
 
   for ( auto& cloud : clouds )
