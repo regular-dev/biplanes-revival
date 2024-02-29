@@ -36,40 +36,7 @@ Menu::UpdateControls()
   if ( mCurrentRoom == ROOMS::GAME )
   {
     if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
-    {
       GoBack();
-
-      if ( game.gameMode == GAME_MODE::BOT_VS_BOT )
-      {
-        game.disableRendering = false;
-        game.fastforwardGameLoop = false;
-        setVSync(game.isVSyncEnabled);
-      }
-
-      return;
-    }
-
-
-    if ( game.gameMode == GAME_MODE::BOT_VS_BOT )
-    {
-      if ( isKeyPressed(SDL_SCANCODE_T) == true )
-      {
-        game.fastforwardGameLoop = true;
-        setVSync(false);
-      }
-      else if ( isKeyReleased(SDL_SCANCODE_T) == true )
-      {
-        game.fastforwardGameLoop = false;
-        setVSync(game.isVSyncEnabled);
-      }
-
-
-      if ( isKeyPressed(SDL_SCANCODE_R) == true )
-        game.disableRendering = true;
-
-      else if ( isKeyReleased(SDL_SCANCODE_R) == true )
-        game.disableRendering = false;
-    }
 
     return;
   }

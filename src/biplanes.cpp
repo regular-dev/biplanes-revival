@@ -150,27 +150,20 @@ main(
 
   while ( game.isExiting == false )
   {
-    if ( game.fastforwardGameLoop == false )
-      TimeUtils::SleepUntil(tickPrevious + tickInterval);
+    TimeUtils::SleepUntil(tickPrevious + tickInterval);
 
     const auto currentTime = TimeUtils::Now();
 
-    if ( game.deltaTimeResetRequested == true )
-    {
-      game.deltaTimeResetRequested = false;
-
-      while ( currentTime >= tickPrevious + tickInterval )
-        tickPrevious += tickInterval;
-    }
-    else
-      deltaTime = static_cast <double> (currentTime - timePrevious);
+    deltaTime = static_cast <double> (currentTime - timePrevious);
 
     timePrevious = currentTime;
+
 
     if ( connection->IsRunning() == true )
       connection->Update(deltaTime);
 
     network.matchmaker->Update();
+
 
     while ( SDL_PollEvent(&windowEvent) != 0 )
     {
@@ -185,6 +178,7 @@ main(
       menu.UpdateControls();
     }
 
+
     uint32_t ticks = 0;
 
     for ( ; currentTime >= tickPrevious + tickInterval;
@@ -194,9 +188,6 @@ main(
 //    Fixed time step
     deltaTime = ticks * tickInterval;
 
-
-    if ( game.fastforwardGameLoop == true )
-      ticks = 1;
 
 //    TODO: independent render frequency
     if ( ticks == 0 )
@@ -220,14 +211,8 @@ main(
 
       readKeyboardInput();
 
-      if ( game.disableRendering == true )
-        continue;
-
       draw_game();
     }
-
-    if ( game.disableRendering == true )
-      continue;
 
     menu.DrawMenu();
     draw_window_letterbox();
