@@ -29,6 +29,39 @@
 #include <cstddef>
 
 
+class AiTemperature
+{
+public:
+
+  struct Weights
+  {
+      float positive {};
+      float negative {};
+
+      Weights() = default;
+
+      static Weights FromTime(
+        const float heatupTime,
+        const float cooldownTime );
+  };
+
+
+  AiTemperature() = default;
+  AiTemperature( const Weights&, const float value = {} );
+
+  void update( const float newValue, const float factor = 1.f );
+  void set( const float newValue );
+
+  operator float () const;
+  Weights weights() const;
+
+
+private:
+  float mValue {};
+  Weights mWeights {};
+};
+
+
 class AiState
 {
   float mPriority {};

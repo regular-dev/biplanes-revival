@@ -77,6 +77,60 @@ get_angle_to_point(
 }
 
 
+AiTemperature::AiTemperature(
+const Weights& sensitivity,
+  const float value )
+  : mValue {value}
+  , mWeights{sensitivity}
+{
+}
+
+void
+AiTemperature::update(
+  const float newValue,
+  const float factor )
+{
+  const auto weight = newValue >= mValue
+  ? mWeights.positive
+  : mWeights.negative;
+
+  const auto valueDiff = newValue - mValue;
+
+  mValue += factor * weight * std::copysign(1.f, valueDiff);
+  mValue = std::clamp(mValue, 0.0f, 1.0f);
+}
+
+void
+AiTemperature::set(
+  const float newValue )
+{
+  mValue = newValue;
+}
+
+AiTemperature::operator float () const
+{
+  return mValue;
+}
+
+AiTemperature::Weights
+AiTemperature::weights() const
+{
+  return mWeights;
+}
+
+AiTemperature::Weights
+AiTemperature::Weights::FromTime(
+  const float heatupTime,
+  const float cooldownTime )
+{
+  return
+  {
+    1.f / heatupTime,
+    1.f / cooldownTime,
+  };
+}
+
+
 class AiStateTest : public AiState
 {
 public:
