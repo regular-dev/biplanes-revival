@@ -21,6 +21,7 @@
 #include <include/ai_stuff.hpp>
 #include <include/biplanes.hpp>
 #include <include/controls.hpp>
+#include <include/time.hpp>
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/menu.hpp>
@@ -30,8 +31,10 @@
 
 #include <lib/SDL_Vector.h>
 
-#include <algorithm>
 #include <cassert>
+#include <iomanip>
+#include <sstream>
+#include <algorithm>
 
 
 static float
@@ -134,23 +137,36 @@ AiTemperature::Weights::FromTime(
 class AiStateTest : public AiState
 {
 public:
-  AiStateTest( const float sensitivity );
+  AiStateTest( const AiTemperature& temperature );
 
   void update(
     const Plane& self,
     const Plane& opponent,
     const std::vector <Bullet>& opponentBullets ) override;
 
-  std::vector <AiAction> actions(
-    const Plane& self,
-    const Plane& opponent,
-    const std::vector <Bullet>& opponentBullets ) const override;
+  std::vector <AiAction> actions() const override;
 };
 
 AiStateTest::AiStateTest(
-  const float sensitivity )
-  : AiState(sensitivity)
-{}
+const AiTemperature& temperature )
+  : AiState(temperature)
+{
+  constexpr auto ReactionTimeToWeights = &AiTemperature::Weights::FromTime;
+
+  const auto throttleWeight = ReactionTimeToWeights(0.1f, 0.1f);
+  const auto pitchWeight = ReactionTimeToWeights(0.1f, 0.1f);
+  const auto shootWeight = ReactionTimeToWeights(0.04f, 0.04f);
+
+  mActions =
+  {
+    {AiAction::Accelerate, throttleWeight},
+    {AiAction::Decelerate, throttleWeight},
+    {AiAction::TurnLeft, pitchWeight},
+    {AiAction::TurnRight, pitchWeight},
+    {AiAction::Shoot, shootWeight},
+    {AiAction::Jump, {}},
+  };
+}
 
 void
 AiStateTest::update(
@@ -158,17 +174,11 @@ AiStateTest::update(
   const Plane& opponent,
   const std::vector <Bullet>& opponentBullets )
 {
-  const float priority = 1.f;
+  const float temperature = 1.f;
 
-  updatePriority(priority);
-}
+  mTemperature.update(temperature, deltaTime);
 
-std::vector <AiAction>
-AiStateTest::actions(
-  const Plane& self,
-  const Plane& opponent,
-  const std::vector <Bullet>& opponentBullets ) const
-{
+
   namespace plane = constants::plane;
 
 
@@ -210,7 +220,10 @@ AiStateTest::actions(
   {
     if (  self.dir() >= -3.f * plane::pitchStep &&
           self.dir() <= 3.f * plane::pitchStep )
-    actions.push_back(AiAction::TurnRight);
+    {
+      actions.push_back(AiAction::TurnLeft);
+      actions.push_back(AiAction::TurnRight);
+    }
   }
 
   else if ( targetDirRelative >= plane::pitchStep * 0.5f )
@@ -233,6 +246,31 @@ AiStateTest::actions(
   else
     actions.push_back(AiAction::Decelerate);
 
+  for ( auto& [action, temperature] : mActions )
+  {
+    const bool actionFound = std::find(
+      actions.cbegin(),
+      actions.cend(),
+      action ) != actions.cend();
+
+    if ( actionFound == true )
+      temperature.update(1.f, deltaTime);
+
+    else
+      temperature.update(0.f, deltaTime);
+  }
+}
+
+std::vector <AiAction>
+AiStateTest::actions() const
+{
+  const float threshold = 0.95f;
+
+  std::vector <AiAction> actions {};
+
+  for ( auto& [action, temperature] : mActions )
+    if ( temperature >= threshold )
+      actions.push_back(action);
 
   return actions;
 }
@@ -275,9 +313,7 @@ AiController::update()
 
     const auto aiState = stateController.currentState();
 
-    const auto aiActions = aiState->actions(
-      plane, opponentPlane,
-      opponentBullets );
+    const auto aiActions = aiState->actions();
 
     for ( const auto aiAction : aiActions )
       plane.input.ExecuteAiAction(aiAction);
@@ -290,7 +326,7 @@ AiStateController::init()
 {
   mStates =
   {
-    new AiStateTest(1.f),
+    new AiStateTest({{}, 1.f}),
   };
 
   mCurrentState = mStates.back();
@@ -315,7 +351,7 @@ AiStateController::update(
     mStates.begin(), mStates.end(),
       [] ( const AiState* lhs, const AiState* rhs )
       {
-        return lhs->priority() < rhs->priority();
+        return lhs->temperature() < rhs->temperature();
       });
 }
 
@@ -327,10 +363,8 @@ AiStateController::currentState() const
 
 
 AiState::AiState(
-  const float sensitivity )
-  : mSensitivity{sensitivity}
-//  reactionTime = tickTime / sensitivity
-//  sensitivity = tickTime / reactionTime
+const AiTemperature& temperature )
+: mTemperature{temperature}
 {
 }
 
@@ -340,35 +374,42 @@ AiState::update(
   const Plane& opponent,
   const std::vector <Bullet>& opponentBullets )
 {
-  updatePriority(0.0);
+  mTemperature.update(0.f);
 }
 
 std::vector <AiAction>
-AiState::actions(
-  const Plane& self,
-  const Plane& opponent,
-  const std::vector <Bullet>& opponentBullets ) const
+AiState::actions() const
 {
   return {};
 }
 
 void
-AiState::updatePriority(
-  const float newPriority )
+AiState::printActionTemperatures() const
 {
-  mPriority += (newPriority - mPriority) * mSensitivity;
-  mPriority = std::clamp(mPriority, 0.0f, 1.0f);
+  log_message("action temps: ");
+
+  for ( auto& [action, temperature] : mActions )
+  {
+    const auto temperatureString = (std::stringstream {}
+      << std::fixed
+      << std::setprecision(2)
+      << temperature).str();
+
+    log_message(temperatureString + ", ");
+  }
+
+  log_message("\n");
 }
 
 void
-AiState::resetPriority(
-  const float newPriority )
+AiState::setTemperature(
+  const float newTemperature )
 {
-  mPriority = newPriority;
+  mTemperature.set(newTemperature);
 }
 
 float
-AiState::priority() const
+AiState::temperature() const
 {
-  return mPriority;
+  return mTemperature;
 }

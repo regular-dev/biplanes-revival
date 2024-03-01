@@ -22,7 +22,6 @@
 
 #include <include/fwd.hpp>
 #include <include/enums.hpp>
-#include <include/timer.hpp>
 
 #include <map>
 #include <vector>
@@ -64,30 +63,27 @@ private:
 
 class AiState
 {
-  float mPriority {};
-  float mSensitivity {};
+protected:
+
+  AiTemperature mTemperature {};
+
+  std::map <AiAction, AiTemperature> mActions {};
 
 
 public:
-  AiState( const float sensitivity );
+  AiState( const AiTemperature& temperature );
 
   virtual void update(
     const Plane& self,
     const Plane& opponent,
     const std::vector <Bullet>& opponentBullets );
 
-  virtual std::vector <AiAction> actions(
-    const Plane& self,
-    const Plane& opponent,
-    const std::vector <Bullet>& opponentBullets ) const;
+  virtual std::vector <AiAction> actions() const;
 
-  void resetPriority( const float newPriority = 0.f );
+  void printActionTemperatures() const;
 
-  float priority() const;
-
-
-protected:
-  void updatePriority( const float priority );
+  void setTemperature( const float );
+  float temperature() const;
 };
 
 
