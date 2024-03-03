@@ -80,6 +80,111 @@ get_angle_to_point(
 }
 
 
+ContextMap::ContextMap(
+  const size_t slotCount )
+  : mValues(slotCount)
+{
+}
+
+void
+ContextMap::write(
+  const size_t slot,
+  const float value )
+{
+  assert(slot < mValues.size());
+
+  mValues[slot] = value;
+}
+
+float
+ContextMap::value(
+  const size_t slot ) const
+{
+  assert(slot < mValues.size());
+
+  return mValues[slot];
+}
+
+float
+ContextMap::minValue() const
+{
+  assert(mValues.empty() == false);
+
+  return *std::min_element(
+    mValues.cbegin(),
+    mValues.cend() );
+}
+
+float
+ContextMap::maxValue() const
+{
+  assert(mValues.empty() == false);
+
+  return *std::max_element(
+    mValues.cbegin(),
+    mValues.cend() );
+}
+
+size_t
+ContextMap::minValueSlot() const
+{
+  assert(mValues.empty() == false);
+
+  const auto lowestValueIter = std::min_element(
+    mValues.cbegin(),
+    mValues.cend() );
+
+  return std::distance(
+    mValues.cbegin(),
+    lowestValueIter );
+}
+
+size_t
+ContextMap::maxValueSlot() const
+{
+  assert(mValues.empty() == false);
+
+  const auto highestValueIter = std::max_element(
+    mValues.cbegin(),
+    mValues.cend() );
+
+  return std::distance(
+    mValues.cbegin(),
+    highestValueIter );
+}
+
+ContextMap
+ContextMap::operator - (
+  const ContextMap& other ) const
+{
+  assert(mValues.size() == other.mValues.size());
+
+  ContextMap result {*this};
+
+  for ( size_t i {}; i < mValues.size(); ++i )
+    result.mValues[i] -= other.mValues[i];
+
+  return result;
+}
+
+ContextMap
+ContextMap::mask(
+  const ContextMap& other,
+  const float threshold ) const
+{
+  assert(mValues.empty() == false);
+  assert(mValues.size() == mValues.size());
+
+  ContextMap result {*this};
+
+  for ( size_t i {}; i < mValues.size(); ++i )
+    if ( other.mValues[i] > threshold )
+      result.mValues[i] = {};
+
+  return result;
+}
+
+
 AiTemperature::AiTemperature(
 const Weights& sensitivity,
   const float value )

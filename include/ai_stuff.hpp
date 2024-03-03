@@ -61,6 +61,28 @@ private:
 };
 
 
+class ContextMap
+{
+  std::vector <float> mValues {};
+
+
+public:
+  ContextMap( const size_t slotCount );
+
+  void write( const size_t slot, const float value );
+  float value( const size_t slot ) const;
+
+  float minValue() const;
+  float maxValue() const;
+
+  size_t minValueSlot() const;
+  size_t maxValueSlot() const;
+
+  ContextMap operator - ( const ContextMap& ) const;
+  ContextMap mask( const ContextMap& other, const float threshold ) const;
+};
+
+
 class AiState
 {
 protected:
