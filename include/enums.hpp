@@ -86,7 +86,7 @@ enum class EVENTS : unsigned char
   PILOT_DEATH   = 'd',
   PLANE_RESPAWN = 'R',
   PILOT_RESPAWN = 'r',
-  PILOT_LAND    = 'l'
+  PILOT_LAND    = 'l',
 };
 
 
