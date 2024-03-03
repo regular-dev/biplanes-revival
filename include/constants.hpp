@@ -114,8 +114,8 @@ namespace constants
     static constexpr float sizeX {24.f / baseWidth};
     static constexpr float sizeY {24.f / baseHeight};
 
-    static constexpr float hitboxSizeX {sizeX / 3.0f * 2.0f};
-    static constexpr float hitboxSizeY {sizeY / 3.0f * 2.0f};
+    static constexpr float hitboxSizeX {sizeX / 3.f * 2.f};
+    static constexpr float hitboxSizeY {sizeY / 3.f * 2.f};
 
     static constexpr float groundCollision {182.f / baseHeight};
 

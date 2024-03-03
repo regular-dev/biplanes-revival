@@ -270,7 +270,7 @@ Plane::Turn( const PLANE_PITCH inputDir )
 
   mPitchCooldown.Start();
 
-  float dir =
+  const float dir =
     inputDir == PLANE_PITCH::PITCH_LEFT
     ? -1.0f : 1.0f;
 
@@ -514,7 +514,7 @@ Plane::AbandonedUpdate()
 
   mPitchCooldown.Start();
 
-  mDir += mDir < 180.0f ? plane::pitchStep : -plane::pitchStep;
+  mDir += plane::pitchStep * (mDir < 180.f ? 1.f : -1.f);
 }
 
 void

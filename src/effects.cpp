@@ -217,11 +217,8 @@ ExplosionSpark::Update()
   mX += mSpeedX * deltaTime;
   mY += mSpeedY * deltaTime;
 
-  if ( mX > 1.0f )
-    mX -= 1.0f;
+  mX = std::fmod( std::fmod(mX, 1.0f) + 1.0f, 1.0f );
 
-  if ( mX < 0.0f )
-    mX += 1.0f;
 
 
   if ( mSpeedY < 0.0f )

@@ -94,8 +94,8 @@ AiTemperature::update(
   const float factor )
 {
   const auto weight = newValue >= mValue
-  ? mWeights.positive
-  : mWeights.negative;
+    ? mWeights.positive
+    : mWeights.negative;
 
   const auto valueDiff = newValue - mValue;
 
@@ -148,7 +148,7 @@ public:
 };
 
 AiStateTest::AiStateTest(
-const AiTemperature& temperature )
+  const AiTemperature& temperature )
   : AiState(temperature)
 {
   constexpr auto ReactionTimeToWeights = &AiTemperature::Weights::FromTime;
@@ -364,7 +364,7 @@ AiStateController::currentState() const
 
 AiState::AiState(
 const AiTemperature& temperature )
-: mTemperature{temperature}
+  : mTemperature{temperature}
 {
 }
 
