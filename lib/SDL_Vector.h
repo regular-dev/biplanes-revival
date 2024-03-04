@@ -4,6 +4,8 @@
   Original Vector class definition by Miguel Gomez, which was written for an article called "C++ Data Structures for Rigid-Body Physics", and can be found in http://www.gamasutra.com/view/feature/131761/c_data_structures_for_rigidbody_.php?page=2
 */
 
+#pragma once
+
 #include <cmath>
 
 
