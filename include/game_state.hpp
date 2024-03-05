@@ -57,6 +57,9 @@ public:
     bool collisions {};
     bool ai {};
 
+    bool stepByStepMode {};
+    bool advanceOneTick {};
+
   } debug {};
 
 

@@ -200,14 +200,7 @@ main(
       if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
         game_loop_mp();
       else
-      {
-        deltaTime = tickInterval;
-
-        for ( size_t tick = 0; tick < ticks; ++tick )
-          game_loop_sp();
-
-        deltaTime = ticks * tickInterval;
-      }
+        game_loop_sp();
 
       readKeyboardInput();
 
@@ -369,8 +362,18 @@ game_init_mp()
 void
 game_loop_sp()
 {
-  if ( gameState().isPaused == true )
+  auto& game = gameState();
+
+  if ( game.isPaused == true )
     return;
+
+  if ( game.debug.stepByStepMode == true )
+  {
+    if ( game.debug.advanceOneTick == false )
+      return;
+
+    game.debug.advanceOneTick = false;
+  }
 
 
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);

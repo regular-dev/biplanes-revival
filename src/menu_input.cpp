@@ -33,6 +33,12 @@ Menu::UpdateControls()
 {
   auto& game = gameState();
 
+  game.debug.stepByStepMode = isKeyDown(SDL_SCANCODE_S);
+
+  if ( isKeyPressed(SDL_SCANCODE_D) == true )
+      game.debug.advanceOneTick = true;
+
+
   if ( mCurrentRoom == ROOMS::GAME )
   {
     if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
@@ -40,6 +46,7 @@ Menu::UpdateControls()
 
     return;
   }
+
 
   if ( mIsTyping == true )
     UpdateTyping();
