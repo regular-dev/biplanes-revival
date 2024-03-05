@@ -70,7 +70,9 @@ public:
   ContextMap( const size_t slotCount );
 
   void write( const size_t slot, const float value );
-  float value( const size_t slot ) const;
+
+  float& operator [] ( const size_t slot );
+  float operator [] ( const size_t slot ) const;
 
   float minValue() const;
   float maxValue() const;

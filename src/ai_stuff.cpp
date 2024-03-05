@@ -97,8 +97,17 @@ ContextMap::write(
   mValues[slot] = value;
 }
 
+float&
+ContextMap::operator [] (
+  const size_t slot )
+{
+  assert(slot < mValues.size());
+
+  return mValues[slot];
+}
+
 float
-ContextMap::value(
+ContextMap::operator [] (
   const size_t slot ) const
 {
   assert(slot < mValues.size());
