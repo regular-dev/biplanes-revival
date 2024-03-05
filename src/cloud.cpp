@@ -149,21 +149,28 @@ Cloud::Draw()
     cloudTexture,
     nullptr,
     &cloudRect );
+}
+
+void
+Cloud::DrawCollisionLayer()
+{
+  const auto& game = gameState();
+
+  if ( game.isHardcoreEnabled == false && mId >= 2 )
+    return;
 
 
-  if ( game.debug.collisions == true )
+  const SDL_FRect cloudHitbox
   {
-    const SDL_FRect cloudHitbox
-    {
-      toWindowSpaceX(mCollisionBox.x),
-      toWindowSpaceY(mCollisionBox.y),
-      scaleToScreenX(mCollisionBox.w),
-      scaleToScreenY(mCollisionBox.h),
-    };
+    toWindowSpaceX(mCollisionBox.x),
+    toWindowSpaceY(mCollisionBox.y),
+    scaleToScreenX(mCollisionBox.w),
+    scaleToScreenY(mCollisionBox.h),
+  };
 
-    setRenderColor(constants::colors::planeHitbox);
-    SDL_RenderDrawRectF( gRenderer, &cloudHitbox );
-  }
+  namespace colors = constants::colors::debug::collisions;
+  setRenderColor(colors::cloudToPlane);
+  SDL_RenderDrawRectF( gRenderer, &cloudHitbox );
 }
 
 void

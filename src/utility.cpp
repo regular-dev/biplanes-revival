@@ -77,6 +77,7 @@ settingsWrite()
   jsonUtility["LogToConsole"]     = picojson::value( game.output.toConsole );
   jsonUtility["LogToFile"]        = picojson::value( game.output.toFile);
   jsonUtility["StatsOutput"]      = picojson::value( game.output.stats );
+  jsonUtility["ShowAiLayer"]      = picojson::value( game.debug.ai );
   jsonUtility["ShowCollisions"]   = picojson::value( game.debug.collisions );
 
   picojson::object jsonSettings;

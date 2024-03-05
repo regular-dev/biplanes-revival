@@ -246,30 +246,6 @@ BulletSpawner::Draw() const
 {
   for ( auto& bullet : mInstances )
     bullet.Draw();
-
-
-  if ( gameState().debug.aiInputs == true )
-  {
-    for ( const auto& [planeType, plane] : planes )
-    {
-      setRenderColor(constants::colors::bulletHitbox);
-
-      const auto closestBullets = GetClosestBullets(
-        plane.x(),
-        plane.y(),
-        plane.type() );
-
-      for ( const auto& bullet : closestBullets )
-      {
-        SDL_RenderDrawLine(
-          gRenderer,
-          toWindowSpaceX(plane.x()),
-          toWindowSpaceY(plane.y()),
-          toWindowSpaceX(bullet.x()),
-          toWindowSpaceY(bullet.y()) );
-      }
-    }
-  }
 }
 
 std::vector <Bullet>

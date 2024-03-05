@@ -102,6 +102,7 @@ public:
 
   virtual std::vector <AiAction> actions() const;
 
+  virtual void drawDebugLayer( const Plane& self ) const;
   void printActionTemperatures() const;
 
   void setTemperature( const float );
@@ -124,6 +125,8 @@ public:
     const Plane& opponent,
     const std::vector <Bullet>& opponentBullets );
 
+  void drawDebugLayer( const Plane& self ) const;
+
   const AiState* currentState() const;
 };
 
@@ -142,6 +145,8 @@ public:
 
   void init();
   void update();
+
+  void drawDebugLayer() const;
 };
 
 extern AiController aiController;

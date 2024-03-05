@@ -81,8 +81,11 @@ public:
   void Jump();
 
   void Update();
+
   void Draw() const;
   void DrawFire() const;
+
+  void DrawCollisionLayer() const;
 
   void SpeedUpdate();
   void CoordinatesUpdate();
@@ -226,6 +229,7 @@ public:
 
     void Update();
     void Draw() const;
+    void DrawCollisionLayer() const;
 
     void FallUpdate();
     void RunUpdate();

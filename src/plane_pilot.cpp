@@ -61,7 +61,6 @@ Plane::Pilot::Draw() const
   namespace pilot = constants::pilot;
   namespace chute = pilot::chute;
   namespace angel = pilot::angel;
-  namespace colors = constants::colors;
 
 
   if ( plane->hasJumped() == false )
@@ -154,46 +153,38 @@ Plane::Pilot::Draw() const
       &textures.anim_pilot_fall_rect[mFallFrame],
       &pilotRect );
   }
+}
+
+void
+Plane::Pilot::DrawCollisionLayer() const
+{
+  namespace colors = constants::colors::debug::collisions;
 
 
-  if ( gameState().debug.collisions == true )
+  if ( mIsChuteOpen == true )
   {
-    if ( mIsChuteOpen == true )
+    const SDL_FRect chuteHitbox
     {
-      const SDL_FRect chuteHitbox
-      {
-        toWindowSpaceX(mChuteHitbox.x),
-        toWindowSpaceY(mChuteHitbox.y),
-        scaleToScreenX(mChuteHitbox.w),
-        scaleToScreenY(mChuteHitbox.h),
-      };
-
-      setRenderColor(colors::bulletHitbox);
-      SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
-    }
-
-    const SDL_FRect hitbox
-    {
-      toWindowSpaceX(mHitbox.x),
-      toWindowSpaceY(mHitbox.y),
-      scaleToScreenX(mHitbox.w),
-      scaleToScreenY(mHitbox.h),
+      toWindowSpaceX(mChuteHitbox.x),
+      toWindowSpaceY(mChuteHitbox.y),
+      scaleToScreenX(mChuteHitbox.w),
+      scaleToScreenY(mChuteHitbox.h),
     };
 
-    setRenderColor(colors::bulletHitbox);
-    SDL_RenderDrawRectF( gRenderer, &hitbox );
+    setRenderColor(colors::bulletToChute);
+    SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
   }
 
-  if ( gameState().debug.aiInputs == true )
+  const SDL_FRect hitbox
   {
-    setRenderColor(colors::planeHitbox);
-    SDL_RenderDrawLine(
-      gRenderer,
-      toWindowSpaceX(mX),
-      toWindowSpaceY(mY),
-      toWindowSpaceX(mX + mSpeedVec.x * constants::tickRate),
-      toWindowSpaceY(mY + mSpeedVec.y * constants::tickRate) );
-  }
+    toWindowSpaceX(mHitbox.x),
+    toWindowSpaceY(mHitbox.y),
+    scaleToScreenX(mHitbox.w),
+    scaleToScreenY(mHitbox.h),
+  };
+
+  setRenderColor(colors::pilotToBullet);
+  SDL_RenderDrawRectF( gRenderer, &hitbox );
 }
 
 void

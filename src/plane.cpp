@@ -79,7 +79,6 @@ void
 Plane::Draw() const
 {
   namespace plane = constants::plane;
-  namespace colors = constants::colors;
 
 
   if ( mIsDead == true )
@@ -119,45 +118,37 @@ Plane::Draw() const
 
 
   DrawFire();
+}
+
+void
+Plane::DrawCollisionLayer() const
+{
+  namespace plane = constants::plane;
+  namespace colors = constants::colors::debug::collisions;
 
 
-  if ( gameState().debug.collisions == true )
+  const SDL_FRect hitbox
   {
-    const SDL_FRect hitbox
-    {
-      toWindowSpaceX(mHitbox.x),
-      toWindowSpaceY(mHitbox.y),
-      scaleToScreenX(mHitbox.w),
-      scaleToScreenY(mHitbox.h),
-    };
+    toWindowSpaceX(mHitbox.x),
+    toWindowSpaceY(mHitbox.y),
+    scaleToScreenX(mHitbox.w),
+    scaleToScreenY(mHitbox.h),
+  };
 
-    setRenderColor(colors::bulletHitbox);
-    SDL_RenderDrawRectF( gRenderer, &hitbox );
+  setRenderColor(colors::planeToBullet);
+  SDL_RenderDrawRectF( gRenderer, &hitbox );
 
 
-    const SDL_FRect planeCenter
-    {
-      toWindowSpaceX(mX - 0.05f * plane::sizeX),
-      toWindowSpaceY(mY - 0.05f * plane::sizeY),
-      scaleToScreenX(0.1f * plane::sizeX),
-      scaleToScreenY(0.1f * plane::sizeY),
-    };
-
-    setRenderColor(colors::planeHitbox);
-    SDL_RenderDrawRectF( gRenderer, &planeCenter );
-  }
-
-
-  if ( mHasJumped == false && gameState().debug.aiInputs == true )
+  const SDL_FRect planeCenter
   {
-    setRenderColor(colors::planeHitbox);
-    SDL_RenderDrawLine(
-      gRenderer,
-      toWindowSpaceX(mX),
-      toWindowSpaceY(mY),
-      toWindowSpaceX(mX + mSpeedVec.x * constants::tickRate),
-      toWindowSpaceY(mY + mSpeedVec.y * constants::tickRate) );
-  }
+    toWindowSpaceX(mX - 0.05f * plane::sizeX),
+    toWindowSpaceY(mY - 0.05f * plane::sizeY),
+    scaleToScreenX(0.1f * plane::sizeX),
+    scaleToScreenY(0.1f * plane::sizeY),
+  };
+
+  setRenderColor(colors::planeToObstacles);
+  SDL_RenderDrawRectF( gRenderer, &planeCenter );
 }
 
 void

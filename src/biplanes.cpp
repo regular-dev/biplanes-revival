@@ -621,11 +621,29 @@ draw_game()
     cloud.Draw();
 
 
-  if ( networkState().isOpponentConnected == false )
-    return;
+  if ( networkState().isOpponentConnected == true )
+  {
+    if (  planeBlue.isDead() == true ||
+          planeRed.isDead() == true )
+      draw_score();
+  }
 
 
-  if (  planeBlue.isDead() == true ||
-        planeRed.isDead() == true )
-    draw_score();
+  if ( gameState().debug.collisions == true )
+  {
+    draw_ground_collision_layer();
+    draw_barn_collision_layer();
+
+    playerPlane.DrawCollisionLayer();
+    playerPlane.pilot.DrawCollisionLayer();
+
+    opponentPlane.DrawCollisionLayer();
+    opponentPlane.pilot.DrawCollisionLayer();
+
+    for ( auto& cloud : clouds )
+      cloud.DrawCollisionLayer();
+  }
+
+  if ( gameState().debug.ai == true )
+    aiController.drawDebugLayer();
 }

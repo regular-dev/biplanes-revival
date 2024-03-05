@@ -49,6 +49,7 @@ public:
 
 
   void Draw();
+  void DrawCollisionLayer();
   void setTransparent();
   void setOpaque();
   void Respawn();

@@ -55,7 +55,7 @@ public:
   struct
   {
     bool collisions {};
-    bool aiInputs {};
+    bool ai {};
 
   } debug {};
 

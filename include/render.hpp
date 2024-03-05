@@ -29,7 +29,9 @@ void draw_text( const char text[], const float x, const float y );
 void draw_text( const std::string&, const float x, const float y );
 
 void draw_background();
+void draw_ground_collision_layer();
 void draw_barn();
+void draw_barn_collision_layer();
 void draw_score();
 void draw_window_letterbox();
 

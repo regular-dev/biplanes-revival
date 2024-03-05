@@ -48,10 +48,6 @@ namespace constants
     static constexpr Color menuHeader {102, 153, 204, 255};
     static constexpr Color menuBorder {99, 0, 181, 255};
 
-    static constexpr Color planeHitbox {255, 255, 0, 255};
-    static constexpr Color pilotHitbox {0, 255, 0, 255};
-    static constexpr Color bulletHitbox {255, 0, 0, 255};
-
     static constexpr Color explosionSpark[]
     {
       {0, 0, 0, 255},
@@ -59,6 +55,32 @@ namespace constants
       {255, 255, 255, 255},
       {253, 255, 108, 255},
     };
+
+    namespace debug
+    {
+      namespace collisions
+      {
+        static constexpr Color planeToObstacles {255, 255, 0, 255};
+        static constexpr Color planeToBullet {255, 0, 0, 255};
+
+        static constexpr Color pilotToObstacles {255, 0, 255, 255};
+        static constexpr Color pilotToBullet {255, 0, 0, 255};
+        static constexpr Color pilotRescueZone {0, 255, 0, 255};
+
+        static constexpr Color bulletToObstacles {255, 0, 0, 255};
+        static constexpr Color bulletToChute {255, 0, 0, 255};
+
+        static constexpr Color cloudToPlane {255, 255, 0, 255};
+      }
+
+      namespace ai
+      {
+        static constexpr Color planeSpeedVector {255, 255, 0, 255};
+        static constexpr Color pilotSpeedVector {255, 255, 0, 255};
+
+        static constexpr Color danger {255, 0, 0, 255};
+      }
+    }
   }
 
 

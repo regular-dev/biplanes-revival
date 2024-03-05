@@ -89,26 +89,40 @@ draw_background()
     textures.texture_background,
     nullptr,
     &backgroundRect );
+}
+
+void
+draw_ground_collision_layer()
+{
+  namespace plane = constants::plane;
+  namespace pilot = constants::pilot;
+  namespace bullet = constants::bullet;
+  namespace colors = constants::colors::debug::collisions;
 
 
-  if ( gameState().debug.collisions == true )
-  {
-    setRenderColor(colors::planeHitbox);
-    SDL_RenderDrawLineF(
-      gRenderer,
-      toWindowSpaceX(0.0f),
-      toWindowSpaceY(plane::groundCollision),
-      toWindowSpaceX(1.0f),
-      toWindowSpaceY(plane::groundCollision) );
+  setRenderColor(colors::planeToObstacles);
+  SDL_RenderDrawLineF(
+    gRenderer,
+    toWindowSpaceX(0.0f),
+    toWindowSpaceY(plane::groundCollision),
+    toWindowSpaceX(1.0f),
+    toWindowSpaceY(plane::groundCollision) );
 
-    setRenderColor(colors::bulletHitbox);
-    SDL_RenderDrawLineF(
-      gRenderer,
-      toWindowSpaceX(0.0f),
-      toWindowSpaceY(bullet::groundCollision),
-      toWindowSpaceX(1.0f),
-      toWindowSpaceY(bullet::groundCollision) );
-  }
+  setRenderColor(colors::pilotToObstacles);
+  SDL_RenderDrawLineF(
+    gRenderer,
+    toWindowSpaceX(0.0f),
+    toWindowSpaceY(pilot::groundCollision),
+    toWindowSpaceX(1.0f),
+    toWindowSpaceY(pilot::groundCollision) );
+
+  setRenderColor(colors::bulletToObstacles);
+  SDL_RenderDrawLineF(
+    gRenderer,
+    toWindowSpaceX(0.0f),
+    toWindowSpaceY(bullet::groundCollision),
+    toWindowSpaceX(1.0f),
+    toWindowSpaceY(bullet::groundCollision) );
 }
 
 void
@@ -116,7 +130,6 @@ draw_barn()
 {
   namespace barn = constants::barn;
   namespace pilot = constants::pilot;
-  namespace colors = constants::colors;
 
 
   const SDL_FRect barnRect
@@ -132,34 +145,39 @@ draw_barn()
     textures.texture_barn,
     nullptr,
     &barnRect );
+}
+
+void
+draw_barn_collision_layer()
+{
+  namespace barn = constants::barn;
+  namespace pilot = constants::pilot;
+  namespace colors = constants::colors::debug::collisions;
 
 
-  if ( gameState().debug.collisions == true )
+  SDL_FRect barnHitbox
   {
-    SDL_FRect barnHitbox
-    {
-      toWindowSpaceX(barn::bulletCollisionX),
-      toWindowSpaceY(barn::bulletCollisionY),
-      scaleToScreenX(barn::bulletCollisionSizeX),
-      scaleToScreenY(barn::sizeY),
-    };
+    toWindowSpaceX(barn::bulletCollisionX),
+    toWindowSpaceY(barn::bulletCollisionY),
+    scaleToScreenX(barn::bulletCollisionSizeX),
+    scaleToScreenY(barn::sizeY),
+  };
 
-    setRenderColor(colors::bulletHitbox);
-    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
+  setRenderColor(colors::bulletToObstacles);
+  SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 
-    barnHitbox.x = toWindowSpaceX(barn::planeCollisionX);
-    barnHitbox.y = toWindowSpaceY(barn::planeCollisionY);
+  barnHitbox.x = toWindowSpaceX(barn::planeCollisionX);
+  barnHitbox.y = toWindowSpaceY(barn::planeCollisionY);
 
-    setRenderColor(colors::planeHitbox);
-    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
+  setRenderColor(colors::planeToObstacles);
+  SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 
-    barnHitbox.x = toWindowSpaceX(barn::pilotCollisionLeftX);
-    barnHitbox.y = toWindowSpaceY(pilot::groundCollision);
-    barnHitbox.w = scaleToScreenX(barn::pilotCollisionRightX - barn::pilotCollisionLeftX);
+  barnHitbox.x = toWindowSpaceX(barn::pilotCollisionLeftX);
+  barnHitbox.y = toWindowSpaceY(pilot::groundCollision);
+  barnHitbox.w = scaleToScreenX(barn::pilotCollisionRightX - barn::pilotCollisionLeftX);
 
-    setRenderColor(colors::pilotHitbox);
-    SDL_RenderDrawRectF( gRenderer, &barnHitbox );
-  }
+  setRenderColor(colors::pilotRescueZone);
+  SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 }
 
 void

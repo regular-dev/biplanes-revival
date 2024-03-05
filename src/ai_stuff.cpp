@@ -21,6 +21,7 @@
 #include <include/ai_stuff.hpp>
 #include <include/biplanes.hpp>
 #include <include/controls.hpp>
+#include <include/sdl.hpp>
 #include <include/time.hpp>
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
@@ -250,6 +251,8 @@ public:
     const std::vector <Bullet>& opponentBullets ) override;
 
   std::vector <AiAction> actions() const override;
+
+  void drawDebugLayer( const Plane& self ) const override;
 };
 
 AiStateTest::AiStateTest(
@@ -380,6 +383,12 @@ AiStateTest::actions() const
   return actions;
 }
 
+void
+AiStateTest::drawDebugLayer(
+  const Plane& self ) const
+{
+}
+
 
 void
 AiController::init()
@@ -425,6 +434,21 @@ AiController::update()
   }
 }
 
+void
+AiController::drawDebugLayer() const
+{
+  for ( auto& [planeType, plane] : planes )
+  {
+    if ( plane.isBot() == false )
+      continue;
+
+    auto& stateController = mStateController.at(plane.type());
+
+    if ( plane.isDead() == false )
+      stateController.drawDebugLayer(plane);
+  }
+}
+
 
 void
 AiStateController::init()
@@ -460,6 +484,15 @@ AiStateController::update(
       });
 }
 
+void
+AiStateController::drawDebugLayer(
+  const Plane& self ) const
+{
+  assert(mCurrentState != nullptr );
+
+  mCurrentState->drawDebugLayer(self);
+}
+
 const AiState*
 AiStateController::currentState() const
 {
@@ -486,6 +519,12 @@ std::vector <AiAction>
 AiState::actions() const
 {
   return {};
+}
+
+void
+AiState::drawDebugLayer(
+  const Plane& self ) const
+{
 }
 
 void
