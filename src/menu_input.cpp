@@ -33,10 +33,12 @@ Menu::UpdateControls()
 {
   auto& game = gameState();
 
+#if defined(BIPLANES_STEP_DEBUGGING_ENABLED)
   game.debug.stepByStepMode = isKeyDown(SDL_SCANCODE_S);
 
   if ( isKeyPressed(SDL_SCANCODE_D) == true )
       game.debug.advanceOneTick = true;
+#endif
 
 
   if ( mCurrentRoom == ROOMS::GAME )

@@ -7,6 +7,8 @@ project(${TARGET} VERSION ${${TARGET}_VERSION} LANGUAGES C CXX)
 add_executable(${TARGET})
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+option(${TARGET}_ENABLE_STEP_DEBUGGING
+  "${TARGET}: Enable step-by-step mode controls for easier debugging" OFF)
 
 if (WIN32)
   option(${TARGET}_DISABLE_CONSOLE "${TARGET}: Don't show console window" ON)
@@ -118,6 +120,7 @@ FetchContent_MakeAvailable(TimeUtils)
 target_compile_definitions(${TARGET} PRIVATE
   BIPLANES_EXE_NAME="${TARGET}"
   BIPLANES_VERSION="${${TARGET}_VERSION}"
+  BIPLANES_STEP_DEBUGGING_ENABLED=${TARGET}_ENABLE_STEP_DEBUGGING
 )
 
 include(GNUInstallDirs)
