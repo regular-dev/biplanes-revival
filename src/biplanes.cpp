@@ -202,6 +202,7 @@ main(
       else
         game_loop_sp();
 
+//      this prevents sticky keys when next event poll returns nothing
       readKeyboardInput();
 
       draw_game();
