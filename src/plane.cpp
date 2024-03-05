@@ -125,6 +125,9 @@ Plane::DrawCollisionLayer() const
   namespace plane = constants::plane;
   namespace colors = constants::colors::debug::collisions;
 
+  if ( mIsDead == true )
+    return;
+
 
   const SDL_FRect hitbox
   {

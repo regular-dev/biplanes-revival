@@ -160,6 +160,9 @@ Plane::Pilot::DrawCollisionLayer() const
 {
   namespace colors = constants::colors::debug::collisions;
 
+  if ( mIsDead == true || plane->mHasJumped == false )
+    return;
+
 
   if ( mIsChuteOpen == true )
   {
