@@ -261,7 +261,7 @@ Plane::Pilot::Bail(
 
   mGravity = pilot::gravity;
   mSpeed = pilot::ejectSpeed;
-  mVSpeed = mSpeed * cos( mDir * M_PI / 180.0 );
+  mVSpeed = mSpeed * std::cos( mDir * M_PI / 180.0 );
   mMoveSpeed = 0.0f;
 
 
@@ -318,7 +318,7 @@ Plane::Pilot::FallUpdate()
   const SDL_FPoint currentPos {mX, mY};
 
   if ( mSpeed > 0.0f )
-    mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
+    mX += mSpeed * std::sin( mDir * M_PI / 180.0f ) * deltaTime;
 
   mX += mMoveSpeed * deltaTime;
 

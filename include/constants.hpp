@@ -265,6 +265,7 @@ namespace constants
   }
 
 
+//  BULLET
   namespace bullet
   {
     static constexpr float sizeX {3.f / baseWidth};

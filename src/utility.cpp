@@ -54,7 +54,7 @@ settingsWrite()
 
   picojson::object jsonAutoFill;
   jsonAutoFill["HARDCORE_MODE"]   = picojson::value( game.isHardcoreEnabled );
-  jsonAutoFill["LOCAL_PORT"]       = picojson::value( (double) LOCAL_PORT );
+  jsonAutoFill["LOCAL_PORT"]      = picojson::value( (double) LOCAL_PORT );
   jsonAutoFill["REMOTE_PORT"]     = picojson::value( (double) REMOTE_PORT );
   jsonAutoFill["SERVER_IP"]       = picojson::value( SERVER_IP );
   jsonAutoFill["MMAKE_PASSWORD"]  = picojson::value( MMAKE_PASSWORD );
@@ -82,7 +82,7 @@ settingsWrite()
 
   picojson::object jsonSettings;
   jsonSettings["AutoFill"]        = picojson::value( jsonAutoFill );
-  jsonSettings["Config"]         = picojson::value( jsonConfig );
+  jsonSettings["Config"]          = picojson::value( jsonConfig );
   jsonSettings["Controls"]        = picojson::value( jsonControls );
   jsonSettings["Utility"]         = picojson::value( jsonUtility );
 

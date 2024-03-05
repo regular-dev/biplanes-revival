@@ -55,8 +55,8 @@ Bullet::Update()
     return;
 
 
-  mX += bullet::speed * sin( mDir * M_PI / 180.0f ) * deltaTime;
-  mY -= bullet::speed * cos( mDir * M_PI / 180.0f ) * deltaTime;
+  mX += bullet::speed * std::sin( mDir * M_PI / 180.0f ) * deltaTime;
+  mY -= bullet::speed * std::cos( mDir * M_PI / 180.0f ) * deltaTime;
 
 
   const bool collidesWithScreenBorder

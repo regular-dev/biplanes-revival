@@ -35,7 +35,6 @@
 #include <include/variables.hpp>
 
 #include <cmath>
-#include <random>
 
 
 Plane::Plane(
@@ -407,12 +406,12 @@ Plane::CoordinatesUpdate()
   const SDL_FPoint currentPos {mX, mY};
 
 //  Change coordinates
-  mX += mSpeed * sin( mDir * M_PI / 180.0f ) * deltaTime;
+  mX += mSpeed * std::sin( mDir * M_PI / 180.0f ) * deltaTime;
 
 
   if ( mIsOnGround == false )
   {
-    mY -= mSpeed * cos( mDir * M_PI / 180.0f ) * deltaTime;
+    mY -= mSpeed * std::cos( mDir * M_PI / 180.0f ) * deltaTime;
 
 //    Gravity
     if ( mSpeed < mMaxSpeedVar )
