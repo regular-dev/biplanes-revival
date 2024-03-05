@@ -229,6 +229,9 @@ settingsParse(
     try { game.output.stats = jsonUtility.at( "StatsOutput" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
+    try { game.debug.ai = jsonUtility.at( "ShowAiLayer" ).get <bool> (); }
+    catch ( const std::exception& ) {};
+
     try { game.debug.collisions = jsonUtility.at( "ShowCollisions" ).get <bool> (); }
     catch ( const std::exception& ) {};
   }
