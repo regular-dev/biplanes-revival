@@ -27,6 +27,7 @@
 
 void draw_text( const char text[], const float x, const float y );
 void draw_text( const std::string&, const float x, const float y );
+void draw_circle( const float x, const float y, const float radius, const size_t segments = 18 );
 
 void draw_background();
 void draw_ground_collision_layer();

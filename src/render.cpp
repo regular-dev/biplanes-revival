@@ -65,6 +65,40 @@ draw_text(
 }
 
 void
+draw_circle(
+  const float x, const float y,
+  const float radius,
+  const size_t segments )
+{
+  const size_t degreeStep = 360 / std::max(segments, size_t{1});
+
+  for ( size_t i {}; i < 360; i += degreeStep )
+  {
+    const auto dir = i * M_PI / 180.f;
+    const auto nextDir = (i + degreeStep) * M_PI / 180.f;
+
+    const SDL_FPoint from
+    {
+      x + radius * std::sin(dir),
+      y + radius * std::cos(dir) * constants::aspectRatio,
+    };
+
+    const SDL_FPoint to
+    {
+      x + radius * std::sin(nextDir),
+      y + radius * std::cos(nextDir) * constants::aspectRatio,
+    };
+
+    SDL_RenderDrawLine(
+      gRenderer,
+      toWindowSpaceX(from.x),
+      toWindowSpaceY(from.y),
+      toWindowSpaceX(to.x),
+      toWindowSpaceY(to.y) );
+  }
+}
+
+void
 draw_background()
 {
   namespace plane = constants::plane;
