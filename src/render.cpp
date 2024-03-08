@@ -202,6 +202,7 @@ draw_barn_collision_layer()
 
   barnHitbox.x = toWindowSpaceX(barn::planeCollisionX);
   barnHitbox.y = toWindowSpaceY(barn::planeCollisionY);
+  barnHitbox.w = scaleToScreenX(barn::sizeX);
 
   setRenderColor(colors::planeToObstacles);
   SDL_RenderDrawRectF( gRenderer, &barnHitbox );
