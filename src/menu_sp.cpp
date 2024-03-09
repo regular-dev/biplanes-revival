@@ -127,5 +127,5 @@ Menu::screen_sp_setup()
 
 
   if ( mSelectedItem == MENU_SP_SETUP::WIN_SCORE )
-    draw_text( "Press [RETURN] to specify win score", 0.005f, 0.650f );
+    draw_text( "Press [RETURN] to specify score", 0.005f, 0.650f );
 }
