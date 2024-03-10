@@ -169,6 +169,9 @@ namespace constants
 
     static constexpr float takeoffDirectionBlue {90.f};
     static constexpr float takeoffDirectionRed {270.f};
+
+    static constexpr float jumpDirOffsetBlue {-90.f};
+    static constexpr float jumpDirOffsetRed {90.f};
   }
 
 
