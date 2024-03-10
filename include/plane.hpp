@@ -130,6 +130,7 @@ public:
   float x() const;
   float y() const;
   float dir() const;
+  float jumpDir() const;
 
   float speed() const;
   float maxSpeed() const;

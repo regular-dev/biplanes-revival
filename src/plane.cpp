@@ -317,13 +317,8 @@ Plane::Jump()
     return;
 
 
-  const float jumpDir =
-    mType == PLANE_TYPE::RED
-    ? mDir + 90.0f
-    : mDir - 90.0f;
-
   mHasJumped = true;
-  pilot.Bail(mX, mY, jumpDir);
+  pilot.Bail(mX, mY, jumpDir());
 
 
   if ( mIsLocal == false )
@@ -1016,6 +1011,16 @@ float
 Plane::dir() const
 {
   return mDir;
+}
+
+float
+Plane::jumpDir() const
+{
+  namespace plane = constants::plane;
+
+  return mType == PLANE_TYPE::RED
+    ? mDir + plane::jumpDirOffsetRed
+    : mDir + plane::jumpDirOffsetBlue;
 }
 
 float
