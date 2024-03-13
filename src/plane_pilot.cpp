@@ -264,7 +264,7 @@ Plane::Pilot::Bail(
 
   mGravity = pilot::gravity;
   mSpeed = pilot::ejectSpeed;
-  mVSpeed = mSpeed * std::cos( mDir * M_PI / 180.0 );
+  mVSpeed = -mSpeed * std::cos(mDir * M_PI / 180.0);
   mMoveSpeed = 0.0f;
 
 
@@ -321,7 +321,7 @@ Plane::Pilot::FallUpdate()
   const SDL_FPoint currentPos {mX, mY};
 
   if ( mSpeed > 0.0f )
-    mX += mSpeed * std::sin( mDir * M_PI / 180.0f ) * deltaTime;
+    mX += mSpeed * std::sin(mDir * M_PI / 180.0) * deltaTime;
 
   mX += mMoveSpeed * deltaTime;
 
@@ -337,22 +337,20 @@ Plane::Pilot::FallUpdate()
 
     panSound(mAudioLoopChannel, mX);
 
-    if ( mVSpeed > 0.0f )
-      mVSpeed = -mGravity * 0.4f;
+    if ( mVSpeed < 0.0f )
+      mVSpeed = 0.4f * mGravity;
 
-    else if ( mVSpeed < -0.08f )
+    else if ( mVSpeed > 0.08f )
     {
-      mVSpeed += 0.5f * deltaTime; // 0.375 ?
-
-      if ( mVSpeed > -0.08f )
-        mVSpeed = -0.08f;
+      mVSpeed -= 0.5f * deltaTime; // 0.375 ?
+      mVSpeed = std::max(mVSpeed, 0.08f);
     }
 
-    else if ( mVSpeed > -0.08f )
-      mVSpeed -= 0.5f * deltaTime;
+    else if ( mVSpeed < 0.08f )
+      mVSpeed += 0.5f * deltaTime;
 
     if ( mSpeed > 0.0f )
-      mSpeed -= 2.0f * mSpeed * deltaTime;
+      mSpeed -= 2.0f * mSpeed * deltaTime; // 2.f = 0.5 seconds
   }
   else
   {
@@ -364,22 +362,22 @@ Plane::Pilot::FallUpdate()
 
     panSound(mAudioLoopChannel, mX);
 
-    if ( mVSpeed > 0.0f )
+    if ( mVSpeed <= 0.0f )
     {
       mGravity += mGravity * 2.0f * deltaTime;
-      mVSpeed -= mGravity * deltaTime;
+      mVSpeed += mGravity * deltaTime;
 
-      if ( mVSpeed < 0.0f )
+      if ( mVSpeed >= 0.0f )
         mGravity = 0.24f; //!!
     }
     else
     {
       mGravity += mGravity * deltaTime;
-      mVSpeed -= mGravity * deltaTime;
+      mVSpeed += mGravity * deltaTime;
     }
   }
 
-  mY -= mVSpeed * deltaTime;
+  mY += mVSpeed * deltaTime;
 
 
   if ( mSpeed > pilot::maxFallSpeedX )
@@ -729,7 +727,7 @@ Plane::Pilot::HitGroundCheck()
 
 
 //  SURVIVE LANDING
-  if ( mVSpeed >= -chute::gravity )
+  if ( mVSpeed <= chute::gravity )
   {
     FallSurvive();
     eventPush(EVENTS::PILOT_LAND);
