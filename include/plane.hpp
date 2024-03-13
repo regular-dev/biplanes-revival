@@ -258,8 +258,6 @@ public:
     bool isHit( const float, const float ) const;
     bool ChuteIsHit( const float, const float ) const;
 
-    SDL_Point getClosestCollision() const;
-
     float x() const;
     float y() const;
 

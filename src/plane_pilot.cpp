@@ -613,20 +613,6 @@ Plane::Pilot::FadeLoopingSounds()
   }
 }
 
-bool
-Plane::Pilot::ChuteIsHit(
-  const float x,
-  const float y ) const
-{
-  if ( mIsChuteOpen == false )
-    return false;
-
-
-  const SDL_FPoint hitPoint {x, y};
-
-  return SDL_PointInFRect(&hitPoint, &mChuteHitbox);
-}
-
 float
 Plane::Pilot::x() const
 {
@@ -802,7 +788,6 @@ Plane::Pilot::Respawn()
   AnimationsReset();
 }
 
-
 bool
 Plane::Pilot::isDead() const
 {
@@ -823,18 +808,16 @@ Plane::Pilot::isHit(
   return SDL_PointInFRect(&hitPoint, &mHitbox);
 }
 
-SDL_Point
-Plane::Pilot::getClosestCollision() const
+bool
+Plane::Pilot::ChuteIsHit(
+  const float x,
+  const float y ) const
 {
-  namespace barn = constants::barn;
-  namespace pilot = constants::pilot;
+  if ( mIsChuteOpen == false )
+    return false;
 
-//  Distance to barn | ground
-  return
-  {
-    std::max( barn::pilotCollisionLeftX,
-              std::min( mX, barn::pilotCollisionRightX ) ),
-    std::max( pilot::groundCollision,
-              std::min( mY, pilot::groundCollision ) ),
-  };
+
+  const SDL_FPoint hitPoint {x, y};
+
+  return SDL_PointInFRect(&hitPoint, &mChuteHitbox);
 }
