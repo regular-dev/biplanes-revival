@@ -255,11 +255,16 @@ public:
     void Respawn();
 
     bool isDead() const;
+    bool isChuteOpen() const;
+    bool isChuteBroken() const;
+    bool isRunning() const;
+
     bool isHit( const float, const float ) const;
     bool ChuteIsHit( const float, const float ) const;
 
     float x() const;
     float y() const;
+    SDL_FPoint speedVec() const;
 
     void setX( const float );
     void setY( const float );

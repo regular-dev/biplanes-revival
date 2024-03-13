@@ -647,6 +647,11 @@ Plane::Pilot::setY(
     mY = y;
 }
 
+SDL_FPoint
+Plane::Pilot::speedVec() const
+{
+  return mSpeedVec;
+}
 
 void
 Plane::Pilot::ChuteHit(
@@ -792,6 +797,24 @@ bool
 Plane::Pilot::isDead() const
 {
   return mIsDead;
+}
+
+bool
+Plane::Pilot::isChuteOpen() const
+{
+  return mIsChuteOpen;
+}
+
+bool
+Plane::Pilot::isChuteBroken() const
+{
+  return mChuteState == CHUTE_STATE::CHUTE_DESTROYED;
+}
+
+bool
+Plane::Pilot::isRunning() const
+{
+  return mIsRunning;
 }
 
 bool
