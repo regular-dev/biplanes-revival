@@ -962,8 +962,8 @@ Plane::hp() const
 float
 Plane::protectionRemainder() const
 {
-  if (  isDead() == false ||
-        mHasJumped == false )
+  if (  mIsDead == true ||
+        mHasJumped == true )
     return 0.0f;
 
   return mProtection.remainderTime();
