@@ -205,7 +205,7 @@ Plane::Pilot::Move(
   if ( mIsChuteOpen == true )
   {
     mChuteState = static_cast <CHUTE_STATE> (inputDir);
-    mMoveSpeed = moveDir * chute::speed;
+    mMoveSpeed = moveDir * chute::baseSpeedX;
 
     return;
   }
@@ -263,8 +263,8 @@ Plane::Pilot::Bail(
     mDir -= 360;
 
   mGravity = pilot::gravity;
-  mSpeed = pilot::ejectSpeed;
-  mVSpeed = -mSpeed * std::cos(mDir * M_PI / 180.0);
+  mSpeed.x =  pilot::ejectSpeed * std::sin(mDir * M_PI / 180.0);
+  mSpeed.y = -pilot::ejectSpeed * std::cos(mDir * M_PI / 180.0);
   mMoveSpeed = 0.0f;
 
 
@@ -320,10 +320,8 @@ Plane::Pilot::FallUpdate()
 
   const SDL_FPoint currentPos {mX, mY};
 
-  if ( mSpeed > 0.0f )
-    mX += mSpeed * std::sin(mDir * M_PI / 180.0) * deltaTime;
+  mX += (mSpeed.x + mMoveSpeed) * deltaTime;
 
-  mX += mMoveSpeed * deltaTime;
 
 //  TODO: do something with this magic mess
 
@@ -337,20 +335,17 @@ Plane::Pilot::FallUpdate()
 
     panSound(mAudioLoopChannel, mX);
 
-    if ( mVSpeed < 0.0f )
-      mVSpeed = 0.4f * mGravity;
+    if ( mSpeed.y < 0.0f )
+      mSpeed.y = 0.4f * mGravity;
 
-    else if ( mVSpeed > 0.08f )
+    else if ( mSpeed.y > pilot::chute::baseSpeedY )
     {
-      mVSpeed -= 0.5f * deltaTime; // 0.375 ?
-      mVSpeed = std::max(mVSpeed, 0.08f);
+      mSpeed.y -= 0.5f * deltaTime; // 0.375 ?
+      mSpeed.y = std::max(mSpeed.y, 0.08f);
     }
 
-    else if ( mVSpeed < 0.08f )
-      mVSpeed += 0.5f * deltaTime;
-
-    if ( mSpeed > 0.0f )
-      mSpeed -= 2.0f * mSpeed * deltaTime; // 2.f = 0.5 seconds
+    else if ( mSpeed.y < pilot::chute::baseSpeedY )
+      mSpeed.y += 0.5f * deltaTime;
   }
   else
   {
@@ -362,31 +357,35 @@ Plane::Pilot::FallUpdate()
 
     panSound(mAudioLoopChannel, mX);
 
-    if ( mVSpeed <= 0.0f )
+    if ( mSpeed.y <= 0.0f )
     {
       mGravity += mGravity * 2.0f * deltaTime;
-      mVSpeed += mGravity * deltaTime;
+      mSpeed.y += mGravity * deltaTime;
 
-      if ( mVSpeed >= 0.0f )
+      if ( mSpeed.y >= 0.0f )
         mGravity = 0.24f; //!!
     }
     else
     {
       mGravity += mGravity * deltaTime;
-      mVSpeed += mGravity * deltaTime;
+      mSpeed.y += mGravity * deltaTime;
     }
   }
 
-  mY += mVSpeed * deltaTime;
+  mY += mSpeed.y * deltaTime;
 
 
-  if ( mSpeed > pilot::maxFallSpeedX )
-    mSpeed -= mSpeed * deltaTime;
+  if ( std::abs(mSpeed.x) > pilot::maxSpeedXThreshold )
+  {
+    const float slowdownFactor = mIsChuteOpen == true
+      ? pilot::chuteSpeedSlowdownFactor   // = 0.5 seconds to reach zero
+      : pilot::airSpeedSlowdownFactor;    // = 1.0 seconds to reach zero
+
+    mSpeed.x += -slowdownFactor * mSpeed.x * deltaTime;
+  }
   else
-    mSpeed = 0.0f;
+    mSpeed.x = 0.0f;
 
-
-  mSpeed = std::max(mSpeed, 0.0f);
 
   mSpeedVec =
   {
@@ -686,8 +685,7 @@ Plane::Pilot::Death()
   mIsDead = true;
 
   mDir = 0;
-  mSpeed = 0.0f;
-  mVSpeed = 0.0f;
+  mSpeed = {};
   mGravity = 0.0f;
   mSpeedVec = {};
   mChuteState = CHUTE_STATE::CHUTE_NONE;
@@ -718,7 +716,7 @@ Plane::Pilot::HitGroundCheck()
 
 
 //  SURVIVE LANDING
-  if ( mVSpeed <= chute::gravity )
+  if ( mSpeed.y <= chute::gravity )
   {
     FallSurvive();
     eventPush(EVENTS::PILOT_LAND);
@@ -752,8 +750,7 @@ Plane::Pilot::FallSurvive()
   mIsRunning = true;
   mIsChuteOpen = false;
 
-  mSpeed = 0.0f;
-  mVSpeed = 0.0f;
+  mSpeed = {};
   mGravity = 0.0f;
   mSpeedVec = {};
   mChuteState = CHUTE_STATE::CHUTE_IDLE;
@@ -786,8 +783,7 @@ Plane::Pilot::Respawn()
 
   mDir = 0;
   mGravity = 0.0f;
-  mSpeed = 0.0f;
-  mVSpeed = 0.0f;
+  mSpeed = {};
   mSpeedVec = {};
 
   AnimationsReset();

@@ -193,8 +193,7 @@ public:
     float mY {};
     int16_t mDir {};
 
-    float mSpeed {};
-    float mVSpeed {};
+    SDL_FPoint mSpeed {};
     float mMoveSpeed {};
     float mGravity {};
     SDL_FPoint mSpeedVec {};
