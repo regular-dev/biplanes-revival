@@ -34,9 +34,9 @@ Menu::UpdateControls()
   auto& game = gameState();
 
 #if defined(BIPLANES_STEP_DEBUGGING_ENABLED)
-  game.debug.stepByStepMode = isKeyDown(SDL_SCANCODE_S);
+  game.debug.stepByStepMode = isKeyDown(SDL_SCANCODE_Q);
 
-  if ( isKeyPressed(SDL_SCANCODE_D) == true )
+  if ( isKeyPressed(SDL_SCANCODE_E) == true )
       game.debug.advanceOneTick = true;
 #endif
 
@@ -60,13 +60,17 @@ Menu::UpdateControls()
   {
     auto& game = gameState();
 
-    if ( isKeyPressed(SDL_SCANCODE_DOWN) == true )
+    if (  isKeyPressed(SDL_SCANCODE_DOWN) ||
+          isKeyPressed(SDL_SCANCODE_S) == true )
       MenuItemNext();
 
-    else if ( isKeyPressed(SDL_SCANCODE_UP) == true )
+    else if ( isKeyPressed(SDL_SCANCODE_UP) ||
+              isKeyPressed(SDL_SCANCODE_W) == true )
       MenuItemPrevious();
 
-    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true )
+    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) ||
+              isKeyPressed(SDL_SCANCODE_LEFT) ||
+              isKeyPressed(SDL_SCANCODE_A) == true )
       GoBack();
 
     else if ( isKeyPressed(SDL_SCANCODE_DELETE) == true )
@@ -85,7 +89,9 @@ Menu::UpdateControls()
     }
   }
 
-  if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )
+  if (  isKeyPressed(SDL_SCANCODE_RETURN) ||
+        isKeyPressed(SDL_SCANCODE_RIGHT) ||
+        isKeyPressed(SDL_SCANCODE_D) == true )
     Select();
 }
 

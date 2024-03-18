@@ -740,7 +740,7 @@ Menu::screen_main()
   draw_text( "Help            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Quit            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
 
-  draw_text( "Navigate menu using arrow keys  ", 0.005f, 0.65f );
+  draw_text( "Navigate menu using arrows/WASD ", 0.005f, 0.65f );
   draw_text( " Press[RETURN] to enter submenu ", 0.005f, 0.70f );
   draw_text( "  Press [F1] to see your stats  ", 0.005f, 0.75f );
 }
