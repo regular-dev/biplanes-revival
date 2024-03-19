@@ -208,8 +208,9 @@ draw_barn_collision_layer()
   SDL_RenderDrawRectF( gRenderer, &barnHitbox );
 
   barnHitbox.x = toWindowSpaceX(barn::pilotCollisionLeftX);
-  barnHitbox.y = toWindowSpaceY(pilot::groundCollision);
+  barnHitbox.y = toWindowSpaceY(barn::posY);
   barnHitbox.w = scaleToScreenX(barn::pilotCollisionRightX - barn::pilotCollisionLeftX);
+  barnHitbox.h = toWindowSpaceY(1.f) - barnHitbox.y;
 
   setRenderColor(colors::pilotRescueZone);
   SDL_RenderDrawRectF( gRenderer, &barnHitbox );
