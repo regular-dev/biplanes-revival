@@ -958,6 +958,8 @@ Plane::isHit(
   if ( mIsDead == true )
     return false;
 
+  if ( mProtection.isReady() == false )
+    return false;
 
 #if BIPLANES_LEGACY_PLANE_HITBOX == 1
   const SDL_FPoint hitPoint {x, y};
