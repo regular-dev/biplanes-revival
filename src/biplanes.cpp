@@ -304,14 +304,8 @@ game_init_mp()
 
 
   if ( network.nodeType == SRV_CLI::CLIENT )
-  {
-    std::stringstream stream {SERVER_IP};
-    int a, b, c, d;
-    char ch;
-    stream >> a >> ch >> b >> ch >> c >> ch >> d;
-
-    address = net::Address {a, b, c, d, port};
-  }
+    address = net::Address::FromString(
+      SERVER_IP, std::to_string(port) );
 
 
   if ( net::InitializeSockets() != 0 )

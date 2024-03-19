@@ -25,12 +25,23 @@
 
 #include <lib/picojson.h>
 
-#include <sstream>
 
+net::Address MatchMaker::GetServerAddress()
+{
+  static auto mmakeAddr = net::Address::ResolveHostname(
+    MATCHMAKE_SRV_HOSTNAME);
 
-const static net::Address MatchMakeServerAddress {toAddress(
-  MATCHMAKE_SRV_IP,
-  std::to_string(MATCHMAKE_SRV_PORT) )};
+  if ( mmakeAddr.GetAddress() == 0 )
+  {
+    mmakeAddr = net::Address::FromString(
+      MATCHMAKE_SRV_IP,
+      std::to_string(MATCHMAKE_SRV_PORT) );
+  }
+  else
+    mmakeAddr = {mmakeAddr.GetAddress(), MATCHMAKE_SRV_PORT};
+
+  return mmakeAddr;
+}
 
 
 bool
@@ -59,9 +70,12 @@ MatchMaker::initNewSession()
 
   mClientId = rand() % 1'000'000;
 
+
   auto connection = networkState().connection;
 
-  if ( connection->Start( MatchMakeServerAddress.GetPort() ) == false )
+  const auto serverAddress = GetServerAddress();
+
+  if ( connection->Start( serverAddress.GetPort() ) == false )
   {
     log_message( "NETWORK MMAKE: Failed to initialize matchmaking session", "\n" );
     menu.setMessage(MESSAGE_TYPE::CANT_START_CONNECTION);
@@ -69,7 +83,7 @@ MatchMaker::initNewSession()
   }
 
 //  TODO: remove this ?
-  connection->Connect(MatchMakeServerAddress);
+//  connection->Connect(serverAddress);
 
   mState = MatchMakerState::FIND_BEGIN;
   menu.setMessage(MESSAGE_TYPE::MMAKE_CONNECTING_TO_SERVER);
@@ -121,7 +135,7 @@ MatchMaker::Update()
       std::string str_msg_mm_socket = picojson::value(msg_mm_socket).serialize();
 
       mSocket.Send(
-        MatchMakeServerAddress,
+        GetServerAddress(),
         str_msg_mm_socket.c_str(),
         str_msg_mm_socket.size() );
 
@@ -140,7 +154,7 @@ MatchMaker::Update()
       if ( mTimer.isReady() == false )
         break;
 
-      sendStatus( MatchConnectStatus::FIND, MatchMakeServerAddress );
+      sendStatus( MatchConnectStatus::FIND, GetServerAddress() );
       log_message( "NETWORK MMAKE: Sent FIND status to matchmake server", "\n" );
       log_message( "NETWORK MMAKE: Waiting for matchmake server reply...", "\n" );
 
@@ -254,7 +268,7 @@ MatchMaker::Update()
       if ( foundOpponent == false )
         break;
 
-      mOpponentAddress = toAddress( opp_ip, opp_port );
+      mOpponentAddress = net::Address::FromString(opp_ip, opp_port);
 
       menu.setMessage(MESSAGE_TYPE::P2P_ESTABLISHING);
       log_message( "NETWORK MMAKE: Opponent address: " );
@@ -392,18 +406,4 @@ MatchMaker::setPassword(
   const std::string& newPassword )
 {
   mPassword = newPassword;
-}
-
-
-net::Address
-toAddress(
-  const std::string& inputAddr,
-  const std::string& inputPort )
-{
-  std::stringstream s {inputAddr};
-  int a, b, c, d;
-  char ch;
-  s >> a >> ch >> b >> ch >> c >> ch >> d;
-
-  return {a, b, c, d, stoi( inputPort )};
 }

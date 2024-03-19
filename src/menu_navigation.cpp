@@ -682,16 +682,12 @@ Menu::GoBack()
     {
       const auto matchmaker = networkState().matchmaker;
 
-      const auto mmakeServerAddress = toAddress(
-        MATCHMAKE_SRV_IP,
-        std::to_string(MATCHMAKE_SRV_PORT) );
-
       matchmaker->Reset();
       matchmaker->sendStatus(
         MatchConnectStatus::GOODBYE,
-        mmakeServerAddress );
+        MatchMaker::GetServerAddress() );
 
-      log_message( "NETWORK MMAKE: Sent goodbye message to matchmake server", "\n" );
+      log_message( "NETWORK MMAKE: Sent goodbye message to matchmake server", "\n\n" );
 
       ChangeRoom(ROOMS::MENU_MP);
       setMessage(MESSAGE_TYPE::NONE);

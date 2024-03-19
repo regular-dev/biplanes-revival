@@ -14,6 +14,7 @@
 
   #define PLATFORM PLATFORM_WINDOWS
   #include <winsock2.h>
+  #include <ws2tcpip.h>
 
 #elif defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
 
@@ -22,6 +23,7 @@
   #include <fcntl.h>
   #include <unistd.h>
   #include <arpa/inet.h>
+  #include <netdb.h>
 
 #else
   static_assert(false, "Net.h is incompatible with your system");
@@ -114,6 +116,90 @@ namespace net
         return false;
       else
         return port < other.port;
+    }
+
+    std::string ToString( const bool includePort = true ) const
+    {
+      const std::string portString = includePort == true
+        ? ":" + std::to_string(GetPort())
+        : "";
+
+      return
+      {
+        GetA() + "." +
+        GetB() + "." +
+        GetC() + "." +
+        GetD() + portString
+      };
+    }
+
+    static Address FromString( const std::string& addrStr, const std::string& portStr )
+    {
+      if ( checkIp(addrStr).empty() == true )
+        return {};
+
+
+      std::stringstream stream {addrStr};
+      int a, b, c, d;
+      char ch;
+      stream >> a >> ch >> b >> ch >> c >> ch >> d;
+
+      return
+      {
+        a, b, c, d,
+        stoi(portStr)
+      };
+    }
+
+    static Address ResolveHostname( const std::string& hostname )
+    {
+      log_message("NETWORK: Resolving hostname '" + hostname + "'\n");
+
+
+      struct addrinfo* addressInfo {};
+
+      const int errorCode = getaddrinfo(
+        hostname.c_str(),
+        NULL, NULL,
+        &addressInfo );
+
+      if ( errorCode != 0 )
+      {
+        log_message("NETWORK: Failed to resolve hostname '" +
+          hostname + "': getaddrinfo returned " +
+          std::to_string(errorCode) + "\n");
+
+        return {};
+      }
+
+
+      switch (addressInfo->ai_family)
+      {
+        case AF_INET:
+          break;
+
+        default:
+        {
+          log_message("NETWORK: Failed to resolve hostname '" +
+            hostname + "': expected AF_INET family\n");
+
+          return {};
+        }
+      }
+
+      const auto resolvedAddress =
+        reinterpret_cast <struct sockaddr_in*> (addressInfo->ai_addr);
+
+      const Address result
+      {
+        ntohl(resolvedAddress->sin_addr.s_addr),
+        resolvedAddress->sin_port,
+      };
+
+      log_message("NETWORK: Resolved hostname '" +
+        hostname + "' is " + result.ToString(false), "\n");
+
+      return result;
     }
 
   private:
@@ -369,13 +455,7 @@ namespace net
 
     void Connect( const Address & address )
     {
-      std::string address_buf;
-      address_buf =   address.GetA() + "." +
-                      address.GetB() + "." +
-                      address.GetC() + "." +
-                      address.GetD() + ":";
-      address_buf +=  std::to_string( address.GetPort() );
-      log_message( "NETWORK: Client is connecting to ", address_buf, "...\n" );
+      log_message( "NETWORK: Client is connecting to ", address.ToString(), "...\n" );
 
       bool connected = IsConnected();
       ClearData();
@@ -478,13 +558,7 @@ namespace net
       {
         state = Connected;
         address = sender;
-        std::string address_buf;
-        address_buf =   address.GetA() + ".";
-        address_buf +=  address.GetB() + ".";
-        address_buf +=  address.GetC() + ".";
-        address_buf +=  address.GetD() + ":";
-        address_buf +=  std::to_string(address.GetPort());
-        log_message( "NETWORK: New client connected from ", address_buf, "\n" );
+        log_message( "NETWORK: New client connected from ", address.ToString(), "\n" );
         OnConnect();
       }
       if ( sender == address )
@@ -653,9 +727,9 @@ namespace net
     {
       if ( sentQueue.exists( local_sequence ) )
       {
-          log_message( "NETWORK: Local sequence ", (const char*) local_sequence, " exists\n" );
+          log_message( "NETWORK: Local sequence " + std::to_string(local_sequence) + " exists\n" );
         for ( PacketQueue::iterator itor = sentQueue.begin(); itor != sentQueue.end(); ++itor )
-            log_message( " + ", (const char*) itor->sequence, "\n" );
+            log_message( " + " + std::to_string(itor->sequence) + "\n" );
       }
       assert( !sentQueue.exists( local_sequence ) );
       assert( !pendingAckQueue.exists( local_sequence ) );
