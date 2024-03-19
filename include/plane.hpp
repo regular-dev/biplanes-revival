@@ -67,8 +67,6 @@ class Plane
   int8_t mFireFrame {};
   Timer mFireAnim {0.0f};
 
-  SDL_FRect mHitbox {};
-
 
 public:
   Plane( const PLANE_TYPE );
@@ -97,7 +95,8 @@ public:
   void AnimationsReset();
   void SmokeUpdate();
   void FireUpdate();
-  void HitboxUpdate();
+
+  SDL_FRect Hitbox() const;
 
   void TakeOffStart();
   void TakeOffFinish();
@@ -212,9 +211,6 @@ public:
     int8_t mAngelLoop {};
     Timer mAngelAnim {0.0f};
 
-    SDL_FRect mHitbox {};
-    SDL_FRect mChuteHitbox {};
-
     int mAudioLoopChannel {-1};
 
 
@@ -240,8 +236,9 @@ public:
     void AnimationsReset();
     void FallAnimUpdate();
     void ChuteAnimUpdate();
-    void HitboxUpdate();
-    void ChuteHitboxUpdate();
+
+    SDL_FRect Hitbox() const;
+    SDL_FRect ChuteHitbox() const;
 
     void PlayFallingSound();
     void FadeFallingSound( const int channel );

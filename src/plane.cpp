@@ -69,8 +69,6 @@ Plane::Update()
   if ( mHasJumped == true )
     pilot.Update();
 
-  HitboxUpdate();
-
   mPitchCooldown.Update();
   mShootCooldown.Update();
 
@@ -135,12 +133,14 @@ Plane::DrawCollisionLayer() const
     return;
 
 
+  const auto planeHitbox = Hitbox();
+
   const SDL_FRect hitbox
   {
-    toWindowSpaceX(mHitbox.x),
-    toWindowSpaceY(mHitbox.y),
-    scaleToScreenX(mHitbox.w),
-    scaleToScreenY(mHitbox.h),
+    toWindowSpaceX(planeHitbox.x),
+    toWindowSpaceY(planeHitbox.y),
+    scaleToScreenX(planeHitbox.w),
+    scaleToScreenY(planeHitbox.h),
   };
 
   setRenderColor(colors::planeToBullet);
@@ -618,16 +618,12 @@ Plane::FireUpdate()
   }
 }
 
-void
-Plane::HitboxUpdate()
+SDL_FRect
+Plane::Hitbox() const
 {
   namespace plane = constants::plane;
 
-
-  if ( mIsDead == true )
-    return;
-
-  mHitbox =
+  return
   {
     mX - 0.5f * plane::hitboxSizeX,
     mY - 0.5f * plane::hitboxSizeY,
@@ -841,8 +837,6 @@ Plane::Respawn()
 
   pilot.Respawn();
 
-  HitboxUpdate();
-
   AnimationsReset();
 
   ResetSpawnProtection();
@@ -957,8 +951,9 @@ Plane::isHit(
 
 #if BIPLANES_LEGACY_PLANE_HITBOX == 1
   const SDL_FPoint hitPoint {x, y};
+  const auto hitbox = Hitbox();
 
-  return SDL_PointInFRect(&hitPoint, &mHitbox);
+  return SDL_PointInFRect(&hitPoint, &hitbox);
 #endif
 
   const auto hitboxOffset = constants::plane::hitboxOffset;

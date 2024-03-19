@@ -35,7 +35,6 @@
 
 Plane::Pilot::Pilot()
 {
-  HitboxUpdate();
 }
 
 void
@@ -51,8 +50,6 @@ Plane::Pilot::Update()
 {
   FallUpdate();
   RunUpdate();
-  HitboxUpdate();
-  ChuteHitboxUpdate();
   DeathUpdate();
 }
 
@@ -167,24 +164,28 @@ Plane::Pilot::DrawCollisionLayer() const
 
   if ( mIsChuteOpen == true )
   {
-    const SDL_FRect chuteHitbox
+    const auto chuteHitbox = ChuteHitbox();
+
+    const SDL_FRect hitbox
     {
-      toWindowSpaceX(mChuteHitbox.x),
-      toWindowSpaceY(mChuteHitbox.y),
-      scaleToScreenX(mChuteHitbox.w),
-      scaleToScreenY(mChuteHitbox.h),
+      toWindowSpaceX(chuteHitbox.x),
+      toWindowSpaceY(chuteHitbox.y),
+      scaleToScreenX(chuteHitbox.w),
+      scaleToScreenY(chuteHitbox.h),
     };
 
     setRenderColor(colors::bulletToChute);
-    SDL_RenderDrawRectF( gRenderer, &chuteHitbox );
+    SDL_RenderDrawRectF( gRenderer, &hitbox );
   }
+
+  const auto pilotHitbox = Hitbox();
 
   const SDL_FRect hitbox
   {
-    toWindowSpaceX(mHitbox.x),
-    toWindowSpaceY(mHitbox.y),
-    scaleToScreenX(mHitbox.w),
-    scaleToScreenY(mHitbox.h),
+    toWindowSpaceX(pilotHitbox.x),
+    toWindowSpaceY(pilotHitbox.y),
+    scaleToScreenX(pilotHitbox.w),
+    scaleToScreenY(pilotHitbox.h),
   };
 
   setRenderColor(colors::pilotToBullet);
@@ -552,17 +553,12 @@ Plane::Pilot::ChuteAnimUpdate()
   }
 }
 
-void
-Plane::Pilot::HitboxUpdate()
+SDL_FRect
+Plane::Pilot::Hitbox() const
 {
   namespace pilot = constants::pilot;
 
-
-  if ( mIsDead == true )
-    return;
-
-
-  mHitbox =
+  return
   {
     mX - 0.5f * pilot::sizeX,
     mY - 0.5f * pilot::sizeY,
@@ -571,17 +567,12 @@ Plane::Pilot::HitboxUpdate()
   };
 }
 
-void
-Plane::Pilot::ChuteHitboxUpdate()
+SDL_FRect
+Plane::Pilot::ChuteHitbox() const
 {
   namespace chute = constants::pilot::chute;
 
-
-  if ( mIsDead == true || mIsChuteOpen == false )
-    return;
-
-
-  mChuteHitbox =
+  return
   {
     mX - 0.5f * chute::sizeX,
     mY - chute::offsetY,
@@ -823,8 +814,9 @@ Plane::Pilot::isHit(
 
 
   const SDL_FPoint hitPoint {x, y};
+  const auto pilotHitbox = Hitbox();
 
-  return SDL_PointInFRect(&hitPoint, &mHitbox);
+  return SDL_PointInFRect(&hitPoint, &pilotHitbox);
 }
 
 bool
@@ -837,6 +829,7 @@ Plane::Pilot::ChuteIsHit(
 
 
   const SDL_FPoint hitPoint {x, y};
+  const auto chuteHitbox = ChuteHitbox();
 
-  return SDL_PointInFRect(&hitPoint, &mChuteHitbox);
+  return SDL_PointInFRect(&hitPoint, &chuteHitbox);
 }
