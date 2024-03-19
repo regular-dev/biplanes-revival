@@ -286,8 +286,10 @@ Plane::Pilot::OpenChute()
 
 
   mIsChuteOpen = true;
-  mGravity = constants::pilot::chute::gravity;
+  mGravity = constants::pilot::gravity;
 
+  if ( mSpeed.y < 0.0f )
+    mSpeed.y = constants::pilot::chute::baseSpeedY;
 
   if ( plane->mIsLocal == true )
     eventPush(EVENTS::EJECT);
@@ -312,6 +314,7 @@ void
 Plane::Pilot::FallUpdate()
 {
   namespace pilot = constants::pilot;
+  namespace chute = pilot::chute;
 
 
   if ( mIsDead == true || mIsRunning == true )
@@ -322,48 +325,30 @@ Plane::Pilot::FallUpdate()
 
   mX += (mSpeed.x + mMoveSpeed) * deltaTime;
 
+  PlayFallingSound();
 
 //  TODO: do something with this magic mess
 
   if ( mIsChuteOpen == true )
   {
-    const auto chuteChannel = playSound(
-      sounds.chute, mAudioLoopChannel, true );
-
-    if ( chuteChannel != -1 )
-      mAudioLoopChannel = chuteChannel;
-
-    panSound(mAudioLoopChannel, mX);
-
-    if ( mSpeed.y < 0.0f )
-      mSpeed.y = 0.4f * mGravity;
-
-    else if ( mSpeed.y > pilot::chute::baseSpeedY )
+    if ( mSpeed.y > chute::baseSpeedY )
     {
-      mSpeed.y -= 0.5f * deltaTime; // 0.375 ?
-      mSpeed.y = std::max(mSpeed.y, 0.08f);
+      mSpeed.y -= chute::speedYSlowdownFactor * deltaTime; // 0.375 ?
+      mSpeed.y = std::max(mSpeed.y, chute::baseSpeedY);
     }
 
-    else if ( mSpeed.y < pilot::chute::baseSpeedY )
-      mSpeed.y += 0.5f * deltaTime;
+    else if ( mSpeed.y < chute::baseSpeedY )
+      mSpeed.y += chute::speedYSlowdownFactor * deltaTime;
   }
   else
   {
-    const auto fallChannel = playSound(
-      sounds.fall, mAudioLoopChannel, true );
-
-    if ( fallChannel != -1 )
-      mAudioLoopChannel = fallChannel;
-
-    panSound(mAudioLoopChannel, mX);
-
-    if ( mSpeed.y <= 0.0f )
+    if ( mSpeed.y <= 0.f )
     {
-      mGravity += mGravity * 2.0f * deltaTime;
+      mGravity += 2.f * mGravity * deltaTime;
       mSpeed.y += mGravity * deltaTime;
 
-      if ( mSpeed.y >= 0.0f )
-        mGravity = 0.24f; //!!
+      if ( mSpeed.y >= 0.f )
+        mGravity = 0.24f; // TODO: why not pilot::gravity ?
     }
     else
     {
@@ -378,8 +363,8 @@ Plane::Pilot::FallUpdate()
   if ( std::abs(mSpeed.x) > pilot::maxSpeedXThreshold )
   {
     const float slowdownFactor = mIsChuteOpen == true
-      ? pilot::chuteSpeedSlowdownFactor   // = 0.5 seconds to reach zero
-      : pilot::airSpeedSlowdownFactor;    // = 1.0 seconds to reach zero
+      ? chute::speedXSlowdownFactor   // = 0.5 seconds to reach zero
+      : pilot::speedXSlowdownFactor;  // = 1.0 seconds to reach zero
 
     mSpeed.x += -slowdownFactor * mSpeed.x * deltaTime;
   }
@@ -603,13 +588,18 @@ Plane::Pilot::ChuteHitboxUpdate()
 }
 
 void
-Plane::Pilot::FadeLoopingSounds()
+Plane::Pilot::FadeFallingSound(
+  const int channel )
 {
-  if ( mAudioLoopChannel != -1 )
-  {
-    Mix_FadeOutChannel(mAudioLoopChannel, constants::audioFadeDuration);
-    mAudioLoopChannel = -1;
-  }
+  if ( Mix_Playing(channel) == true )
+    Mix_FadeOutChannel(
+      channel,
+      constants::audioFadeDuration );
+}
+
+void
+Plane::Pilot::PlayFallingSound()
+{
 }
 
 float
@@ -656,7 +646,7 @@ void
 Plane::Pilot::ChuteHit(
   Plane& attacker )
 {
-  FadeLoopingSounds();
+  FadeFallingSound(mAudioLoopChannel);
 
   panSound(
     playSound(sounds.hitChute, -1, false),
@@ -674,7 +664,7 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  FadeLoopingSounds();
+  FadeFallingSound(mAudioLoopChannel);
 
   panSound(
     playSound(sounds.dead, -1, false),
@@ -716,7 +706,7 @@ Plane::Pilot::HitGroundCheck()
 
 
 //  SURVIVE LANDING
-  if ( mSpeed.y <= chute::gravity )
+  if ( mSpeed.y <= pilot::safeLandingSpeed )
   {
     FallSurvive();
     eventPush(EVENTS::PILOT_LAND);
@@ -743,7 +733,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  FadeLoopingSounds();
+  FadeFallingSound(mAudioLoopChannel);
 
   mY = constants::pilot::groundCollision;
 
@@ -775,7 +765,7 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
-  FadeLoopingSounds();
+  FadeFallingSound(mAudioLoopChannel);
 
   mIsRunning = false;
   mIsChuteOpen = false;

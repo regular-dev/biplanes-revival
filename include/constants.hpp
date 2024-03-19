@@ -242,11 +242,10 @@ namespace constants
     static constexpr float gravity {0.2f};
     static constexpr float ejectSpeed {0.45f};
     static constexpr float runSpeed {25.6f / baseWidth};
+    static constexpr float safeLandingSpeed {gravity};
 
     static constexpr float maxSpeedXThreshold {2.048f / baseWidth};
-
-    static constexpr float airSpeedSlowdownFactor {1.f};
-    static constexpr float chuteSpeedSlowdownFactor {2.f};
+    static constexpr float speedXSlowdownFactor {1.f};
 
     static constexpr double runFrameTime {0.075};
     static constexpr double fallFrameTime {0.1};
@@ -259,9 +258,11 @@ namespace constants
 
       static constexpr double frameTime {0.25};
 
-      static constexpr float gravity {pilot::gravity};
       static constexpr float baseSpeedX {10.24f / baseWidth};
       static constexpr float baseSpeedY {16.64f / baseHeight};
+
+      static constexpr float speedXSlowdownFactor {2.f};
+      static constexpr float speedYSlowdownFactor {0.5f};
     }
 
     namespace angel

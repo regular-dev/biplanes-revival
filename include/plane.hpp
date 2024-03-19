@@ -243,7 +243,8 @@ public:
     void HitboxUpdate();
     void ChuteHitboxUpdate();
 
-    void FadeLoopingSounds();
+    void PlayFallingSound();
+    void FadeFallingSound( const int channel );
 
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );
