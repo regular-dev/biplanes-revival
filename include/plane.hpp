@@ -136,6 +136,7 @@ public:
   float maxSpeed() const;
   SDL_FPoint speedVector() const;
 
+  SDL_FPoint bulletSpawnOffset() const;
 
   bool isHit( const float, const float ) const;
   bool isDead() const;

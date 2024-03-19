@@ -23,6 +23,7 @@
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/sdl.hpp>
+#include <include/render.hpp>
 #include <include/cloud.hpp>
 #include <include/bullet.hpp>
 #include <include/menu.hpp>
@@ -34,7 +35,12 @@
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 
+#include <lib/SDL_Vector.h>
+
 #include <cmath>
+
+
+#define BIPLANES_LEGACY_PLANE_HITBOX 0
 
 
 Plane::Plane(
@@ -151,6 +157,17 @@ Plane::DrawCollisionLayer() const
 
   setRenderColor(colors::planeToObstacles);
   SDL_RenderDrawRectF( gRenderer, &planeCenter );
+
+  const auto hitboxOffset = constants::plane::hitboxOffset;
+  const auto dir = mDir * M_PI / 180.0f;
+
+  const SDL_Vector hitboxCenter
+  {
+    mX + hitboxOffset * std::sin(dir),
+    mY - hitboxOffset * std::cos(dir),
+  };
+
+  draw_circle(hitboxCenter.x, hitboxCenter.y, plane::hitboxRadius);
 }
 
 void
@@ -298,7 +315,13 @@ Plane::Shoot()
     playSound(sounds.shoot, -1, false),
     mX );
 
-  bullets.SpawnBullet(mX, mY, mDir, mType);
+  const auto bulletOffset = bulletSpawnOffset();
+
+  bullets.SpawnBullet(
+    mX + bulletOffset.x,
+    mY + bulletOffset.y,
+    mDir,
+    mType );
 
 
   if ( mIsLocal == true )
@@ -936,9 +959,25 @@ Plane::isHit(
     return false;
 
 
+#if BIPLANES_LEGACY_PLANE_HITBOX == 1
   const SDL_FPoint hitPoint {x, y};
 
   return SDL_PointInFRect(&hitPoint, &mHitbox);
+#endif
+
+  const auto hitboxOffset = constants::plane::hitboxOffset;
+  const auto dir = mDir * M_PI / 180.0f;
+
+  const SDL_Vector hitboxCenter
+  {
+    mX + hitboxOffset * std::sin(dir),
+    mY - hitboxOffset * std::cos(dir),
+  };
+
+  const auto distance =
+    (SDL_Vector {x, y} - hitboxCenter).length();
+
+  return distance <= constants::plane::hitboxRadius;
 }
 
 PLANE_TYPE
@@ -1039,6 +1078,23 @@ SDL_FPoint
 Plane::speedVector() const
 {
   return mSpeedVec;
+}
+
+SDL_FPoint
+Plane::bulletSpawnOffset() const
+{
+#if BIPLANES_LEGACY_PLANE_HITBOX == 1
+  return {};
+#endif
+
+  const auto offset = constants::plane::bulletSpawnOffset;
+  const auto dir = mDir * M_PI / 180.0f;
+
+  return
+  {
+    offset * std::sin(dir),
+    -offset * std::cos(dir),
+  };
 }
 
 // Get coordinates for sending

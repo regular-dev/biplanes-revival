@@ -138,6 +138,11 @@ namespace constants
 
     static constexpr float hitboxSizeX {sizeX / 3.f * 2.f};
     static constexpr float hitboxSizeY {sizeY / 3.f * 2.f};
+    static constexpr float hitboxDiameter {hitboxSizeX};
+    static constexpr float hitboxRadius {0.5f * hitboxDiameter};
+    static constexpr float hitboxOffset {0.1f * sizeX};
+
+    static constexpr float bulletSpawnOffset {hitboxOffset + hitboxRadius};
 
     static constexpr float groundCollision {182.f / baseHeight};
 
