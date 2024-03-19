@@ -308,22 +308,37 @@ loadSound(
 int
 playSound(
   Mix_Chunk* sound,
-  const int channel,
-  const bool repeating )
+  const int channel )
 {
   if ( soundInitialized == false || sound == nullptr )
     return -1;
 
 
-  if ( repeating == true && channel != -1 )
-  {
-    if ( Mix_Playing(channel) == false )
-      return Mix_PlayChannel(channel, sound, 0);
+  if ( channel == -1 )
+    return Mix_PlayChannel(-1, sound, 0);
 
+  if ( Mix_Playing(channel) == false )
+    return Mix_PlayChannel(channel, sound, 0);
+
+  return -1;
+}
+
+int
+loopSound(
+  Mix_Chunk* sound,
+  const int channel )
+{
+  if ( soundInitialized == false || sound == nullptr )
     return -1;
-  }
 
-  return Mix_PlayChannel(-1, sound, 0);
+
+  if ( channel == -1 )
+    return Mix_PlayChannel(-1, sound, 0);
+
+  if ( Mix_Playing(channel) == false )
+    return Mix_PlayChannel(channel, sound, 0);
+
+  return channel;
 }
 
 void
@@ -334,6 +349,9 @@ panSound(
   if ( soundInitialized == false || channel == -1 )
     return;
 
+  if ( Mix_Playing(channel) == false )
+    return;
+
   const auto panDepth = gameState().audioPanDepth;
 
   const uint8_t left = 255 - 255 * pan * panDepth;
@@ -341,6 +359,17 @@ panSound(
 
   Mix_SetPanning(channel, left, right);
 }
+
+int
+stopSound(
+  const int channel )
+{
+  if ( soundInitialized == false || channel == -1 )
+    return -1;
+
+  return Mix_HaltChannel(channel);
+}
+
 
 void
 setRenderColor(

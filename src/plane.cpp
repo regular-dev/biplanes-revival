@@ -311,9 +311,7 @@ Plane::Shoot()
 
   mShootCooldown.Start();
 
-  panSound(
-    playSound(sounds.shoot, -1, false),
-    mX );
+  panSound( playSound(sounds.shoot), mX );
 
   const auto bulletOffset = bulletSpawnOffset();
 
@@ -698,9 +696,7 @@ Plane::Hit(
 
   if ( mHp > 0 )
   {
-    panSound(
-      playSound(sounds.hit, -1, false),
-      mX );
+    panSound( playSound(sounds.hit), mX );
 
     --mHp;
 
@@ -738,9 +734,7 @@ Plane::Explode()
   namespace spark = constants::explosion::spark;
 
 
-  panSound(
-    playSound(sounds.expl, -1, false),
-    mX );
+  panSound( playSound(sounds.expl), mX );
 
   const auto sparkDirFactor =
     std::sin(mDir * M_PI / 180.f);
@@ -899,12 +893,12 @@ Plane::ScoreChange(
     {
       if ( opponentPlane.isBot() == false )
       {
-        playSound(sounds.loss, -1, false);
+        playSound(sounds.loss);
         menu.setMessage(MESSAGE_TYPE::GAME_LOST);
       }
       else
       {
-        playSound(sounds.victory, -1, false);
+        playSound(sounds.victory);
 
         if ( mType == PLANE_TYPE::BLUE )
           menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
@@ -916,13 +910,13 @@ Plane::ScoreChange(
     }
     else
     {
-      playSound(sounds.victory, -1, false);
+      playSound(sounds.victory);
       menu.setMessage(MESSAGE_TYPE::GAME_WON);
     }
   }
   else
   {
-    playSound(sounds.loss, -1, false);
+    playSound(sounds.loss);
     menu.setMessage(MESSAGE_TYPE::GAME_LOST);
   }
 

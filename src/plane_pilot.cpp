@@ -43,6 +43,7 @@ Plane::Pilot::setPlane(
   Plane* parentPlane )
 {
   plane = parentPlane;
+  mAudioLoopChannel = plane->type();
 }
 
 void
@@ -252,6 +253,8 @@ Plane::Pilot::Bail(
 {
   namespace pilot = constants::pilot;
 
+
+  stopSound(mAudioLoopChannel);
 
   mX = planeX;
   mY = planeY;
@@ -600,6 +603,19 @@ Plane::Pilot::FadeFallingSound(
 void
 Plane::Pilot::PlayFallingSound()
 {
+  if (  plane->hasJumped() == false ||
+        mIsDead == true ||
+        mIsRunning == true ||
+        mAudioLoopChannel == -1 )
+    return;
+
+
+  const auto soundToPlay = mIsChuteOpen == true
+    ? sounds.chute
+    : sounds.fall;
+
+  loopSound(soundToPlay, mAudioLoopChannel);
+  panSound(mAudioLoopChannel, mX);
 }
 
 float
@@ -646,11 +662,9 @@ void
 Plane::Pilot::ChuteHit(
   Plane& attacker )
 {
-  FadeFallingSound(mAudioLoopChannel);
+//  FadeFallingSound(mAudioLoopChannel);
 
-  panSound(
-    playSound(sounds.hitChute, -1, false),
-    mX );
+  panSound( playSound(sounds.hitChute), mX );
 
   mChuteState = CHUTE_STATE::CHUTE_DESTROYED;
   mIsChuteOpen = false;
@@ -666,9 +680,7 @@ Plane::Pilot::Death()
 {
   FadeFallingSound(mAudioLoopChannel);
 
-  panSound(
-    playSound(sounds.dead, -1, false),
-    mX );
+  panSound( playSound(sounds.dead), mX );
 
   mIsRunning = false;
   mIsChuteOpen = false;
@@ -751,9 +763,7 @@ Plane::Pilot::Rescue()
 {
   plane->Respawn();
 
-  panSound(
-    playSound(sounds.rescue, -1, false),
-    plane->mX );
+  panSound( playSound(sounds.rescue), plane->mX );
 
   if ( gameState().isRoundFinished  == false )
     plane->mStats.rescues++;

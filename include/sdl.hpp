@@ -50,12 +50,17 @@ Mix_Chunk* loadSound( const std::string& );
 
 int playSound(
   Mix_Chunk* sound,
-  const int channel,
-  const bool repeating );
+  const int channel = -1 );
+
+int loopSound(
+  Mix_Chunk* sound,
+  const int channel );
 
 void panSound(
   const int channel,
   const float pan );
+
+int stopSound( const int channel );
 
 
 void setRenderColor( const Color& );
