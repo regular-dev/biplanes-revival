@@ -308,8 +308,8 @@ namespace constants
     static constexpr float planeCollisionX {0.5f - sizeX * 0.5f};
     static constexpr float planeCollisionY {163.904f / baseHeight}; // TODO: verify
 
-    static constexpr float pilotCollisionLeftX {0.5f - sizeX * 0.4f};
-    static constexpr float pilotCollisionRightX {0.5f + sizeX * 0.4f};
+    static constexpr float pilotCollisionLeftX {0.5f - sizeX * 0.475f};
+    static constexpr float pilotCollisionRightX {0.5f + sizeX * 0.475f};
 
     static constexpr float bulletCollisionX {0.5f - sizeX * 0.475f};
     static constexpr float bulletCollisionY {168.48f / baseHeight}; // TODO: verify
