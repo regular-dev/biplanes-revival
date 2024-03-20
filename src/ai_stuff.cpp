@@ -461,10 +461,10 @@ AiTemperature::Weights::FromTime(
 }
 
 
-class AiStateTest : public AiState
+class AiStatePlane : public AiState
 {
 public:
-  AiStateTest( const AiTemperature& temperature );
+  AiStatePlane( const AiTemperature& temperature );
 
   void update(
     const Plane& self,
@@ -474,7 +474,7 @@ public:
   std::vector <AiAction> actions() const override;
 };
 
-AiStateTest::AiStateTest(
+AiStatePlane::AiStatePlane(
   const AiTemperature& temperature )
   : AiState(temperature)
 {
@@ -500,7 +500,7 @@ AiStateTest::AiStateTest(
 }
 
 void
-AiStateTest::update(
+AiStatePlane::update(
   const Plane& self,
   const Plane& opponent,
   const std::vector <Bullet>& opponentBullets )
@@ -1070,7 +1070,7 @@ AiStateTest::update(
 }
 
 std::vector <AiAction>
-AiStateTest::actions() const
+AiStatePlane::actions() const
 {
   const float threshold = 0.95f;
 
@@ -1444,7 +1444,7 @@ AiStateController::init()
 
   mStates =
   {
-    new AiStateTest({{1.f, 1.f}, 1.f}),
+    new AiStatePlane({{1.f, 1.f}, 1.f}),
     new AiStatePilot({{1.f, 1.f}, 1.f}),
   };
 
