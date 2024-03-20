@@ -26,6 +26,7 @@
 #include <include/render.hpp>
 #include <include/cloud.hpp>
 #include <include/bullet.hpp>
+#include <include/math.hpp>
 #include <include/menu.hpp>
 #include <include/network.hpp>
 #include <include/network_data.hpp>
@@ -286,11 +287,7 @@ Plane::Turn( const PLANE_PITCH inputDir )
 
   mDir += dir * constants::plane::pitchStep;
 
-  if ( mDir < 0.0f )
-    mDir += 360.0f;
-
-  else if ( mDir >= 360.0f )
-    mDir -= 360.0f;
+  mDir = clamp_angle(mDir, 360.f);
 }
 
 void
@@ -1049,8 +1046,8 @@ Plane::jumpDir() const
   namespace plane = constants::plane;
 
   return mType == PLANE_TYPE::RED
-    ? mDir + plane::jumpDirOffsetRed
-    : mDir + plane::jumpDirOffsetBlue;
+          ? clamp_angle(mDir + plane::jumpDirOffsetRed, 360.f)
+          : clamp_angle(mDir + plane::jumpDirOffsetBlue, 360.f);
 }
 
 float

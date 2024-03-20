@@ -64,6 +64,9 @@ target_sources(${TARGET} PRIVATE
   src/matchmake.cpp
   include/matchmake.hpp
 
+  src/math.cpp
+  include/math.hpp
+
   src/menu.cpp
   src/menu_input.cpp
   src/menu_navigation.cpp

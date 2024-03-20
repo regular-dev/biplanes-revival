@@ -25,6 +25,7 @@
 #include <include/timer.hpp>
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
+#include <include/math.hpp>
 #include <include/network.hpp>
 #include <include/cloud.hpp>
 #include <include/sounds.hpp>
@@ -259,12 +260,7 @@ Plane::Pilot::Bail(
 
   mX = planeX;
   mY = planeY;
-  mDir = bailDir;
-
-  if ( mDir < 0 )
-    mDir += 360;
-  else if ( mDir >= 360 )
-    mDir -= 360;
+  mDir = clamp_angle(bailDir, 360.f);
 
   mGravity = pilot::gravity;
   mSpeed.x =  pilot::ejectSpeed * std::sin(mDir * M_PI / 180.0);
