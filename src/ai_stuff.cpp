@@ -1025,6 +1025,23 @@ AiStateTest::update(
           allowJump = false;
       }
 
+      const SDL_Vector barnPos
+      {
+        0.5f,
+        pilot::groundCollision,
+      };
+
+      const auto distanceToBarn = get_distance_between_points(
+        pos, barnPos );
+
+      const auto angleToBarn = get_angle_to_point(
+        pos, barnPos );
+
+      if (  self.hp() == opponent.hp() &&
+            distanceToBarn > 0.5f * pilot::ejectSpeed &&
+            std::abs(self.jumpDir() - angleToBarn) >= 3.f * plane::pitchStep )
+        allowJump = false;
+
       if ( self.jumpDir() < 90.f || self.jumpDir() > 270.f )
         allowJump = false;
 
