@@ -36,7 +36,6 @@
 
 #include <cassert>
 #include <iomanip>
-#include <sstream>
 #include <algorithm>
 
 
@@ -424,8 +423,7 @@ AiTemperature::update(
 
   const auto valueDiff = newValue - mValue;
 
-//  TODO: epsilon comparison
-  if ( std::abs(valueDiff) < 0.001f )
+  if ( std::abs(valueDiff) < std::numeric_limits <float>::epsilon() )
     return;
 
   mValue += factor * weight * std::copysign(1.f, valueDiff);
@@ -946,10 +944,9 @@ AiStateTest::update(
       actions.push_back(AiAction::TurnRight);
 
 
-//    TODO: if relative dir >= 45 && distance < plane::sizeX
+//    TODO: decelerate to get on opponent's tail
     if (  isStalling == true ||
           isOpponentBehind == false ||
-//          opponentShortestDistance > 0.25f ||
           std::abs(interestOpponentDirDiff) >= 45.f )
       actions.push_back(AiAction::Accelerate);
     else
@@ -989,8 +986,6 @@ AiStateTest::update(
       if ( std::abs(self.jumpDir() - angleToBarn) <= 3.f * plane::pitchStep )
         actions.push_back(AiAction::Jump);
 
-//      TODO: test angle/distance to ground ?
-
     }
     else if ( selfHp == 0.f )
     {
@@ -1029,24 +1024,6 @@ AiStateTest::update(
         if ( std::abs(angleToBullet - self.jumpDir()) <= 3.f * plane::pitchStep )
           allowJump = false;
       }
-
-      const SDL_Vector barnPos
-      {
-        0.5f,
-        pilot::groundCollision,
-      };
-
-      const auto distanceToBarn = get_distance_between_points(
-        pos, barnPos );
-
-//      if ( distanceToBarn < pilot::ejectSpeed )
-//        actions.push_back(AiAction::Jump);
-
-      const auto angleToBarn = get_angle_to_point(
-        pos, barnPos );
-
-//      if ( std::abs(self.jumpDir() - angleToBarn) > 3.f * plane::pitchStep )
-//        allowJump = false;
 
       if ( self.jumpDir() < 90.f || self.jumpDir() > 270.f )
         allowJump = false;
@@ -1148,6 +1125,7 @@ AiStatePilot::update(
   mInterestMap.reinit();
   mDangerMap.reinit();
 
+//  Run to rescue zone
   if ( self.pilot.x() > constants::barn::pilotCollisionRightX )
     mInterestMap[0] = 1.0f;
 
@@ -1184,6 +1162,7 @@ AiStatePilot::update(
     {pilotPos.x + 0.5f * pilot::sizeX + runDistance, pilotPos.y + 0.5f * pilot::sizeY},
   };
 
+//  Avoid bullets
   for ( const auto& bullet : opponentBullets )
   {
     const auto bulletDir = bullet.dir() * M_PI / 180.f;
@@ -1231,7 +1210,54 @@ AiStatePilot::update(
       mDangerMap.write(dirIndex, danger);
   }
 
-//  TODO: avoid plane LoS
+//  Avoid opponent's LoS
+  if ( opponent.canShoot() == true )
+  {
+    const auto bulletDir = opponent.dir() * M_PI / 180.f;
+    const auto bulletSpeed = constants::bullet::speed;
+
+    const auto bulletOffset = opponent.bulletSpawnOffset();
+
+    const SDL_Vector bulletPathStart
+    {
+      opponent.x() + bulletOffset.x,
+      opponent.y() + bulletOffset.y,
+    };
+
+    const SDL_Vector bulletPathEnd
+    {
+      bulletPathStart.x + bulletSpeed * timeToAvoidBullet * std::sin(bulletDir),
+      bulletPathStart.y - bulletSpeed * timeToAvoidBullet * std::cos(bulletDir),
+    };
+
+    SDL_Vector contactPoint {};
+
+    const bool willCollide = segment_intersects_polygon(
+      bulletPathStart, bulletPathEnd,
+      pilotHitbox,
+      &contactPoint );
+
+    if ( willCollide == true )
+    {
+      const auto distanceToCollision =
+        (contactPoint - pilotPos).length();
+
+      const auto angleToCollision = get_angle_relative(
+        0.f, get_angle_to_point(pilotPos, contactPoint) );
+
+      const bool dirIndex = angleToCollision > 0;
+
+      const auto danger = distanceToCollision;
+
+      if ( mDangerMap[dirIndex] > 0.f )
+      {
+        mDangerMap[dirIndex] = std::min(
+          mDangerMap[dirIndex], danger );
+      }
+      else
+        mDangerMap.write(dirIndex, danger);
+    }
+  }
 
 //  const auto maxDanger = mDangerMap.maxValue();
   const auto maxDanger = SDL_Vector
@@ -1268,18 +1294,14 @@ AiStatePilot::update(
 
   if ( self.pilot.isRunning() == false )
   {
-    const auto reactionTime =
-      0.f;
-//      1.f / mActions[AiAction::Jump].weights().positive;
-
-    const auto timeToSlowdown = reactionTime +
+    const auto timeToSlowdown =
       std::abs(pilotSpeed.y * constants::tickRate + pilot::gravity - chute::baseSpeedY)
       / chute::speedYSlowdownFactor;
 
     const auto ticksToSlowdown =
       timeToSlowdown * constants::tickRate;
 
-    const auto timeToLand = reactionTime +
+    const auto timeToLand =
       (pilot::groundCollision - pilotPos.y)
       / chute::baseSpeedY;
 
