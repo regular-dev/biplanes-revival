@@ -78,7 +78,13 @@ namespace constants
         static constexpr Color planeSpeedVector {255, 255, 0, 255};
         static constexpr Color pilotSpeedVector {255, 255, 0, 255};
 
+        static constexpr Color planeGravityVector {255, 127, 0, 255};
+
         static constexpr Color danger {255, 0, 0, 255};
+        static constexpr Color interest {0, 0, 255, 255};
+        static constexpr Color seek {0, 255, 0, 255};
+
+        static constexpr Color actionBox {255, 255, 255, 255};
       }
     }
   }
@@ -146,7 +152,8 @@ namespace constants
 
     static constexpr float groundCollision {182.f / baseHeight};
 
-    static constexpr float pitchStep {22.5f};
+    static constexpr uint8_t directionCount {16};
+    static constexpr float pitchStep {360.f / directionCount};
 
     static constexpr float acceleration {0.5f};
     static constexpr float deceleration {0.5f * acceleration};
@@ -360,6 +367,32 @@ namespace constants
       static constexpr float numOffsetBlue2X {sizeX * 1.1f};
       static constexpr float numOffsetRed1X {sizeX * 1.75f};
       static constexpr float numOffsetRed2X {sizeX * 0.75f};
+    }
+  }
+
+
+//  ARTIFICIAL IDIOT
+  namespace ai
+  {
+    static constexpr float barnDangerRadius {0.75f * barn::sizeX};
+
+    namespace debug
+    {
+      static constexpr float dangerMagnitude {2.f * plane::sizeX};
+      static constexpr float interestMagnitude {2.f * plane::sizeX};
+      static constexpr float heatMagnitude {2.f * plane::sizeX};
+
+      static constexpr float actionGridOffsetX {0.6f * plane::sizeX};
+      static constexpr float actionGridOffsetY {-0.6f * plane::sizeY};
+
+      static constexpr float actionBoxSizeX {0.25f * plane::sizeX};
+      static constexpr float actionBoxSizeY {0.25f * plane::sizeY};
+
+      static constexpr float actionBoxSpacingX {};
+      static constexpr float actionBoxSpacingY {};
+
+      static constexpr float actionBoxStepX {actionBoxSizeX + 0.5f * actionBoxSpacingX};
+      static constexpr float actionBoxStepY {actionBoxSizeY + 0.5f * actionBoxSpacingY};
     }
   }
 }

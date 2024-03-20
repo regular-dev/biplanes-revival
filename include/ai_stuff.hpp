@@ -74,14 +74,23 @@ public:
   float& operator [] ( const size_t slot );
   float operator [] ( const size_t slot ) const;
 
+  void reinit();
+  void normalize();
+
+  size_t size() const;
+
   float minValue() const;
   float maxValue() const;
 
   size_t minValueSlot() const;
   size_t maxValueSlot() const;
 
+
   ContextMap operator - ( const ContextMap& ) const;
   ContextMap mask( const ContextMap& other, const float threshold ) const;
+
+  float sum( const size_t firstSlot, const size_t lastSlot, const int8_t dir ) const;
+  size_t countSlotDistance( const size_t firstSlot, const size_t lastSlot, const int8_t dir ) const;
 };
 
 
@@ -92,6 +101,9 @@ protected:
   AiTemperature mTemperature {};
 
   std::map <AiAction, AiTemperature> mActions {};
+
+  ContextMap mInterestMap {0};
+  ContextMap mDangerMap {0};
 
 
 public:
@@ -119,6 +131,7 @@ class AiStateController
 
 public:
   AiStateController() = default;
+  ~AiStateController();
 
   void init();
 

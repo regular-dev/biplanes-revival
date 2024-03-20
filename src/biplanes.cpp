@@ -349,6 +349,12 @@ game_init_mp()
   packetSendTime = {};
   game_reset();
 
+  if ( gameState().debug.ai == true )
+  {
+    aiController = {};
+    aiController.init();
+  }
+
   log_message( "\nLOG: Multiplayer game initialized successfully!\n\n" );
 
   return 0;
@@ -542,6 +548,9 @@ game_loop_mp()
     processPlaneControls(remotePlane, opponentControls);
     remotePlane.Update();
   }
+
+  if ( gameState().debug.ai == true )
+    aiController.update();
 
   zeppelin.Update();
   bullets.Update();

@@ -78,7 +78,12 @@ void
 Plane::Input::Jump()
 {
   if ( plane->mHasJumped == true )
+  {
     plane->pilot.OpenChute();
+
+    if ( plane->isBot() == true )
+      plane->pilot.ChuteUnlock();
+  }
   else
     plane->Jump();
 }
