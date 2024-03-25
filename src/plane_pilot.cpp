@@ -380,15 +380,9 @@ Plane::Pilot::FallUpdate()
 
   CoordinatesWrap();
 
-
-//  THINK: autoland remote pilot ?
-  if ( plane->mIsLocal == false )
-    return;
-
-
   HitGroundCheck();
 
-  if ( plane->mIsBot == true )
+  if ( plane->mIsBot == true || plane->mIsLocal == false )
     return;
 
 
@@ -702,8 +696,7 @@ Plane::Pilot::HitGroundCheck()
   namespace chute = pilot::chute;
 
 
-  if (  mY <= pilot::groundCollision ||
-        plane->mIsLocal == false )
+  if (  mY <= pilot::groundCollision )
     return;
 
 
@@ -711,15 +704,16 @@ Plane::Pilot::HitGroundCheck()
   if ( mSpeed.y <= pilot::safeLandingSpeed )
   {
     FallSurvive();
-    eventPush(EVENTS::PILOT_LAND);
+
+    if ( plane->mIsLocal == true )
+      eventPush(EVENTS::PILOT_LAND);
 
     return;
   }
 
 
-//  THINK: autoland remote pilot ?
-//  $REF: if self is remote
-//    return;
+  if ( plane->mIsLocal == false )
+    return;
 
 
   Death();
