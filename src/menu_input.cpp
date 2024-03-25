@@ -80,7 +80,7 @@ Menu::UpdateControls()
               mCurrentRoom == ROOMS::MENU_MAIN )
     {
       setMessage(MESSAGE_TYPE::NONE);
-      ChangeRoom(ROOMS::MENU_RECENT_STATS);
+      ChangeRoom(ROOMS::MENU_RECENT_STATS_PAGE1);
 
       auto& stats = game.stats;
       calcDerivedStats(stats.recent[PLANE_TYPE::RED]);

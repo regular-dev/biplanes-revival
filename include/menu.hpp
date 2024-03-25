@@ -88,7 +88,8 @@ public:
   void screen_copyright();
   void screen_splash();
 
-  void screen_stats_recent();
+  void screen_stats_recent_page1();
+  void screen_stats_recent_page2();
   void screen_stats_total_page1();
   void screen_stats_total_page2();
 

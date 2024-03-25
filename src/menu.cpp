@@ -372,9 +372,15 @@ Menu::DrawMenu()
       break;
     }
 
-    case ROOMS::MENU_RECENT_STATS:
+    case ROOMS::MENU_RECENT_STATS_PAGE1:
     {
-      screen_stats_recent();
+      screen_stats_recent_page1();
+      break;
+    }
+
+    case ROOMS::MENU_RECENT_STATS_PAGE2:
+    {
+      screen_stats_recent_page2();
       break;
     }
 

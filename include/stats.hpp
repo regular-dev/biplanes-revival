@@ -36,7 +36,8 @@ struct Statistics
   uint32_t rescues {};
 
   uint32_t plane_kills {};
-  uint32_t deaths {};
+  uint32_t plane_deaths {};
+  uint32_t pilot_deaths {};
 
   uint32_t wins {};
   uint32_t losses {};
@@ -46,15 +47,15 @@ struct Statistics
   uint32_t totalHits {};
   uint32_t misses {};
   float accuracy {};
+  float shotsPerKill {};
 
   uint32_t suicides {};
   float selfPreservation {};
 
   uint32_t totalKills {};
+  uint32_t totalDeaths {};
   float kdRatio {};
   float survivability {};
-
-  float avgBulletsPerKill {};
 
 
   Statistics() = default;

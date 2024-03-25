@@ -384,18 +384,19 @@ stats_write()
   const auto& stats = gameState().stats.total;
 
   picojson::object jsonStats;
-  jsonStats["ChuteHits"]  = picojson::value( (double) stats.chute_hits );
-  jsonStats["Crashes"]    = picojson::value( (double) stats.crashes );
-  jsonStats["Deaths"]     = picojson::value( (double) stats.deaths );
-  jsonStats["Falls"]      = picojson::value( (double) stats.falls );
-  jsonStats["Jumps"]      = picojson::value( (double) stats.jumps );
-  jsonStats["Kills"]      = picojson::value( (double) stats.plane_kills );
-  jsonStats["Losses"]     = picojson::value( (double) stats.losses );
-  jsonStats["PilotHits"]  = picojson::value( (double) stats.pilot_hits );
-  jsonStats["PlaneHits"]  = picojson::value( (double) stats.plane_hits );
-  jsonStats["Rescues"]    = picojson::value( (double) stats.rescues );
-  jsonStats["Shots"]      = picojson::value( (double) stats.shots );
-  jsonStats["Wins"]       = picojson::value( (double) stats.wins );
+  jsonStats["ChuteHits"]    = picojson::value( (double) stats.chute_hits );
+  jsonStats["Crashes"]      = picojson::value( (double) stats.crashes );
+  jsonStats["PlaneDeaths"]  = picojson::value( (double) stats.plane_deaths );
+  jsonStats["PilotDeaths"]  = picojson::value( (double) stats.pilot_deaths );
+  jsonStats["Falls"]        = picojson::value( (double) stats.falls );
+  jsonStats["Jumps"]        = picojson::value( (double) stats.jumps );
+  jsonStats["Kills"]        = picojson::value( (double) stats.plane_kills );
+  jsonStats["Losses"]       = picojson::value( (double) stats.losses );
+  jsonStats["PilotHits"]    = picojson::value( (double) stats.pilot_hits );
+  jsonStats["PlaneHits"]    = picojson::value( (double) stats.plane_hits );
+  jsonStats["Rescues"]      = picojson::value( (double) stats.rescues );
+  jsonStats["Shots"]        = picojson::value( (double) stats.shots );
+  jsonStats["Wins"]         = picojson::value( (double) stats.wins );
 
 
   std::string jsonOutput = picojson::value( jsonStats ).serialize( true );
@@ -446,7 +447,10 @@ statsRead()
     try { stats.crashes = jsonStats.at( "Crashes" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { stats.deaths = jsonStats.at( "Deaths" ).get <double> (); }
+    try { stats.plane_deaths = jsonStats.at( "PlaneDeaths" ).get <double> (); }
+    catch ( const std::exception& ) {};
+
+    try { stats.pilot_deaths = jsonStats.at( "PilotDeaths" ).get <double> (); }
     catch ( const std::exception& ) {};
 
     try { stats.falls = jsonStats.at( "Falls" ).get <double> (); }

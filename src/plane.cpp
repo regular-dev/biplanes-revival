@@ -715,7 +715,7 @@ Plane::Hit(
 
   if ( gameState().isRoundFinished == false )
   {
-    mStats.deaths++;
+    mStats.plane_deaths++;
     attacker.mStats.plane_kills++;
   }
 }

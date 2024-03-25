@@ -744,7 +744,13 @@ Menu::GoBack()
       break;
     }
 
-    case ROOMS::MENU_RECENT_STATS:
+    case ROOMS::MENU_RECENT_STATS_PAGE1:
+    {
+      ChangeRoom(ROOMS::MENU_RECENT_STATS_PAGE2);
+      break;
+    }
+
+    case ROOMS::MENU_RECENT_STATS_PAGE2:
     {
       ChangeRoom(ROOMS::MENU_TOTAL_STATS_PAGE1);
       break;
