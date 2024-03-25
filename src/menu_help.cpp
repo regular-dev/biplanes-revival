@@ -278,53 +278,53 @@ Menu::screen_help()
 //  Accelerate
   draw_text( "Accelerate",        0.360f, 0.05f );
   char textbuf[30];
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(THROTTLE_UP) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(THROTTLE_UP) );
   draw_text( textbuf,             0.400f, 0.1f );
 
 
 //  Turn left
   draw_text( "Turn Anti       ",  0, 0.100f );
   draw_text( "Clockwise       ",  0, 0.150f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_LEFT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_LEFT) );
   draw_text( textbuf,             0, 0.200f );
 
 
 //  Turn right
   draw_text( "Turn            ",  0.600f, 0.150f );
   draw_text( "Clockwise       ",  0.600f, 0.200f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_RIGHT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_RIGHT) );
   draw_text( textbuf,             0.600f, 0.250f );
 
 
 //  Decelerate
   draw_text( "Decelerate      ",  0.200f, 0.250f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(THROTTLE_DOWN) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(THROTTLE_DOWN) );
   draw_text( textbuf,             0.200f, 0.300f );
 
 
 //  Fire
   draw_text( " Fire           ",  0.125f, 0.350f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(FIRE) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(FIRE) );
   draw_text( textbuf,             0.275f, 0.350f );
 
 
 //  Jump
   draw_text( "Eject           ",  0.125f, 0.400f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(JUMP) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(JUMP) );
   draw_text( textbuf,             0.275f, 0.400f );
 
 
 //  Move left
   draw_text( "Move            ",  0.025f, 0.650f );
   draw_text( "Left            ",  0.025f, 0.700f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_LEFT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_LEFT) );
   draw_text( textbuf,             0.025f, 0.750f );
 
 
 //  Move right
   draw_text( " Move           ",  0.325f, 0.650f );
   draw_text( "Right           ",  0.325f, 0.700f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_RIGHT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_RIGHT) );
   draw_text( textbuf,             0.325f, 0.600f );
 
 
@@ -336,19 +336,19 @@ Menu::screen_help()
 //  Fly left
   draw_text( "Move            ",  0.525f, 0.650f );
   draw_text( "Left            ",  0.525f, 0.700f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_LEFT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_LEFT) );
   draw_text( textbuf,             0.525f, 0.750f );
 
 
 //  Fly right
   draw_text( " Move           ",  0.825f, 0.650f );
   draw_text( "Right           ",  0.825f, 0.700f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(TURN_RIGHT) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(TURN_RIGHT) );
   draw_text( textbuf,             0.750f, 0.600f );
 
 
 //  Open Parachute
   draw_text( "Open Parachute  ",  0.525f, 0.850f );
-  sprintf( textbuf, "[%s]",       SDL_GetKeyName(JUMP) );
+  sprintf( textbuf, "[%s]",       SDL_GetScancodeName(JUMP) );
   draw_text( textbuf,             0.525f, 0.900f );
 }
