@@ -121,7 +121,7 @@ namespace DIFFICULTY
     EASY,
     MEDIUM,
     HARD,
-    EVOLVE,
+    DEVELOPER,
   };
 }
 

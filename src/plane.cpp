@@ -293,8 +293,6 @@ Plane::Turn( const PLANE_PITCH inputDir )
 void
 Plane::Shoot()
 {
-//  THINK: is spawn protection condition needed ?
-//  THINK: is shoot cooldown condition needed ?
   if (  mHasJumped == true ||
         mIsDead == true ||
         mIsOnGround == true ||
@@ -538,8 +536,13 @@ Plane::AnimationsReset()
   mFireAnim.Stop();
   mFireFrame = 0;
 
+  const auto shootCooldown =
+    gameState().botDifficulty == DIFFICULTY::EASY
+      ? constants::ai::shootCooldownEasy
+      : plane::shootCooldown;
+
   mPitchCooldown.SetNewTimeout( plane::pitchCooldown );
-  mShootCooldown.SetNewTimeout( plane::shootCooldown );
+  mShootCooldown.SetNewTimeout( shootCooldown );
 
   mDeadCooldown.SetNewTimeout( plane::deadCooldown );
   mProtection.SetNewTimeout( plane::spawnProtectionCooldown );

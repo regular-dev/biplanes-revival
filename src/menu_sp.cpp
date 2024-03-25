@@ -67,13 +67,13 @@ Menu::screen_sp()
 
     case DIFFICULTY::HARD:
     {
-      aiDifficulty = "Developer";
+      aiDifficulty = "Veteran";
       break;
     }
 
-    case DIFFICULTY::EVOLVE:
+    case DIFFICULTY::DEVELOPER:
     {
-      aiDifficulty = "Evolve";
+      aiDifficulty = "Developer";
       break;
     }
   }

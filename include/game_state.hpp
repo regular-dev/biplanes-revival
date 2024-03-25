@@ -74,7 +74,7 @@ public:
   float audioPanDepth {0.4f};
 
   GAME_MODE gameMode {};
-  DIFFICULTY botDifficulty {DIFFICULTY::MEDIUM};
+  DIFFICULTY botDifficulty {DIFFICULTY::EASY};
   uint8_t winScore {10};
 
 

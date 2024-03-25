@@ -376,6 +376,10 @@ namespace constants
   {
     static constexpr float barnDangerRadius {0.75f * barn::sizeX};
 
+    static constexpr float aimConeDefault {0.5f};
+    static constexpr float aimConeEasy {2.f};
+    static constexpr float shootCooldownEasy {2.f * plane::shootCooldown};
+
     namespace debug
     {
       static constexpr float dangerMagnitude {2.f * plane::sizeX};

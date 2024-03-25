@@ -426,8 +426,16 @@ AiTemperature::update(
   if ( std::abs(valueDiff) < std::numeric_limits <float>::epsilon() )
     return;
 
-  mValue += factor * weight * std::copysign(1.f, valueDiff);
-  mValue = std::clamp(mValue, 0.0f, 1.0f);
+
+//  static std::minstd_rand0 eng {std::random_device{}()};
+//  static std::mt19937 eng {std::random_device{}()};
+//  static std::uniform_real_distribution <float> distr {0.25f, 1.f};
+
+//  const auto randomFactor = distr(eng);
+  const auto randomFactor = 1.f;
+
+  mValue += factor * weight * randomFactor * std::copysign(1.f, valueDiff);
+  mValue = std::clamp(mValue, 0.f, 1.f);
 }
 
 void
@@ -483,10 +491,47 @@ AiStatePlane::AiStatePlane(
 
   constexpr auto ReactionTimeToWeights = &AiTemperature::Weights::FromTime;
 
-  const auto throttleWeight = ReactionTimeToWeights(0.1f, 0.1f);
-  const auto pitchWeight = ReactionTimeToWeights(0.1f, 0.1f);
-  const auto shootWeight = ReactionTimeToWeights(0.04f, 0.04f);
-  const auto jumpWeight = ReactionTimeToWeights(0.04f, 0.04f);
+  auto throttleWeight = ReactionTimeToWeights(0.1f, 0.1f);
+  auto pitchWeight = ReactionTimeToWeights(0.1f, 0.1f);
+  auto shootWeight = ReactionTimeToWeights(0.04f, 0.04f);
+  auto jumpWeight = ReactionTimeToWeights(0.04f, 0.04f);
+
+  switch (gameState().botDifficulty)
+  {
+    case DIFFICULTY::EASY:
+    {
+      throttleWeight = ReactionTimeToWeights(0.35f, 0.35f);
+      pitchWeight = ReactionTimeToWeights(0.45f, 0.45f);
+      shootWeight = ReactionTimeToWeights(0.45f, 0.45f);
+      jumpWeight = ReactionTimeToWeights(0.1f, 0.1f);
+
+      break;
+    }
+    case DIFFICULTY::MEDIUM:
+    {
+      throttleWeight = ReactionTimeToWeights(0.25f, 0.25f);
+      pitchWeight = ReactionTimeToWeights(0.35f, 0.35f);
+      shootWeight = ReactionTimeToWeights(0.35f, 0.35f);
+      jumpWeight = ReactionTimeToWeights(0.08f, 0.08f);
+
+      break;
+    }
+    case DIFFICULTY::HARD:
+    {
+      throttleWeight = ReactionTimeToWeights(0.17f, 0.17f);
+      pitchWeight = ReactionTimeToWeights(0.25f, 0.25f);
+      shootWeight = ReactionTimeToWeights(0.2f, 0.2f);
+      jumpWeight = ReactionTimeToWeights(0.06f, 0.06f);
+
+      break;
+    }
+
+    case DIFFICULTY::DEVELOPER:
+      break;
+
+    default:
+      assert(false);
+  }
 
   mActions =
   {
@@ -519,6 +564,8 @@ AiStatePlane::update(
 
     return;
   }
+
+  const auto botDifficulty = gameState().botDifficulty;
 
   mTemperature.update(1.f);
 
@@ -742,13 +789,24 @@ AiStatePlane::update(
 
       const auto bulletOffset = self.bulletSpawnOffset();
 
-      const auto canHitInstantly = opponent.isHit(
-        self.x() + bulletOffset.x,
-        self.y() + bulletOffset.y );
+      const float aimCone =
+        botDifficulty == DIFFICULTY::EASY
+          ? constants::ai::aimConeEasy
+          : constants::ai::aimConeDefault;
 
-      if (  std::abs(dirToTargetRelative) <= plane::pitchStep * 0.5f ||
-            canHitInstantly == true )
-        actions.push_back(AiAction::Shoot);
+      const bool canHitInstantly = opponent.isHit(
+        self.x() + bulletOffset.x,
+        self.y() + bulletOffset.y ) &&
+          botDifficulty > DIFFICULTY::EASY;
+
+      const bool willBulletHit =
+        std::abs(dirToTargetRelative) <= plane::pitchStep * aimCone;
+
+      if ( willBulletHit == true || canHitInstantly == true )
+      {
+        if ( opponent.hasJumped() == false || botDifficulty > DIFFICULTY::EASY )
+          actions.push_back(AiAction::Shoot);
+      }
 
       const size_t dirIndex = std::round(dirToTargetAbsolute / plane::pitchStep);
 
@@ -786,6 +844,7 @@ AiStatePlane::update(
     opponent.protectionRemainder() >= 0.5f * plane::spawnProtectionCooldown;
 
   const bool shouldRescue =
+    botDifficulty > DIFFICULTY::EASY &&
     self.hp() < plane::maxHp &&
     (opponent.isDead() == true || opponent.hasJumped() == true);
 
@@ -954,6 +1013,7 @@ AiStatePlane::update(
   }
 
 
+//  Eject to avoid crash
   if ( isSafeToJump(self) == true )
   {
     const float selfHp =
@@ -962,10 +1022,14 @@ AiStatePlane::update(
         : static_cast <float> (self.hp()) /
           constants::plane::maxHp;
 
+    const bool facesGround =
+      self.jumpDir() >= 90.f && self.jumpDir() <= 270.f;
 
-    if ( isCrashing == true )
+
+    if ( isCrashing == true && botDifficulty > DIFFICULTY::MEDIUM )
       actions.push_back(AiAction::Jump);
 
+//    Eject if no danger is present
     else if ( shouldRescue == true )
     {
       const SDL_Vector barnPos
@@ -977,19 +1041,47 @@ AiStatePlane::update(
       const auto distanceToBarn = get_distance_between_points(
         pos, barnPos );
 
-      if ( distanceToBarn < pilot::ejectSpeed )
-        actions.push_back(AiAction::Jump);
-
       const auto angleToBarn = get_angle_to_point(
         pos, barnPos );
 
-      if ( std::abs(self.jumpDir() - angleToBarn) <= 3.f * plane::pitchStep )
-        actions.push_back(AiAction::Jump);
+      const bool closeToBarn = distanceToBarn < 0.5f * pilot::ejectSpeed;
 
+      const bool facesBarn =
+        std::abs(self.jumpDir() - angleToBarn) <= 3.f * plane::pitchStep;
+
+      switch (botDifficulty)
+      {
+        case DIFFICULTY::EASY:
+          break;
+
+        case DIFFICULTY::MEDIUM:
+        {
+          actions.push_back(AiAction::Jump);
+          break;
+        }
+
+        case DIFFICULTY::HARD:
+        {
+          if ( closeToBarn == true )
+            actions.push_back(AiAction::Jump);
+
+          break;
+        }
+
+        case DIFFICULTY::DEVELOPER:
+        {
+          if ( facesBarn == true || facesGround == true )
+            actions.push_back(AiAction::Jump);
+
+          break;
+        }
+      }
     }
-    else if ( selfHp == 0.f )
+
+//    Eject during combat
+    else if ( selfHp == 0.f && botDifficulty > DIFFICULTY::EASY )
     {
-      bool allowJump {true};
+      bool allowJump = gameState().isHardcoreEnabled == false;
 
       for ( const auto& bullet : opponentBullets )
       {
@@ -1037,16 +1129,43 @@ AiStatePlane::update(
       const auto angleToBarn = get_angle_to_point(
         pos, barnPos );
 
-      if (  self.hp() == opponent.hp() &&
-            distanceToBarn > 0.5f * pilot::ejectSpeed &&
-            std::abs(self.jumpDir() - angleToBarn) >= 3.f * plane::pitchStep )
+      const bool closeToBarn = distanceToBarn < 0.75f * pilot::ejectSpeed;
+
+      const bool facesBarn =
+        std::abs(self.jumpDir() - angleToBarn) <= 2.f * plane::pitchStep;
+
+
+      if ( closeToBarn == false && facesGround == false )
         allowJump = false;
 
-      if ( self.jumpDir() < 90.f || self.jumpDir() > 270.f )
+      if (  self.hp() == opponent.hp() && facesBarn == false )
         allowJump = false;
 
       if ( allowJump == true )
-        actions.push_back(AiAction::Jump);
+      {
+        switch (botDifficulty)
+        {
+          case DIFFICULTY::EASY:
+          case DIFFICULTY::MEDIUM:
+            break;
+
+          case DIFFICULTY::HARD:
+          {
+            if ( closeToBarn == true )
+              actions.push_back(AiAction::Jump);
+
+            break;
+          }
+
+          case DIFFICULTY::DEVELOPER:
+          {
+            if ( facesBarn == true || facesGround == true )
+              actions.push_back(AiAction::Jump);
+
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -1106,8 +1225,29 @@ AiStatePilot::AiStatePilot(
 
   constexpr auto ReactionTimeToWeights = &AiTemperature::Weights::FromTime;
 
-  const auto movementWeight = ReactionTimeToWeights(0.04f, 0.04f);
-  const auto chuteWeight = ReactionTimeToWeights(0.004f, 0.004f);
+  auto movementWeight = ReactionTimeToWeights(0.02f, 0.02f);
+  auto chuteWeight = ReactionTimeToWeights(0.004f, 0.004f);
+
+  switch (gameState().botDifficulty)
+  {
+    case DIFFICULTY::EASY:
+    case DIFFICULTY::MEDIUM:
+    {
+      movementWeight = ReactionTimeToWeights(0.2f, 0.2f);
+      break;
+    }
+    case DIFFICULTY::HARD:
+    {
+      movementWeight = ReactionTimeToWeights(0.16f, 0.16f);
+      break;
+    }
+
+    case DIFFICULTY::DEVELOPER:
+      break;
+
+    default:
+      assert(false);
+  }
 
   mActions =
   {
@@ -1136,6 +1276,8 @@ AiStatePilot::update(
 
     return;
   }
+
+  const auto botDifficulty = gameState().botDifficulty;
 
   mTemperature.update(1.f);
 
@@ -1180,55 +1322,56 @@ AiStatePilot::update(
   };
 
 //  Avoid bullets
-  for ( const auto& bullet : opponentBullets )
-  {
-    const auto bulletDir = bullet.dir() * M_PI / 180.f;
-    const auto bulletSpeed = constants::bullet::speed;
-
-    const SDL_Vector bulletPathStart
+  if ( botDifficulty > DIFFICULTY::MEDIUM )
+    for ( const auto& bullet : opponentBullets )
     {
-      bullet.x(),
-      bullet.y(),
-    };
+      const auto bulletDir = bullet.dir() * M_PI / 180.f;
+      const auto bulletSpeed = constants::bullet::speed;
 
-    const SDL_Vector bulletPathEnd
-    {
-      bullet.x() + bulletSpeed * timeToAvoidBullet * std::sin(bulletDir),
-      bullet.y() - bulletSpeed * timeToAvoidBullet * std::cos(bulletDir),
-    };
+      const SDL_Vector bulletPathStart
+      {
+        bullet.x(),
+        bullet.y(),
+      };
 
-    SDL_Vector contactPoint {};
+      const SDL_Vector bulletPathEnd
+      {
+        bullet.x() + bulletSpeed * timeToAvoidBullet * std::sin(bulletDir),
+        bullet.y() - bulletSpeed * timeToAvoidBullet * std::cos(bulletDir),
+      };
 
-    const bool willCollide = segment_intersects_polygon(
-      bulletPathStart, bulletPathEnd,
-      pilotHitbox,
-      &contactPoint );
+      SDL_Vector contactPoint {};
 
-    if ( willCollide == false )
-      continue;
+      const bool willCollide = segment_intersects_polygon(
+        bulletPathStart, bulletPathEnd,
+        pilotHitbox,
+        &contactPoint );
+
+      if ( willCollide == false )
+        continue;
 
 
-    const auto distanceToCollision =
-      (contactPoint - pilotPos).length();
+      const auto distanceToCollision =
+        (contactPoint - pilotPos).length();
 
-    const auto angleToCollision = get_angle_relative(
-      0.f, get_angle_to_point(pilotPos, contactPoint) );
+      const auto angleToCollision = get_angle_relative(
+        0.f, get_angle_to_point(pilotPos, contactPoint) );
 
-    const bool dirIndex = angleToCollision > 0;
+      const bool dirIndex = angleToCollision > 0;
 
-    const auto danger = distanceToCollision;
+      const auto danger = distanceToCollision;
 
-    if ( mDangerMap[dirIndex] > 0.f )
-    {
-      mDangerMap[dirIndex] = std::min(
-        mDangerMap[dirIndex], danger );
+      if ( mDangerMap[dirIndex] > 0.f )
+      {
+        mDangerMap[dirIndex] = std::min(
+          mDangerMap[dirIndex], danger );
+      }
+      else
+        mDangerMap.write(dirIndex, danger);
     }
-    else
-      mDangerMap.write(dirIndex, danger);
-  }
 
 //  Avoid opponent's LoS
-  if ( opponent.canShoot() == true )
+  if ( opponent.canShoot() == true && botDifficulty > DIFFICULTY::HARD )
   {
     const auto bulletDir = opponent.dir() * M_PI / 180.f;
     const auto bulletSpeed = constants::bullet::speed;
@@ -1331,7 +1474,7 @@ AiStatePilot::update(
         actions.push_back(AiAction::Jump);
     }
     else if ( timeToLand < 1.f )
-        actions.push_back(AiAction::Jump);
+      actions.push_back(AiAction::Jump);
   }
 
 
