@@ -62,6 +62,8 @@ void panSound(
 
 int stopSound( const int channel );
 
+void setSoundVolume( const float normalizedVolume );
+
 
 void setRenderColor( const Color& );
 void queryWindowSize();

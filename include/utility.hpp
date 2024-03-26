@@ -40,3 +40,6 @@ std::string checkIp( const std::string& );
 bool checkPort( const std::string& );
 bool checkPass( const std::string& );
 bool checkScoreToWin( const std::string& );
+bool checkPercentage( const std::string& );
+
+size_t percentageToInteger( const float );

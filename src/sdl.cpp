@@ -173,6 +173,7 @@ SDL_init(
     else
     {
       Mix_ReserveChannels(2);
+      setSoundVolume(gameState().audioVolume);
       soundInitialized = true;
     }
 
@@ -352,7 +353,7 @@ panSound(
   if ( Mix_Playing(channel) == false )
     return;
 
-  const auto panDepth = gameState().audioPanDepth;
+  const auto panDepth = gameState().stereoDepth;
 
   const uint8_t left = 255 - 255 * pan * panDepth;
   const uint8_t right = 255 - 255 * (1.0f - pan) * panDepth;
@@ -368,6 +369,13 @@ stopSound(
     return -1;
 
   return Mix_HaltChannel(channel);
+}
+
+void
+setSoundVolume(
+  const float normalizedVolume )
+{
+  Mix_Volume(-1, normalizedVolume * MIX_MAX_VOLUME);
 }
 
 

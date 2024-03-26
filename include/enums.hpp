@@ -111,6 +111,8 @@ namespace MENU_SPECIFY
     PORT,
     PASSWORD,
     WIN_SCORE,
+    AUDIO_VOLUME,
+    STEREO_DEPTH,
   };
 }
 
@@ -182,6 +184,7 @@ enum class ROOMS
   MENU_MP_DC_HOST,
   MENU_MP_DC_JOIN,
   MENU_MP_DC_HELP,
+  MENU_SETTINGS,
   MENU_SETTINGS_CONTROLS,
   MENU_HELP,
   MENU_RECENT_STATS_PAGE1,
@@ -302,6 +305,18 @@ namespace MENU_MP_DC_JOIN
   };
 }
 
+namespace MENU_SETTINGS
+{
+  enum MENU_SETTINGS
+  {
+    CONTROLS,
+    AUDIO_VOLUME,
+    STEREO_DEPTH,
+    STATS_RESET,
+    BACK,
+  };
+}
+
 namespace MENU_SETTINGS_CONTROLS
 {
   enum MENU_SETTINGS_CONTROLS
@@ -321,7 +336,7 @@ namespace MENU_PAUSE
   enum MENU_PAUSE
   {
     CONTINUE,
-    CONTROLS,
+    SETTINGS,
     HELP,
     DISCONNECT,
   };

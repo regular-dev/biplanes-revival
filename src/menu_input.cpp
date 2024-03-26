@@ -184,6 +184,32 @@ Menu::EndTyping(
       break;
     }
 
+    case MENU_SPECIFY::AUDIO_VOLUME:
+    {
+      if ( checkPercentage(mInputAudioVolume) == true )
+        gameState().audioVolume =
+          std::stoi(mInputAudioVolume) / 100.f;
+
+      else
+        mInputAudioVolume = std::to_string(
+          percentageToInteger(gameState().audioVolume) );
+
+      setSoundVolume(gameState().audioVolume);
+    }
+
+    case MENU_SPECIFY::STEREO_DEPTH:
+    {
+      if ( checkPercentage(mInputStereoDepth) == true )
+        gameState().stereoDepth =
+          std::stoi(mInputStereoDepth) / 100.f;
+
+      else
+        mInputStereoDepth = std::to_string(
+          percentageToInteger(gameState().stereoDepth) );
+
+      break;
+    }
+
     default:
       break;
   }
@@ -308,26 +334,46 @@ Menu::UpdateTyping()
     {
       if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputScoreToWin.length() > 0 )
         mInputScoreToWin.pop_back();
-
-      else if ( windowEvent.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
-        SDL_SetClipboardText(mInputScoreToWin.c_str());
-
-      else if ( windowEvent.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-        if ( checkPort( SDL_GetClipboardText() ) == true )
-          mInputScoreToWin = SDL_GetClipboardText();
     }
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
-      {
-        if ( mInputScoreToWin.length() < 3 )
-          mInputScoreToWin += windowEvent.text.text;
-      }
+      if ( mInputScoreToWin.length() < 3 )
+        mInputScoreToWin += windowEvent.text.text;
+    }
+
+    return;
+  }
+
+  if ( mSpecifyingVarState[MENU_SPECIFY::AUDIO_VOLUME] == true )
+  {
+    if ( windowEvent.type == SDL_KEYDOWN )
+    {
+      if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputAudioVolume.length() > 0 )
+        mInputAudioVolume.pop_back();
+    }
+
+    else if ( windowEvent.type == SDL_TEXTINPUT )
+    {
+      if ( mInputAudioVolume.length() < 3 )
+        mInputAudioVolume += windowEvent.text.text;
+    }
+
+    return;
+  }
+
+  if ( mSpecifyingVarState[MENU_SPECIFY::STEREO_DEPTH] == true )
+  {
+    if ( windowEvent.type == SDL_KEYDOWN )
+    {
+      if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputStereoDepth.length() > 0 )
+        mInputStereoDepth.pop_back();
+    }
+
+    else if ( windowEvent.type == SDL_TEXTINPUT )
+    {
+      if ( mInputStereoDepth.length() < 3 )
+        mInputStereoDepth += windowEvent.text.text;
     }
 
     return;

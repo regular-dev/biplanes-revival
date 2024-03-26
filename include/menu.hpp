@@ -42,7 +42,7 @@ class Menu
   float mButtonX {};
   MENU_BUTTON_DIR mButtonDir {MENU_BUTTON_DIR::RIGHT};
 
-  bool mSpecifyingVarState[4] {};
+  bool mSpecifyingVarState[6] {};
   bool mIsTyping {};
   MENU_SETTINGS_CONTROLS mKeyToDefine {};
   bool mIsDefiningKey {};
@@ -52,6 +52,8 @@ class Menu
   std::string mInputPortClient {};
   std::string mInputPassword {};
   std::string mInputScoreToWin {};
+  std::string mInputAudioVolume {};
+  std::string mInputStereoDepth {};
 
   MESSAGE_TYPE mCurrentMessage {};
   Timer mConnectedMessageTimer {0.0};
@@ -83,6 +85,7 @@ public:
 
   void screen_main();
   void screen_settings();
+  void screen_controls();
   void screen_help();
   void screen_pause();
   void screen_copyright();

@@ -64,7 +64,14 @@ Menu::Select()
 
         case MENU_MAIN::SETTINGS:
         {
-          ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS);
+          ChangeRoom(ROOMS::MENU_SETTINGS);
+
+          mInputAudioVolume = std::to_string(
+            percentageToInteger(gameState().audioVolume) );
+
+          mInputStereoDepth = std::to_string(
+            percentageToInteger(gameState().stereoDepth) );
+
           break;
         }
 
@@ -90,8 +97,6 @@ Menu::Select()
       {
         case MENU_SP::SETUP_GAME:
         {
-//          TODO: if ai difficulty is evolve:
-//                switch to room MENU_SP_SETUP_NN
           ChangeRoom(ROOMS::MENU_SP_SETUP);
           mInputScoreToWin = std::to_string(gameState().winScore);
           break;
@@ -472,6 +477,39 @@ Menu::Select()
       break;
     }
 
+    case ROOMS::MENU_SETTINGS:
+    {
+      switch (mSelectedItem)
+      {
+        case MENU_SETTINGS::CONTROLS:
+        {
+          ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS);
+          break;
+        }
+
+        case MENU_SETTINGS::AUDIO_VOLUME:
+        {
+          ToggleTyping(MENU_SPECIFY::AUDIO_VOLUME);
+          break;
+        }
+
+        case MENU_SETTINGS::STEREO_DEPTH:
+        {
+          ToggleTyping(MENU_SPECIFY::STEREO_DEPTH);
+          break;
+        }
+
+        case MENU_SETTINGS::STATS_RESET:
+        {
+          resetRecentStats();
+          gameState().stats.total = {};
+          break;
+        }
+      }
+
+      break;
+    }
+
     case ROOMS::MENU_SETTINGS_CONTROLS:
     {
       switch (mSelectedItem)
@@ -530,9 +568,9 @@ Menu::Select()
           break;
         }
 
-        case MENU_PAUSE::CONTROLS:
+        case MENU_PAUSE::SETTINGS:
         {
-          ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS);
+          ChangeRoom(ROOMS::MENU_SETTINGS);
           break;
         }
 
@@ -719,6 +757,16 @@ Menu::GoBack()
       break;
     }
 
+    case ROOMS::MENU_SETTINGS:
+    {
+      if ( gameState().isPaused == true )
+        ChangeRoom(ROOMS::MENU_PAUSE);
+      else
+        ChangeRoom(ROOMS::MENU_MAIN);
+
+      break;
+    }
+
     case ROOMS::MENU_SETTINGS_CONTROLS:
     {
       if ( mIsDefiningKey ==  true )
@@ -726,10 +774,7 @@ Menu::GoBack()
 
       settingsWrite();
 
-      if ( gameState().isPaused == true )
-        ChangeRoom(ROOMS::MENU_PAUSE);
-      else
-        ChangeRoom(ROOMS::MENU_MAIN);
+      ChangeRoom(ROOMS::MENU_SETTINGS);
 
       break;
     }

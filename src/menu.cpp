@@ -42,6 +42,7 @@ Menu::Menu()
     {ROOMS::MENU_COPYRIGHT, 0},
     {ROOMS::MENU_SPLASH, 0},
     {ROOMS::MENU_MAIN, MENU_MAIN::EXIT},
+    {ROOMS::MENU_SETTINGS, MENU_SETTINGS::BACK},
     {ROOMS::MENU_SETTINGS_CONTROLS, MENU_SETTINGS_CONTROLS::BACK},
     {ROOMS::MENU_HELP, 0},
 
@@ -75,6 +76,8 @@ Menu::Menu()
   mInputPortClient = std::to_string(REMOTE_PORT);
   mInputPassword = MMAKE_PASSWORD;
   mInputScoreToWin = std::to_string(gameState().winScore);
+  mInputAudioVolume = std::to_string(percentageToInteger(gameState().audioVolume));
+  mInputStereoDepth = std::to_string(percentageToInteger(gameState().stereoDepth));
 
   mConnectedMessageTimer = {constants::menu::connectedMessageTimeout};
   mIntroAutoSkipTimer = {constants::menu::introAutoSkipTimeout};
@@ -360,9 +363,15 @@ Menu::DrawMenu()
       break;
     }
 
-    case ROOMS::MENU_SETTINGS_CONTROLS:
+    case ROOMS::MENU_SETTINGS:
     {
       screen_settings();
+      break;
+    }
+
+    case ROOMS::MENU_SETTINGS_CONTROLS:
+    {
+      screen_controls();
       break;
     }
 
@@ -742,7 +751,7 @@ Menu::screen_main()
   draw_text( "BIPLANES REVIVAL", 0.250f, 0.2855f );
   draw_text( "One Player Game ", 0.255f, 0.2855f + 0.0721f );
   draw_text( "Two Player Game ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Controls        ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Settings        ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Help            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Quit            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
 
@@ -770,7 +779,81 @@ Menu::screen_settings()
   DrawButton();
 
 
-  draw_text( "Controls            ",        0.250f, 0.2855f );
+  draw_text( "SETTINGS       ",       0.025f, 0.2855f );
+  draw_text( "Controls       ",       0.040f, 0.2855f + 0.0721f );
+  draw_text( "Audio volume:  ",       0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputAudioVolume + "%", 0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Audio panning: ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( mInputStereoDepth + "%", 0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Reset stats    ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Back           ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+
+
+  if ( isSpecifyingVar(MENU_SPECIFY::AUDIO_VOLUME) == true )
+  {
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
+    draw_text( "specifying audio volume ", 0.250f, 0.650f );
+
+    return;
+  }
+
+  if ( isSpecifyingVar(MENU_SPECIFY::STEREO_DEPTH) == true )
+  {
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
+    draw_text( "specifying stereo depth ", 0.250f, 0.650f );
+
+    return;
+  }
+
+
+  switch (mSelectedItem)
+  {
+    case MENU_SETTINGS::AUDIO_VOLUME:
+    {
+      draw_text( "Press [RETURN] to specify      ", 0.005f, 0.700f );
+      draw_text( "                   audio volume", 0.005f, 0.750f );
+      break;
+    }
+
+    case MENU_SETTINGS::STEREO_DEPTH:
+    {
+      draw_text( "Press [RETURN] to specify      ", 0.005f, 0.700f );
+      draw_text( "                   stereo depth", 0.005f, 0.750f );
+      break;
+    }
+
+    case MENU_SETTINGS::STATS_RESET:
+    {
+      draw_text( "Press [RETURN] to reset        ", 0.005f, 0.700f );
+      draw_text( "                    your stats ", 0.005f, 0.750f );
+      break;
+    }
+
+    default:
+      break;
+  }
+}
+
+void
+Menu::screen_controls()
+{
+  namespace button = constants::menu::button;
+
+
+  if ( gameState().isPaused == false )
+  {
+    setRenderColor(constants::colors::background);
+    SDL_RenderClear(gRenderer);
+
+    draw_background();
+    draw_barn();
+  }
+
+  DrawMenuRect();
+  DrawButton();
+
+
+  draw_text( "CONTROLS            ",        0.025f, 0.2855f );
   draw_text( "Accelerate          ",        0.025f, 0.2855f + 0.0721f );
   draw_text( SDL_GetScancodeName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
   draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + button::sizeY );
@@ -811,7 +894,7 @@ Menu::screen_pause()
 
   draw_text( "GAME PAUSED       ", 0.250f, 0.2855f );
   draw_text( "On With the Show! ", 0.255f, 0.2855f + 0.0721f );
-  draw_text( "Controls          ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Settings          ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Help              ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Bail Out!         ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
 }

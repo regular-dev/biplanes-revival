@@ -63,7 +63,8 @@ settingsWrite()
   jsonConfig["AutoSkipIntro"]     = picojson::value( game.autoSkipIntro );
   jsonConfig["EnableAudio"]       = picojson::value( game.isAudioEnabled );
   jsonConfig["EnableVSync"]       = picojson::value( game.isVSyncEnabled );
-  jsonConfig["AudioPanningDepth"] = picojson::value( game.audioPanDepth );
+  jsonConfig["AudioVolume"]       = picojson::value( game.audioVolume );
+  jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth );
 
   picojson::object jsonControls;
   jsonControls["FIRE"]            = picojson::value( (double) FIRE );
@@ -161,15 +162,14 @@ settingsParse(
     try { game.isVSyncEnabled = jsonConfig.at( "EnableVSync" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.audioPanDepth = jsonConfig.at( "AudioPanningDepth" ).get <double> (); }
+    try { game.audioVolume = jsonConfig.at( "AudioVolume" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    game.audioPanDepth =
-      game.audioPanDepth < 0.0f
-      ? 0.0f
-      : game.audioPanDepth > 1.0f
-        ? 1.0f
-        : game.audioPanDepth;
+    try { game.stereoDepth = jsonConfig.at( "StereoDepth" ).get <double> (); }
+    catch ( const std::exception& ) {};
+
+    game.stereoDepth = std::clamp(game.stereoDepth, 0.f, 1.f);
+    game.audioVolume = std::clamp(game.audioVolume, 0.f, 1.f);
   }
   catch ( const std::exception& ) {};
 
@@ -579,8 +579,32 @@ checkScoreToWin(
   const auto scoreNum = stoi(score);
   const auto maxScore = std::numeric_limits <uint8_t>::max();
 
-  if ( scoreNum >= 0 && scoreNum < maxScore )
-    return true;
+  return
+    scoreNum >= 0 &&
+    scoreNum <= maxScore;
+}
 
-  return false;
+bool
+checkPercentage(
+  const std::string& percentage )
+{
+  if ( percentage.empty() == true )
+    return false;
+
+  for ( const auto& digit : percentage )
+    if ( std::isdigit(digit) == false )
+      return false;
+
+  const auto percentageNum = std::stoi(percentage);
+
+  return
+    percentageNum >= 0u &&
+    percentageNum <= 100u;
+}
+
+size_t
+percentageToInteger(
+  const float percentage )
+{
+  return std::clamp(percentage * 100.f, 0.f, 100.f);
 }
