@@ -524,6 +524,7 @@ Plane::AbandonedUpdate()
 void
 Plane::AnimationsReset()
 {
+  namespace ai = constants::ai;
   namespace plane = constants::plane;
   namespace fire = constants::fire;
   namespace smoke = constants::smoke;
@@ -536,13 +537,13 @@ Plane::AnimationsReset()
   mFireAnim.Stop();
   mFireFrame = 0;
 
-  const auto shootCooldown =
-    gameState().botDifficulty == DIFFICULTY::EASY
-      ? constants::ai::shootCooldownEasy
-      : plane::shootCooldown;
+  if (  mIsBot == true &&
+        gameState().botDifficulty == DIFFICULTY::EASY )
+    mShootCooldown.SetNewTimeout( ai::shootCooldownEasy );
+  else
+    mShootCooldown.SetNewTimeout( plane::shootCooldown );
 
   mPitchCooldown.SetNewTimeout( plane::pitchCooldown );
-  mShootCooldown.SetNewTimeout( shootCooldown );
 
   mDeadCooldown.SetNewTimeout( plane::deadCooldown );
   mProtection.SetNewTimeout( plane::spawnProtectionCooldown );
