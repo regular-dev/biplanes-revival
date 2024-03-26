@@ -810,8 +810,11 @@ Menu::MenuItemNext()
 void
 Menu::ReturnToMainMenu()
 {
-  gameState().isRoundFinished = false;
-  gameState().isPaused = false;
+  auto& game = gameState();
+  game.isRoundRunning = false;
+  game.isRoundFinished = false;
+  game.isPaused = false;
+
   networkState().isOpponentConnected = false;
 
   ChangeRoom(ROOMS::MENU_MAIN);

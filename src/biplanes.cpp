@@ -194,8 +194,7 @@ main(
       continue;
 
 
-    if (  menu.currentRoom() == ROOMS::GAME ||
-          menu.currentRoom() == ROOMS::MENU_PAUSE )
+    if ( gameState().isRoundRunning == true )
     {
       if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
         game_loop_mp();
@@ -285,6 +284,7 @@ game_init_sp()
 
   log_message( "\nLOG: Singleplayer game initialized successfully!\n\n" );
 
+  gameState().isRoundRunning = true;
   menu.setMessage(MESSAGE_TYPE::SUCCESSFULL_CONNECTION);
 
   return 0;
@@ -356,6 +356,8 @@ game_init_mp()
   }
 
   log_message( "\nLOG: Multiplayer game initialized successfully!\n\n" );
+
+  gameState().isRoundRunning = true;
 
   return 0;
 }

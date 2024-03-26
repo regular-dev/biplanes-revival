@@ -65,6 +65,7 @@ public:
 
   bool isPaused {};
   bool isExiting {};
+  bool isRoundRunning {};
   bool isRoundFinished {};
   bool isHardcoreEnabled {};
 
