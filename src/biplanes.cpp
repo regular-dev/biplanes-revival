@@ -213,6 +213,8 @@ main(
     display_update();
   }
 
+  log_message("EXIT: Exit sequence initiated\n");
+
   if ( connection->IsConnected() == true )
   {
     sendDisconnectMessage();

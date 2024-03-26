@@ -39,6 +39,8 @@
 void
 settingsWrite()
 {
+  log_message("OUTPUT: Writing settings", "\n");
+
   const auto& game = gameState();
 
   std::ofstream settings {CONFIG_FILENAME, std::ios::out};
@@ -46,8 +48,8 @@ settingsWrite()
   if ( settings.is_open() == false )
   {
     log_message( "LOG: Can't write to " CONFIG_FILENAME "!" );
-    log_message( "User key bindings will not be saved!\n\n" );
-    show_warning( "Warning!", "Can't write to " CONFIG_FILENAME "!\nCustom key bindings will not be saved!" );
+    log_message( "User settings & key binds won't be saved!\n\n" );
+    show_warning( "Warning!", "Can't write to " CONFIG_FILENAME "!\nUser settings & key binds won't be saved!" );
 
     return;
   }
@@ -376,6 +378,8 @@ logSDL2Version()
 bool
 stats_write()
 {
+  log_message("OUTPUT: Writing stats", "\n");
+
   std::ofstream statsOut { STATS_FILENAME, std::ios::trunc };
 
   if ( statsOut.is_open() == false )
@@ -525,11 +529,11 @@ checkPort(
 
 
   for ( const auto& digit : port )
-    if ( isdigit(digit) == false )
+    if ( std::isdigit(digit) == false )
       return false;
 
 
-  const auto portNum = stoi(port);
+  const auto portNum = std::stoi(port);
 
   if ( portNum > 1024 && portNum <= 65535 )
     return true;
@@ -573,10 +577,10 @@ checkScoreToWin(
     return false;
 
   for ( const auto& digit : score )
-    if ( isdigit(digit) == false )
+    if ( std::isdigit(digit) == false )
       return false;
 
-  const auto scoreNum = stoi(score);
+  const auto scoreNum = std::stoi(score);
   const auto maxScore = std::numeric_limits <uint8_t>::max();
 
   return

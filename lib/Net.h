@@ -425,7 +425,7 @@ namespace net
     {
       if ( running )
       {
-        log_message( "NETWORK: Ceasing connection\n" );
+        log_message( "NETWORK: Ceasing connection\n\n" );
 
         bool connected = IsConnected();
         ClearData();

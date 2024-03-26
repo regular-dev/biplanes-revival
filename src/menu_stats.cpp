@@ -307,8 +307,6 @@ calcDerivedStats(
 void
 updateRecentStats()
 {
-  log_message("updateRecentStats()\n");
-
   for ( const auto& [planeType, plane] : planes )
     gameState().stats.recent[planeType] = plane.stats();
 }
@@ -316,8 +314,6 @@ updateRecentStats()
 void
 resetRecentStats()
 {
-  log_message("resetRecentStats()\n");
-
   for ( auto& [planeType, stats] : gameState().stats.recent )
     stats = {};
 }
@@ -325,8 +321,6 @@ resetRecentStats()
 void
 updateTotalStats()
 {
-  log_message("updateTotalStats()\n");
-
   auto& game = gameState();
 
   const auto& planeRed = planes.at(PLANE_TYPE::RED);

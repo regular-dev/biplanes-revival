@@ -134,7 +134,7 @@ Menu::EndTyping(
       if ( mCurrentRoom == ROOMS::MENU_MP_DC_HOST )
       {
         if ( checkPort(mInputPortHost) == true )
-          LOCAL_PORT = stoi(mInputPortHost);
+          LOCAL_PORT = std::stoi(mInputPortHost);
         else
         {
           LOCAL_PORT = DEFAULT_LOCAL_PORT;
@@ -145,7 +145,7 @@ Menu::EndTyping(
       }
 
       if ( checkPort(mInputPortClient) == true )
-        REMOTE_PORT = stoi(mInputPortClient);
+        REMOTE_PORT = std::stoi(mInputPortClient);
       else
       {
         REMOTE_PORT = DEFAULT_REMOTE_PORT;
@@ -174,7 +174,7 @@ Menu::EndTyping(
 
 
       if ( checkScoreToWin(mInputScoreToWin) == true )
-        gameState().winScore = stoi(mInputScoreToWin);
+        gameState().winScore = std::stoi(mInputScoreToWin);
       else
       {
         gameState().winScore = defaultWinScore;
