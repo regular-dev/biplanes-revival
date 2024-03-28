@@ -3,6 +3,8 @@
 
 #include <lib/godot_math.hpp>
 
+#include <cmath>
+
 
 bool
 segment_intersects_polygon(

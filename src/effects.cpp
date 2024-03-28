@@ -24,6 +24,8 @@
 #include <include/constants.hpp>
 #include <include/textures.hpp>
 
+#include <cmath>
+
 
 Effect::Effect(
   const float x,

@@ -34,6 +34,7 @@
 #include <lib/SDL_Vector.h>
 #include <lib/godot_math.hpp>
 
+#include <cmath>
 #include <cassert>
 #include <iomanip>
 #include <algorithm>

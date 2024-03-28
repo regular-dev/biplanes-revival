@@ -29,6 +29,7 @@
 #include <include/sounds.hpp>
 #include <include/textures.hpp>
 
+#include <cmath>
 #include <algorithm>
 
 
