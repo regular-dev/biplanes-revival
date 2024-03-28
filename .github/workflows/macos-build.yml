@@ -1,0 +1,67 @@
+name: Build (macOS)
+
+on:
+  push:
+    branches:
+      - ai-fsm-utility
+    paths-ignore:
+      - '**/README.md'
+
+  pull_request:
+    branches:
+      - ai-fsm-utility
+
+jobs:
+  build-macos:
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: ["Release"]
+        cmake_generator: ["Ninja"]
+
+        config:
+        - {
+            os: macos-latest,
+            cc: "clang",
+            cxx: "clang++"
+          }
+        - {
+            os: macos-latest,
+            cc: "gcc-13",
+            cxx: "g++-13"
+          }
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'ai-fsm-utility'
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Install dependencies
+      run: |
+        brew install ninja sdl2 sdl2_image sdl2_mixer
+
+    - name: Configure CMake
+      run: >
+        cmake
+        -G ${{ matrix.cmake_generator }}
+        -S ${{ github.workspace }}
+        -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      run: >
+        cmake
+        --build ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ matrix.build_type }}
+
