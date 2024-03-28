@@ -67,7 +67,14 @@ public:
   bool isExiting {};
   bool isRoundRunning {};
   bool isRoundFinished {};
-  bool isHardcoreEnabled {};
+
+  struct
+  {
+    bool extraClouds {};
+    bool oneShotKills {};
+    bool alternativeHitboxes {};
+
+  } features {};
 
   bool autoSkipIntro {};
   bool isVSyncEnabled {true};

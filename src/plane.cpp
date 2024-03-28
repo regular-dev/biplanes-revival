@@ -41,9 +41,6 @@
 #include <cmath>
 
 
-#define BIPLANES_LEGACY_PLANE_HITBOX 0
-
-
 Plane::Plane(
   const PLANE_TYPE construct_type )
   : mType{construct_type}
@@ -684,11 +681,13 @@ Plane::Hit(
     eventPush(EVENTS::HIT_PLANE);
   }
 
-  if ( gameState().isRoundFinished == false )
+
+  const auto& game = gameState();
+
+  if ( game.isRoundFinished == false )
     attacker.mStats.plane_hits++;
 
-
-  if ( gameState().isHardcoreEnabled == true )
+  if ( game.features.oneShotKills == true )
     mHp = 0;
 
   if ( mHp > 0 )
@@ -950,12 +949,14 @@ Plane::isHit(
   if ( mProtection.isReady() == false )
     return false;
 
-#if BIPLANES_LEGACY_PLANE_HITBOX == 1
-  const SDL_FPoint hitPoint {x, y};
-  const auto hitbox = Hitbox();
 
-  return SDL_PointInFRect(&hitPoint, &hitbox);
-#endif
+  if ( gameState().features.alternativeHitboxes == false )
+  {
+    const SDL_FPoint hitPoint {x, y};
+    const auto hitbox = Hitbox();
+
+    return SDL_PointInFRect(&hitPoint, &hitbox);
+  }
 
   const auto hitboxOffset = constants::plane::hitboxOffset;
   const auto dir = mDir * M_PI / 180.0f;
@@ -1075,9 +1076,9 @@ Plane::speedVector() const
 SDL_FPoint
 Plane::bulletSpawnOffset() const
 {
-#if BIPLANES_LEGACY_PLANE_HITBOX == 1
-  return {};
-#endif
+  if ( gameState().features.alternativeHitboxes == false )
+    return {};
+
 
   const auto offset = constants::plane::bulletSpawnOffset;
   const auto dir = mDir * M_PI / 180.0f;

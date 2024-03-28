@@ -73,8 +73,11 @@ enum CHUTE_STATE : uint8_t
 
 enum class EVENTS : unsigned char
 {
-  NONE          = 'n',
-  NO_HARDCORE   = 'h',
+  NONE = 'n',
+
+  NO_EXTRA_CLOUDS   = 'O',
+  NO_ONESHOT_KILLS  = 'K',
+  NO_ALT_HITBOXES   = 'H',
 
   SHOOT         = 's',
   EJECT         = 'e',
@@ -168,7 +171,6 @@ enum class ROOMS
   MENU_MAIN,
   MENU_SP,
   MENU_SP_SETUP,
-//  MENU_SP_SETUP_NN,
   MENU_MP,
   MENU_MP_HELP_PAGE1,
   MENU_MP_HELP_PAGE2,
@@ -224,23 +226,12 @@ namespace MENU_SP_SETUP
   {
     START,
     WIN_SCORE,
-    HARDCORE_MODE,
+    EXTRA_CLOUDS,
+    ONESHOT_KILLS,
+    ALT_HITBOXES,
     BACK,
   };
 }
-
-//namespace MENU_SP_SETUP_NN
-//{
-//  enum MENU_SP_SETUP_NN
-//  {
-//    SETUP_GAME,
-//    NN_USE_BASE_NET,
-//    NN_EXPORT_DATA,
-//    NN_RESET_DATA,
-//    NN_TRAIN_DATA,
-//    BACK,
-//  };
-//}
 
 namespace MENU_MP
 {
@@ -259,7 +250,9 @@ namespace MENU_MP_MMAKE
   {
     FIND_GAME,
     SPECIFY_PASSWORD,
-    HARDCORE_MODE,
+    EXTRA_CLOUDS,
+    ONESHOT_KILLS,
+    ALT_HITBOXES,
     BACK,
   };
 }
@@ -289,7 +282,9 @@ namespace MENU_MP_DC_HOST
   {
     HOST_START,
     SPECIFY_PORT,
-    HARDCORE_MODE,
+    EXTRA_CLOUDS,
+    ONESHOT_KILLS,
+    ALT_HITBOXES,
     BACK,
   };
 }

@@ -104,28 +104,52 @@ Menu::screen_sp_setup()
   DrawButton();
 
 
-  const std::string hardcore =
-    gameState().isHardcoreEnabled == true
+  const auto& features = gameState().features;
+
+  const std::string extraClouds =
+    features.extraClouds == true
     ? "On" : "Off";
 
-  draw_text( "SETUP GAME    ",  0.025f, 0.2855f );
-  draw_text( "Start Game    ",  0.040f, 0.2855f + 0.0721f );
-  draw_text( "Score to win: ",  0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputScoreToWin,  0.500f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Hardcore mode:",  0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( hardcore,          0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( "Back          ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  const std::string oneShotKills =
+    features.oneShotKills == true
+    ? "On" : "Off";
+
+  const std::string altHitboxes =
+    features.alternativeHitboxes == true
+    ? "On" : "Off";
+
+  draw_text( "SETUP GAME    ",    0.025f, 0.2855f );
+  draw_text( "Start Game    ",    0.040f, 0.2855f + 0.0721f );
+  draw_text( "Score to win: ",    0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputScoreToWin,    0.550f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,         0.550f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,        0.550f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Alt. hitboxes: ",   0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,         0.550f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( "Back          ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::WIN_SCORE) == true )
   {
-    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
-    draw_text( "specifying win score... ", 0.250f, 0.650f );
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.725f );
+    draw_text( "specifying win score... ", 0.250f, 0.775f );
 
     return;
   }
 
 
-  if ( mSelectedItem == MENU_SP_SETUP::WIN_SCORE )
-    draw_text( "Press [RETURN] to specify score", 0.005f, 0.650f );
+  switch (mSelectedItem)
+  {
+    case MENU_SP_SETUP::WIN_SCORE:
+      draw_text( "Press [RETURN] to specify score", 0.005f, 0.725f );
+      break;
+
+    case MENU_SP_SETUP::ALT_HITBOXES:
+      draw_text( "Enable alternative plane hitbox ", 0.005f, 0.725f );
+      draw_text( " More challenge for experienced ", 0.005f, 0.775f );
+      draw_text( "                       players  ", 0.005f, 0.825f );
+      break;
+  }
 }

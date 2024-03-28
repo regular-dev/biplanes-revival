@@ -125,9 +125,9 @@ Cloud::Draw()
   namespace cloud = constants::cloud;
 
 
-  const auto& game = gameState();
+  const auto& features = gameState().features;
 
-  if ( game.isHardcoreEnabled == false && mId >= 2 )
+  if ( features.extraClouds == false && mId >= 2 )
     return;
 
 
@@ -154,9 +154,9 @@ Cloud::Draw()
 void
 Cloud::DrawCollisionLayer()
 {
-  const auto& game = gameState();
+  const auto& features = gameState().features;
 
-  if ( game.isHardcoreEnabled == false && mId >= 2 )
+  if ( features.extraClouds == false && mId >= 2 )
     return;
 
 

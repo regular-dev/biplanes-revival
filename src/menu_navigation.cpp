@@ -175,11 +175,28 @@ Menu::Select()
           break;
         }
 
-        case MENU_SP_SETUP::HARDCORE_MODE:
+        case MENU_SP_SETUP::EXTRA_CLOUDS:
         {
-//          TODO: change to HARDCORE_MODE_SP ?
-          auto& isHardcoreEnabled = gameState().isHardcoreEnabled;
-          isHardcoreEnabled = !isHardcoreEnabled;
+          auto& extraClouds = gameState().features.extraClouds;
+          extraClouds = !extraClouds;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_SP_SETUP::ONESHOT_KILLS:
+        {
+          auto& oneshotKills = gameState().features.oneShotKills;
+          oneshotKills = !oneshotKills;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_SP_SETUP::ALT_HITBOXES:
+        {
+          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          altHitboxes = !altHitboxes;
 
           settingsWrite();
           break;
@@ -308,10 +325,28 @@ Menu::Select()
           break;
         }
 
-        case MENU_MP_MMAKE::HARDCORE_MODE:
+        case MENU_MP_MMAKE::EXTRA_CLOUDS:
         {
-          auto& isHardcoreEnabled = gameState().isHardcoreEnabled;
-          isHardcoreEnabled = !isHardcoreEnabled;
+          auto& extraClouds = gameState().features.extraClouds;
+          extraClouds = !extraClouds;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_MMAKE::ONESHOT_KILLS:
+        {
+          auto& oneShotKills = gameState().features.oneShotKills;
+          oneShotKills = !oneShotKills;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_MMAKE::ALT_HITBOXES:
+        {
+          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          altHitboxes = !altHitboxes;
 
           settingsWrite();
           break;
@@ -401,10 +436,28 @@ Menu::Select()
           break;
         }
 
-        case MENU_MP_DC_HOST::HARDCORE_MODE:
+        case MENU_MP_DC_HOST::EXTRA_CLOUDS:
         {
-          auto& isHardcoreEnabled = gameState().isHardcoreEnabled;
-          isHardcoreEnabled = !isHardcoreEnabled;
+          auto& extraClouds = gameState().features.extraClouds;
+          extraClouds = !extraClouds;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_DC_HOST::ONESHOT_KILLS:
+        {
+          auto& oneShotKills = gameState().features.oneShotKills;
+          oneShotKills = !oneShotKills;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_DC_HOST::ALT_HITBOXES:
+        {
+          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          altHitboxes = !altHitboxes;
 
           settingsWrite();
           break;
@@ -435,9 +488,14 @@ Menu::Select()
           planeBlue.setBot(false);
           planeRed.setBot(false);
 
-//          Automatically switches off if
-//          the opponent has this option disabled
-          gameState().isHardcoreEnabled = true;
+
+//          Any option automatically switches off
+//          if the opponent has it disabled
+          auto& features = gameState().features;
+          features.extraClouds = true;
+          features.oneShotKills = true;
+          features.alternativeHitboxes = true;
+
 
           if ( game_init_mp() != 0 )
           {

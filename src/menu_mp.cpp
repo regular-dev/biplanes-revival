@@ -65,17 +65,33 @@ Menu::screen_mp_mmake()
   DrawButton();
 
 
-  const std::string hardcore =
-    gameState().isHardcoreEnabled == true
+  const auto& features = gameState().features;
+
+  const std::string extraClouds =
+    features.extraClouds == true
     ? "On" : "Off";
 
-  draw_text( "MATCHMAKING   ",  0.025f, 0.2855f );
-  draw_text( "Find Game     ",  0.040f, 0.2855f + 0.0721f );
-  draw_text( "Password:     ",  0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputPassword,    0.500f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Hardcore mode:",  0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( hardcore,          0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( "Back          ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  const std::string oneShotKills =
+    features.oneShotKills == true
+    ? "On" : "Off";
+
+  const std::string altHitboxes =
+    features.alternativeHitboxes == true
+    ? "On" : "Off";
+
+
+  draw_text( "MATCHMAKING   ",    0.025f, 0.2855f );
+  draw_text( "Find Game     ",    0.040f, 0.2855f + 0.0721f );
+  draw_text( "Password:     ",    0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputPassword,      0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,         0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,        0.500f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Alt. hitboxes: ",   0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,         0.500f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( "Back          ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+
 
   if ( isSpecifyingVar(MENU_SPECIFY::PASSWORD) == true )
   {
@@ -85,25 +101,44 @@ Menu::screen_mp_mmake()
     return;
   }
 
+
   switch (mSelectedItem)
   {
     case MENU_MP_MMAKE::FIND_GAME:
     {
-      draw_text( "Search for opponents", 0.005f, 0.65f );
+      draw_text( "Search for opponents", 0.005f, 0.725f );
       break;
     }
 
     case MENU_MP_MMAKE::SPECIFY_PASSWORD:
     {
-      draw_text( "Press[RETURN]to specify password", 0.005f, 0.65f );
+      draw_text( "Press[RETURN]to specify password", 0.005f, 0.725f );
       break;
     }
 
-    case MENU_MP_MMAKE::HARDCORE_MODE:
+    case MENU_MP_MMAKE::EXTRA_CLOUDS:
     {
-      draw_text( "Enable one-shot kills           ", 0.005f, 0.650f );
-      draw_text( "Both opponents  should have this", 0.005f, 0.700f );
-      draw_text( "           turned  on           ", 0.005f, 0.750f );
+      draw_text( "Enable extra clouds             ", 0.005f, 0.725f );
+      draw_text( "Both opponents  should have this", 0.005f, 0.775f );
+      draw_text( "           turned  on           ", 0.005f, 0.825f );
+
+      break;
+    }
+
+    case MENU_MP_MMAKE::ONESHOT_KILLS:
+    {
+      draw_text( "Enable one-shot kills           ", 0.005f, 0.725f );
+      draw_text( "Both opponents  should have this", 0.005f, 0.775f );
+      draw_text( "           turned  on           ", 0.005f, 0.825f );
+
+      break;
+    }
+
+    case MENU_MP_MMAKE::ALT_HITBOXES:
+    {
+      draw_text( "Enable alternative plane hitbox ", 0.005f, 0.725f );
+      draw_text( "Both opponents  should have this", 0.005f, 0.775f );
+      draw_text( "           turned  on           ", 0.005f, 0.825f );
 
       break;
     }
@@ -151,17 +186,31 @@ Menu::screen_mp_dc_host()
   DrawButton();
 
 
-  const std::string hardcore =
-    gameState().isHardcoreEnabled == true
+  const auto& features = gameState().features;
+
+  const std::string extraClouds =
+    features.extraClouds == true
+    ? "On" : "Off";
+
+  const std::string oneShotKills =
+    features.oneShotKills == true
+    ? "On" : "Off";
+
+  const std::string altHitboxes =
+    features.alternativeHitboxes == true
     ? "On" : "Off";
 
   draw_text( "HOST TWO PLAYER GAME ", 0.025f, 0.2855f );
   draw_text( "Start Two Player Game", 0.040f, 0.2855f + 0.0721f );
   draw_text( "Host Port:           ", 0.040f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( mInputPortHost,          0.825f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Hardcore mode:       ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( hardcore,                0.825f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( "Back                 ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,         0.825f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,        0.825f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Alt. hitboxes: ",   0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,         0.825f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( "Back          ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::PORT) == true )
@@ -177,7 +226,7 @@ Menu::screen_mp_dc_host()
     case MENU_MP_DC_HOST::HOST_START:
     {
       draw_text( "Start server at port " + std::to_string(LOCAL_PORT),
-        0.005f, 0.650f );
+        0.005f, 0.725f );
 
       break;
     }
@@ -185,14 +234,27 @@ Menu::screen_mp_dc_host()
     case MENU_MP_DC_HOST::SPECIFY_PORT:
     {
       draw_text( "Press [RETURN] to specify port",
-        0.005f, 0.650f );
+        0.005f, 0.725f );
       break;
     }
 
-    case MENU_MP_DC_HOST::HARDCORE_MODE:
+    case MENU_MP_MMAKE::EXTRA_CLOUDS:
     {
-      draw_text( "Enable one-shot kills",
-        0.005f, 0.650f );
+      draw_text( "Enable extra clouds             ", 0.005f, 0.725f );
+      break;
+    }
+
+    case MENU_MP_MMAKE::ONESHOT_KILLS:
+    {
+      draw_text( "Enable one-shot kills           ", 0.005f, 0.725f );
+      break;
+    }
+
+    case MENU_MP_MMAKE::ALT_HITBOXES:
+    {
+      draw_text( "Enable alternative plane hitbox ", 0.005f, 0.725f );
+      draw_text( "       More challenge for       ", 0.005f, 0.775f );
+      draw_text( "           experienced players  ", 0.005f, 0.825f );
       break;
     }
 

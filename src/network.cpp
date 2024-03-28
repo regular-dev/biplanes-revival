@@ -107,8 +107,16 @@ eventsPack(
 {
   if ( sentGameParams == false )
   {
-    if ( gameState().isHardcoreEnabled == false )
-      eventPush(EVENTS::NO_HARDCORE);
+    auto& features = gameState().features;
+
+    if ( features.alternativeHitboxes == false )
+      eventPush(EVENTS::NO_ALT_HITBOXES);
+
+    if ( features.extraClouds == false )
+      eventPush(EVENTS::NO_EXTRA_CLOUDS);
+
+    if ( features.oneShotKills == false )
+      eventPush(EVENTS::NO_ONESHOT_KILLS);
 
     sentGameParams = true;
   }
@@ -192,10 +200,24 @@ processOpponentData(
           continue;
         }
 
-        case (uint8_t) EVENTS::NO_HARDCORE:
+        case (uint8_t) EVENTS::NO_EXTRA_CLOUDS:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_HARDCORE", "\n");
-          gameState().isHardcoreEnabled = false;
+          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_EXTRA_CLOUDS", "\n");
+          gameState().features.extraClouds = false;
+          continue;
+        }
+
+        case (uint8_t) EVENTS::NO_ONESHOT_KILLS:
+        {
+          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_ONESHOT_KILLS", "\n");
+          gameState().features.oneShotKills = false;
+          continue;
+        }
+
+        case (uint8_t) EVENTS::NO_ALT_HITBOXES:
+        {
+          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_ALT_HITBOXES", "\n");
+          gameState().features.alternativeHitboxes = false;
           continue;
         }
 

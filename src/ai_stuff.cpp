@@ -1017,7 +1017,7 @@ AiStatePlane::update(
   if ( isSafeToJump(self) == true )
   {
     const float selfHp =
-      gameState().isHardcoreEnabled == true
+      gameState().features.oneShotKills == true
         ? 0.0f
         : static_cast <float> (self.hp()) /
           constants::plane::maxHp;
@@ -1081,7 +1081,8 @@ AiStatePlane::update(
 //    Eject during combat
     else if ( selfHp == 0.f && botDifficulty > DIFFICULTY::EASY )
     {
-      bool allowJump = gameState().isHardcoreEnabled == false;
+      bool allowJump =
+        gameState().features.oneShotKills == false;
 
       for ( const auto& bullet : opponentBullets )
       {

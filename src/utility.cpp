@@ -55,7 +55,10 @@ settingsWrite()
   }
 
   picojson::object jsonAutoFill;
-  jsonAutoFill["HARDCORE_MODE"]   = picojson::value( game.isHardcoreEnabled );
+  jsonAutoFill["ExtraClouds"]     = picojson::value( game.features.extraClouds );
+  jsonAutoFill["OneShotKills"]    = picojson::value( game.features.oneShotKills );
+  jsonAutoFill["AltHitboxes"]     = picojson::value( game.features.alternativeHitboxes );
+
   jsonAutoFill["LOCAL_PORT"]      = picojson::value( (double) LOCAL_PORT );
   jsonAutoFill["REMOTE_PORT"]     = picojson::value( (double) REMOTE_PORT );
   jsonAutoFill["SERVER_IP"]       = picojson::value( SERVER_IP );
@@ -122,7 +125,13 @@ settingsParse(
   {
     auto& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
-    try { game.isHardcoreEnabled = jsonAutoFill.at( "HARDCORE_MODE" ).get <bool> (); }
+    try { game.features.extraClouds = jsonAutoFill.at( "ExtraClouds" ).get <bool> (); }
+    catch ( const std::exception& ) {};
+
+    try { game.features.oneShotKills = jsonAutoFill.at( "OneShotKills" ).get <bool> (); }
+    catch ( const std::exception& ) {};
+
+    try { game.features.alternativeHitboxes = jsonAutoFill.at( "AltHitboxes" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
     try { LOCAL_PORT = jsonAutoFill.at( "LOCAL_PORT" ).get <double> (); }
