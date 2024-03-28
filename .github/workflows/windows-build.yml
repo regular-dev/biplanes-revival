@@ -1,0 +1,83 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches:
+      - ai-fsm-utility
+    paths-ignore:
+      - '**/README.md'
+
+  pull_request:
+    branches:
+      - ai-fsm-utility
+
+jobs:
+  build-msys2:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: ["Release"]
+        cmake_generator: ["Ninja"]
+        shared_libs_enabled: ["ON", "OFF"]
+
+        config:
+        - { sys: mingw32, env: i686, cc: gcc, cxx: g++ }
+        - { sys: mingw32, env: i686, cc: clang, cxx: clang++ }
+        - { sys: mingw64, env: x86_64, cc: gcc, cxx: g++ }
+        - { sys: mingw64, env: x86_64, cc: clang, cxx: clang++ }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2.22.0
+      with:
+        msystem: ${{ matrix.config.sys }}
+        install: >-
+          mingw-w64-${{ matrix.config.env }}-gcc
+          mingw-w64-${{ matrix.config.env }}-clang
+          mingw-w64-${{ matrix.config.env }}-make
+          mingw-w64-${{ matrix.config.env }}-cmake
+          mingw-w64-${{ matrix.config.env }}-ninja
+          mingw-w64-${{ matrix.config.env }}-SDL2
+          mingw-w64-${{ matrix.config.env }}-SDL2_image
+          mingw-w64-${{ matrix.config.env }}-SDL2_mixer
+
+    - name: Set reusable strings
+      id: strings
+      run: |
+        echo "build-output-dir=$(cygpath -u '${{ github.workspace }}')/build" >> "$GITHUB_OUTPUT"
+        echo "source-dir=$(cygpath -u '${{ github.workspace }}')" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      run: >
+          cmake
+          -G ${{ matrix.cmake_generator }}
+          -S ${{ steps.strings.outputs.source-dir }}
+          -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DBUILD_SHARED_LIBS=${{ matrix.shared_libs_enabled }}
+
+    - name: Build
+      run: >
+        cmake
+        --build ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ matrix.build_type }}
+
+    - name: Upload Build Artifact
+      if: matrix.shared_libs_enabled == 'OFF'
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'windows-${{ matrix.config.sys }}-${{ matrix.config.cc }}'
+        path: '${{ github.workspace }}\build\bin'
+        if-no-files-found: error
+        compression-level: 9
