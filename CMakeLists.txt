@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
 
 set(TARGET BiplanesRevival)
 set(${TARGET}_VERSION 1.1.0)
