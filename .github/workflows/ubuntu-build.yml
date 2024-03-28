@@ -49,7 +49,9 @@ jobs:
       shell: bash
       run: |
         sudo apt update
-        sudo apt install -y ninja-build
+        sudo apt install -y ninja-build software-properties-common
+        sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ noble main universe'
+        sudo apt update
         sudo apt install -y -t noble libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
 
     - name: Configure CMake
