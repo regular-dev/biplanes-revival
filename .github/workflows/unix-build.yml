@@ -1,0 +1,90 @@
+name: Build (Ubuntu + macOS)
+
+on:
+  push:
+    branches:
+      - ai-fsm-utility
+    paths-ignore:
+      - '**/README.md'
+
+  pull_request:
+    branches:
+      - ai-fsm-utility
+
+  build-unix:
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: ["Release"]
+        cmake_generator: ["Ninja"]
+
+        config:
+        - {
+            os: ubuntu-latest,
+            cc: "gcc",
+            cxx: "g++"
+          }
+        - {
+            os: ubuntu-latest,
+            cc: "clang",
+            cxx: "clang++"
+          }
+        - {
+            os: macos-latest,
+            cc: "clang",
+            cxx: "clang++"
+          }
+        - {
+          os: macos-latest,
+          cc: "gcc",
+          cxx: "g++"
+        }
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'ai-fsm-utility'
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.config.os == 'ubuntu-latest'
+      shell: bash
+      run: >
+        sudo apt install -y
+          ninja-build
+          libsdl2-dev
+          libsdl2-image-dev
+          libsdl2-mixer-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.config.os == 'macos-latest'
+      run: >
+        brew install
+          ninja
+          sdl2
+          sdl2_image
+          sdl2_mixer
+
+    - name: Configure CMake
+      run: >
+        cmake
+        -G ${{ matrix.cmake_generator }}
+        -S ${{ github.workspace }}
+        -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      run: >
+        cmake
+        --build ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ matrix.build_type }}
