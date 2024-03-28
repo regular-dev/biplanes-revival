@@ -47,7 +47,7 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: >
+      run: |
         sudo apt update
         sudo apt install -y ninja-build libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
 
