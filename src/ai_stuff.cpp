@@ -965,7 +965,11 @@ AiStatePlane::update(
     while ( sortedInterestDirs.size() > 2 )
       sortedInterestDirs.erase(sortedInterestDirs.begin());
 
-    const auto pathStartLeft = std::clamp(selfDirIndex - 1ul, 0ul, mDangerMap.size() - 1ul);
+    const auto pathStartLeft = std::clamp(
+      selfDirIndex - size_t{1},
+      size_t{},
+      mDangerMap.size() - size_t{1});
+
     const auto pathStartRight = (selfDirIndex + 1) % mDangerMap.size();
 
     float lowestPathSumLeft {1000.f};
