@@ -37,6 +37,7 @@
 #include <cmath>
 #include <cassert>
 #include <iomanip>
+#include <sstream>
 #include <algorithm>
 
 
