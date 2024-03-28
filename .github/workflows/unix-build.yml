@@ -40,8 +40,8 @@ jobs:
           }
         - {
           os: macos-latest,
-          cc: "gcc",
-          cxx: "g++"
+          cc: "gcc-13",
+          cxx: "g++-13"
         }
 
     steps:
