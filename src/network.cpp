@@ -98,7 +98,6 @@ eventPush(
 
   eventsLocal.pop_front();
   eventsLocal.push_back( (unsigned char) newEvent );
-  log_message("pushing event '", {(char) newEvent}, "'\n");
 }
 
 void
@@ -196,76 +195,65 @@ processOpponentData(
       {
         case (uint8_t) EVENTS::NONE:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NONE", "\n");
           continue;
         }
 
         case (uint8_t) EVENTS::NO_EXTRA_CLOUDS:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_EXTRA_CLOUDS", "\n");
           gameState().features.extraClouds = false;
           continue;
         }
 
         case (uint8_t) EVENTS::NO_ONESHOT_KILLS:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_ONESHOT_KILLS", "\n");
           gameState().features.oneShotKills = false;
           continue;
         }
 
         case (uint8_t) EVENTS::NO_ALT_HITBOXES:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": NO_ALT_HITBOXES", "\n");
           gameState().features.alternativeHitboxes = false;
           continue;
         }
 
         case (uint8_t) EVENTS::SHOOT:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": SHOOT", "\n");
           planeRemote.input.Shoot();
           continue;
         }
 
         case (uint8_t) EVENTS::EJECT:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": EJECT", "\n");
           planeRemote.input.Jump();
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_PLANE:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": HIT_PLANE", "\n");
           planeRemote.Hit(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_CHUTE:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": HIT_CHUTE", "\n");
           planeRemote.pilot.ChuteHit(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::HIT_PILOT:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": HIT_PILOT", "\n");
           planeRemote.pilot.Kill(planeLocal);
           continue;
         }
 
         case (uint8_t) EVENTS::PLANE_DEATH:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": PLANE_DEATH", "\n");
           planeRemote.Crash();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_DEATH:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": PILOT_DEATH", "\n");
           planeRemote.pilot.Death();
 
           planeRemote.ScoreChange(-1);
@@ -276,21 +264,18 @@ processOpponentData(
 
         case (uint8_t) EVENTS::PLANE_RESPAWN:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": PLANE_RESPAWN", "\n");
           planeRemote.Respawn();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_RESPAWN:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": PILOT_RESPAWN", "\n");
           planeRemote.pilot.Rescue();
           continue;
         }
 
         case (uint8_t) EVENTS::PILOT_LAND:
         {
-          log_message("NETWORK: event ", std::to_string(eventCounterRemote), ": PILOT_LAND", "\n");
           planeRemote.pilot.FallSurvive();
           continue;
         }
