@@ -11,6 +11,7 @@ on:
     branches:
       - ai-fsm-utility
 
+jobs:
   build-unix:
     runs-on: ${{ matrix.config.os }}
 
