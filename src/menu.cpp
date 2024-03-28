@@ -791,16 +791,16 @@ Menu::screen_settings()
 
   if ( isSpecifyingVar(MENU_SPECIFY::AUDIO_VOLUME) == true )
   {
-    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
-    draw_text( "specifying audio volume ", 0.250f, 0.650f );
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.700f );
+    draw_text( "specifying audio volume ", 0.250f, 0.750f );
 
     return;
   }
 
   if ( isSpecifyingVar(MENU_SPECIFY::STEREO_DEPTH) == true )
   {
-    draw_text( "Press [RETURN] to finish", 0.250f, 0.600f );
-    draw_text( "specifying stereo depth ", 0.250f, 0.650f );
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.700f );
+    draw_text( "specifying stereo depth ", 0.250f, 0.750f );
 
     return;
   }
