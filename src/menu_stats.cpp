@@ -28,6 +28,8 @@
 #include <include/variables.hpp>
 #include <include/utility.hpp>
 
+#include <cmath>
+
 
 void
 Menu::screen_stats_recent_page1()

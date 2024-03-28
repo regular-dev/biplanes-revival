@@ -27,6 +27,7 @@
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 
+#include <cmath>
 #include <string>
 
 
