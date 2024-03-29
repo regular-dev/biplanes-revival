@@ -51,7 +51,7 @@ jobs:
         sudo apt update
         sudo apt install -y ninja-build
 
-    - name: Download SDL2 development libraries
+    - name: Build SDL2 from sources
       run: |
         mkdir -p ${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs
         cd ${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs
@@ -61,6 +61,12 @@ jobs:
         tar -xf SDL2-2.30.1.tar.gz
         tar -xf SDL2_image-2.8.2.tar.gz
         tar -xf SDL2_mixer-2.8.0.tar.gz
+        cd SDL2-2.30.1
+        cmake -S . -B build && cmake --build build && cmake --install build
+        cd ../SDL2_image-2.8.2
+        cmake -S . -B build && cmake --build build && cmake --install build
+        cd ../SDL2_mixer-2.8.0
+        cmake -S . -B build && cmake --build build && cmake --install build
 
     - name: Configure CMake
       run: >
@@ -71,9 +77,6 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
         -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DSDL2_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2-2.30.1
-        -DSDL2_IMAGE_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_image-2.8.2
-        -DSDL2_MIXER_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_mixer-2.8.0
 
     - name: Build
       run: >
