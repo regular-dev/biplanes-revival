@@ -62,15 +62,39 @@ jobs:
         tar -xf SDL2_image-2.8.2.tar.gz
         tar -xf SDL2_mixer-2.8.0.tar.gz
         cd SDL2-2.30.1
-        cmake -S . -B build
+        cmake -S . -B build \
+          -DSDL2MIXER_OPUS=OFF \
+          -DSDL2MIXER_MIDI=OFF \
+          -DSDL2MIXER_MP3=OFF \
+          -DSDL2MIXER_MOD=OFF \
+          -DSDL2MIXER_GME=OFF \
+          -DSDL2MIXER_FLAC=OFF \
+          -DSDL2MIXER_CMD=OFF \
+          -DSDL2MIXER_VENDORED=OFF
         cmake --build build
         sudo cmake --install build
         cd ../SDL2_image-2.8.2
-        cmake -S . -B build
+        cmake -S . -B build \
+          -DSDL2MIXER_OPUS=OFF \
+          -DSDL2MIXER_MIDI=OFF \
+          -DSDL2MIXER_MP3=OFF \
+          -DSDL2MIXER_MOD=OFF \
+          -DSDL2MIXER_GME=OFF \
+          -DSDL2MIXER_FLAC=OFF \
+          -DSDL2MIXER_CMD=OFF \
+          -DSDL2MIXER_VENDORED=OFF
         cmake --build build
         sudo cmake --install build
         cd ../SDL2_mixer-2.8.0
-        cmake -S . -B build
+        cmake -S . -B build \
+          -DSDL2MIXER_OPUS=OFF \
+          -DSDL2MIXER_MIDI=OFF \
+          -DSDL2MIXER_MP3=OFF \
+          -DSDL2MIXER_MOD=OFF \
+          -DSDL2MIXER_GME=OFF \
+          -DSDL2MIXER_FLAC=OFF \
+          -DSDL2MIXER_CMD=OFF \
+          -DSDL2MIXER_VENDORED=OFF
         cmake --build build
         sudo cmake --install build
 
