@@ -46,6 +46,7 @@ jobs:
           mingw-w64-${{ matrix.config.env }}-make
           mingw-w64-${{ matrix.config.env }}-cmake
           mingw-w64-${{ matrix.config.env }}-ninja
+          mingw-w64-${{ matrix.config.env }}-wget
           mingw-w64-${{ matrix.config.env }}-SDL2
           mingw-w64-${{ matrix.config.env }}-SDL2_image
           mingw-w64-${{ matrix.config.env }}-SDL2_mixer
@@ -73,6 +74,21 @@ jobs:
         --build ${{ steps.strings.outputs.build-output-dir }}
         --config ${{ matrix.build_type }}
 
+    - name: Download SDL2 binaries
+      if: matrix.shared_libs_enabled == 'OFF'
+      run: |
+        mkdir SDL_deps
+        cd SDL_deps
+        wget https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-2.30.1-win32-x86.zip
+        wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-2.8.2-win32-x86.zip
+        wget https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-2.8.0-win32-x86.zip
+        7z x SDL2-2.30.1-win32-x86.zip
+        7z x SDL2_image-2.8.2-win32-x86.zip
+        7z x SDL2_mixer-2.8.0-win32-x86.zip
+        cp SDL2-2.30.1-win32-x86/SDL2.dll '${{ steps.strings.outputs.build-output-dir }}/bin'
+        cp SDL2_image-2.8.2-win32-x86/SDL2_image.dll '${{ steps.strings.outputs.build-output-dir }}/bin'
+        cp SDL2_mixer-2.8.0-win32-x86/SDL2_mixer.dll '${{ steps.strings.outputs.build-output-dir }}/bin'
+
     - name: Upload Build Artifact
       if: matrix.shared_libs_enabled == 'OFF'
       uses: actions/upload-artifact@v4
@@ -81,3 +97,4 @@ jobs:
         path: '${{ github.workspace }}\build\bin'
         if-no-files-found: error
         compression-level: 9
+
