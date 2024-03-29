@@ -62,11 +62,17 @@ jobs:
         tar -xf SDL2_image-2.8.2.tar.gz
         tar -xf SDL2_mixer-2.8.0.tar.gz
         cd SDL2-2.30.1
-        cmake -S . -B build && cmake --build build && cmake --install build
+        cmake -S . -B build
+        cmake --build build
+        sudo cmake --install build
         cd ../SDL2_image-2.8.2
-        cmake -S . -B build && cmake --build build && cmake --install build
+        cmake -S . -B build
+        cmake --build build
+        sudo cmake --install build
         cd ../SDL2_mixer-2.8.0
-        cmake -S . -B build && cmake --build build && cmake --install build
+        cmake -S . -B build
+        cmake --build build
+        sudo cmake --install build
 
     - name: Configure CMake
       run: >
