@@ -20,7 +20,6 @@ jobs:
 
       matrix:
         build_type: ["Release"]
-        cmake_generator: ["Ninja"]
         shared_libs_enabled: ["ON", "OFF"]
 
         config:
@@ -53,7 +52,6 @@ jobs:
     - name: Configure CMake
       run: >
         cmake
-        -G ${{ matrix.cmake_generator }}
         -S ${{ github.workspace }}
         -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
