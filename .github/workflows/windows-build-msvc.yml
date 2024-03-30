@@ -35,6 +35,7 @@ jobs:
 
     - name: Set reusable strings
       id: strings
+      shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}\build" >> "$GITHUB_OUTPUT"
 
@@ -57,9 +58,9 @@ jobs:
         -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DBUILD_SHARED_LIBS=${{ matrix.shared_libs_enabled }}
-        -DSDL2_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2-2.30.1
-        -DSDL2_IMAGE_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_image-2.8.2
-        -DSDL2_MIXER_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_mixer-2.8.0
+        -DSDL2_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2-2.30.1
+        -DSDL2_IMAGE_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2_image-2.8.2
+        -DSDL2_MIXER_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2_mixer-2.8.0
 
     - name: Build
       run: >
