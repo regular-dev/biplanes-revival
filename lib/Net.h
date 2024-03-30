@@ -351,13 +351,18 @@ namespace net
         return false;
 
       #if PLATFORM == PLATFORM_WINDOWS
-      typedef int socklen_t;
+        typedef int socklen_t;
       #endif
 
       sockaddr_in from;
       socklen_t fromLength = sizeof( from );
 
-      int received_bytes = recvfrom( socketHandle, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
+      int received_bytes = recvfrom(
+        socketHandle,
+        (char*)data,
+        size, 0,
+        (sockaddr*)&from,
+        &fromLength );
 
       if ( received_bytes <= 0 )
         return 0;
@@ -531,32 +536,42 @@ namespace net
     virtual bool SendPacket( const unsigned char data[], const int size )
     {
       assert( running );
+
       if ( address.GetAddress() == 0 )
         return false;
-      unsigned char packet[size+4];
+
+      static std::vector <uint8_t> packet {};
+      packet.resize(size + 4);
       packet[0] = (unsigned char) ( protocolId >> 24 );
       packet[1] = (unsigned char) ( ( protocolId >> 16 ) & 0xFF );
       packet[2] = (unsigned char) ( ( protocolId >> 8 ) & 0xFF );
       packet[3] = (unsigned char) ( ( protocolId ) & 0xFF );
       memcpy( &packet[4], data, size );
-      return socket.Send( address, packet, size + 4 );
+
+      return socket.Send( address, packet.data(), size + 4 );
     }
 
     virtual int ReceivePacket( unsigned char data[], const int size )
     {
       assert( running );
-      unsigned char packet[size+4];
+
       Address sender;
-      int bytes_read = socket.Receive( sender, packet, size + 4 );
+      static std::vector <uint8_t> packet {};
+      packet.resize(size + 4);
+
+      int bytes_read = socket.Receive( sender, packet.data(), size + 4 );
       if ( bytes_read == 0 )
         return 0;
+
       if ( bytes_read <= 4 )
         return 0;
+
       if ( packet[0] != (unsigned char) ( protocolId >> 24 ) ||
-         packet[1] != (unsigned char) ( ( protocolId >> 16 ) & 0xFF ) ||
-         packet[2] != (unsigned char) ( ( protocolId >> 8 ) & 0xFF ) ||
-         packet[3] != (unsigned char) ( protocolId & 0xFF ) )
+           packet[1] != (unsigned char) ( ( protocolId >> 16 ) & 0xFF ) ||
+           packet[2] != (unsigned char) ( ( protocolId >> 8 ) & 0xFF ) ||
+           packet[3] != (unsigned char) ( protocolId & 0xFF ) )
         return 0;
+
       if ( mode == Server && !IsConnected() )
       {
         state = Connected;
@@ -564,6 +579,7 @@ namespace net
         log_message( "NETWORK: New client connected from ", address.ToString(), "\n" );
         OnConnect();
       }
+
       if ( sender == address )
       {
         if ( mode == Client && state == Connecting )
@@ -572,10 +588,13 @@ namespace net
           state = Connected;
           OnConnect();
         }
+
         timeoutAccumulator = 0.0f;
         memcpy( data, &packet[4], bytes_read - 4 );
+
         return bytes_read - 4;
       }
+
       return 0;
     }
 
@@ -703,7 +722,6 @@ namespace net
 
     ReliabilitySystem( unsigned int max_sequence = 0xFFFFFFFF )
     {
-      this->rtt_maximum = rtt_maximum;
       this->max_sequence = max_sequence;
       Reset();
     }
@@ -1038,14 +1056,19 @@ namespace net
     bool SendPacket( const unsigned char data[], int size )
     {
       const int header = 12;
-      unsigned char packet[header+size];
+      static std::vector <uint8_t> packet {};
+      packet.resize(header + size);
+
       unsigned int seq = reliabilitySystem.GetLocalSequence();
       unsigned int ack = reliabilitySystem.GetRemoteSequence();
       unsigned int ack_bits = reliabilitySystem.GenerateAckBits();
-      WriteHeader( packet, seq, ack, ack_bits );
-      memcpy( packet + header, data, size );
-      if ( !Connection::SendPacket( packet, size + header ) )
+
+      WriteHeader( packet.data(), seq, ack, ack_bits );
+      memcpy( packet.data() + header, data, size );
+
+      if ( !Connection::SendPacket( packet.data(), size + header ) )
         return false;
+
       reliabilitySystem.PacketSent( size );
       return true;
     }
@@ -1053,9 +1076,10 @@ namespace net
     int ReceivePacket( unsigned char data[], int size )
     {
       const int header = 12;
-      unsigned char packet[header+size];
+      static std::vector <uint8_t> packet {};
+      packet.resize(header + size);
 
-      int received_bytes = Connection::ReceivePacket( packet, size + header );
+      int received_bytes = Connection::ReceivePacket( packet.data(), size + header );
 
       if ( received_bytes == 0 )
         return 0;
@@ -1067,14 +1091,14 @@ namespace net
       unsigned int packet_ack = 0;
       unsigned int packet_ack_bits = 0;
 
-      ReadHeader( packet, packet_sequence, packet_ack, packet_ack_bits );
+      ReadHeader( packet.data(), packet_sequence, packet_ack, packet_ack_bits );
       reliabilitySystem.PacketReceived( packet_sequence, received_bytes - header );
       reliabilitySystem.ProcessAck( packet_ack, packet_ack_bits );
 
       if ( packet_sequence != reliabilitySystem.GetRemoteSequence() )
         return 0;
 
-      memcpy( data, packet + header, received_bytes - header );
+      memcpy( data, packet.data() + header, received_bytes - header );
       return received_bytes - header;
     }
 

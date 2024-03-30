@@ -243,7 +243,7 @@ game_reset()
     clouds.resize(8);
 
     for ( uint8_t i = 0; i < clouds.size(); i++ )
-      clouds[i] = {i % 2, i};
+      clouds[i] = {static_cast <bool> (i % 2), i};
   }
 
   eventsReset();
