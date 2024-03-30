@@ -135,9 +135,9 @@ target_include_directories(${TARGET} PRIVATE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_options(${TARGET} PUBLIC
-  -Wno-narrowing
-)
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  target_compile_options(${TARGET} PUBLIC -Wno-narrowing)
+endif()
 
 if (NOT ${BUILD_SHARED_LIBS})
   target_link_libraries(${TARGET} PUBLIC
