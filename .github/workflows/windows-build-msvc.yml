@@ -20,6 +20,7 @@ jobs:
 
       matrix:
         build_type: ["Release"]
+        cmake_generator: ["Ninja"]
         shared_libs_enabled: ["ON", "OFF"]
 
         config:
