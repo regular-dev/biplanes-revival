@@ -1,4 +1,4 @@
-name: Build (Windows)
+name: Build (Windows MSYS2)
 
 on:
   push:

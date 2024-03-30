@@ -1,0 +1,92 @@
+name: Build (Windows MSVC)
+
+on:
+  push:
+    branches:
+      - ai-fsm-utility
+    paths-ignore:
+      - '**/README.md'
+
+  pull_request:
+    branches:
+      - ai-fsm-utility
+
+jobs:
+  build-msvc:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build_type: ["Release"]
+        shared_libs_enabled: ["ON", "OFF"]
+
+        config:
+        - {
+            os: windows-latest,
+            cc: "cl",
+            cxx: "cl"
+          }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      id: strings
+      run: |
+        echo "build-output-dir=${{ github.workspace }}\build" >> "$GITHUB_OUTPUT"
+
+    - name: Download SDL2 development libraries
+      run: |
+        mkdir ${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs
+        cd ${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs
+        Invoke-WebRequest https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-devel-2.30.1-VC.zip -OutFile SDL2.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-devel-2.8.2-VC.zip -OutFile SDL2_image.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-devel-2.8.0-VC.zip -OutFile SDL2_mixer.zip
+        7z x -y SDL2.zip
+        7z x -y SDL2_image.zip
+        7z x -y SDL2_mixer.zip
+
+    - name: Configure CMake
+      run: >
+        cmake
+        -G ${{ matrix.cmake_generator }}
+        -S ${{ github.workspace }}
+        -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DBUILD_SHARED_LIBS=${{ matrix.shared_libs_enabled }}
+        -DSDL2_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2-2.30.1
+        -DSDL2_IMAGE_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_image-2.8.2
+        -DSDL2_MIXER_PATH=${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs/SDL2_mixer-2.8.0
+
+    - name: Build
+      run: >
+        cmake
+        --build ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ matrix.build_type }}
+
+    - name: Download SDL2 binaries
+      if: matrix.shared_libs_enabled == 'OFF'
+      run: |
+        mkdir SDL_deps
+        cd SDL_deps
+        Invoke-WebRequest https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-2.30.1-win32-x64.zip -OutFile SDL2.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-2.8.2-win32-x64.zip -OutFile SDL2_image.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-2.8.0-win32-x64.zip -OutFile SDL2_mixer.zip
+        7z x -y SDL2.zip
+        7z x -y SDL2_image.zip
+        7z x -y SDL2_mixer.zip
+        copy SDL2.dll ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
+        copy SDL2_image.dll ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
+        copy SDL2_mixer.dll ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
+
+    - name: Upload Build Artifact
+      if: matrix.shared_libs_enabled == 'OFF'
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'windows-msvc-x64'
+        path: '${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}'
+        if-no-files-found: error
+        compression-level: 9
+
