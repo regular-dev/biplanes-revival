@@ -157,7 +157,7 @@ Plane::DrawCollisionLayer() const
   SDL_RenderDrawRectF( gRenderer, &planeCenter );
 
   const auto hitboxOffset = constants::plane::hitboxOffset;
-  const auto dir = mDir * M_PI / 180.0f;
+  const float dir = mDir * M_PI / 180.0f;
 
   const SDL_Vector hitboxCenter
   {
@@ -773,9 +773,10 @@ Plane::Explode()
     const auto sparkSpeed =
       spark::speedMin + speedVariation * spark::speedRange;
 
+    const float sparkDir = dir * M_PI / 180.f;
+
     effects.Spawn(new ExplosionSpark{
-      mX, mY, sparkSpeed,
-      dir * M_PI / 180.f });
+      mX, mY, sparkSpeed, sparkDir });
   }
 
 
@@ -959,7 +960,7 @@ Plane::isHit(
   }
 
   const auto hitboxOffset = constants::plane::hitboxOffset;
-  const auto dir = mDir * M_PI / 180.0f;
+  const float dir = mDir * M_PI / 180.0f;
 
   const SDL_Vector hitboxCenter
   {
@@ -1081,7 +1082,7 @@ Plane::bulletSpawnOffset() const
 
 
   const auto offset = constants::plane::bulletSpawnOffset;
-  const auto dir = mDir * M_PI / 180.0f;
+  const float dir = mDir * M_PI / 180.0f;
 
   return
   {

@@ -33,7 +33,7 @@ textures_load()
 
   textures.main_font = loadTexture( "assets/menu/font.png" );
 
-  for ( size_t i = 0; i < 95; ++i )
+  for ( uint8_t i = 0; i < 95; ++i )
   {
     textures.font_rect[i] =
     {

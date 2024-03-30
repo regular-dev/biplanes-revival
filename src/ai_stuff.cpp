@@ -117,7 +117,7 @@ isAboutToCrash(
   namespace barn = constants::barn;
 
 
-  const auto dir = self.dir() * M_PI / 180.f;
+  const float dir = self.dir() * M_PI / 180.f;
 
   const auto speed = 0.5f * std::clamp(
     self.speed() * constants::tickRate,
@@ -582,7 +582,7 @@ AiStatePlane::update(
 
   for ( size_t i {}; i < plane::directionCount; ++i )
   {
-    const auto dir = (i * plane::pitchStep) * M_PI / 180.f;
+    const float dir = (i * plane::pitchStep) * M_PI / 180.f;
 
     const SDL_Vector probeStart {self.x(), self.y()};
 
@@ -670,9 +670,9 @@ AiStatePlane::update(
 //    line5 = bottomLeft -> topRight
 //    line6 = bottomRight -> topLeft
 
-    const auto bulletDirLeft = (bullet.dir() - 90.f) * M_PI / 180.f;
-    const auto bulletDirRight = (bullet.dir() + 90.f) * M_PI / 180.f;
-    const auto bulletDir = bullet.dir() * M_PI / 180.f;
+    const float bulletDirLeft = (bullet.dir() - 90.f) * M_PI / 180.f;
+    const float bulletDirRight = (bullet.dir() + 90.f) * M_PI / 180.f;
+    const float bulletDir = bullet.dir() * M_PI / 180.f;
 
     const SDL_Vector bulletPathLeftStart
     {
@@ -1092,7 +1092,7 @@ AiStatePlane::update(
 
       for ( const auto& bullet : opponentBullets )
       {
-        const auto bulletDir = bullet.dir() * M_PI / 180.0;
+        const float bulletDir = bullet.dir() * M_PI / 180.0;
 
         const auto bulletPathLength =
           0.5f * constants::bullet::speed;
@@ -1332,7 +1332,7 @@ AiStatePilot::update(
   if ( botDifficulty > DIFFICULTY::MEDIUM )
     for ( const auto& bullet : opponentBullets )
     {
-      const auto bulletDir = bullet.dir() * M_PI / 180.f;
+      const float bulletDir = bullet.dir() * M_PI / 180.f;
       const auto bulletSpeed = constants::bullet::speed;
 
       const SDL_Vector bulletPathStart
@@ -1380,7 +1380,7 @@ AiStatePilot::update(
 //  Avoid opponent's LoS
   if ( opponent.canShoot() == true && botDifficulty > DIFFICULTY::HARD )
   {
-    const auto bulletDir = opponent.dir() * M_PI / 180.f;
+    const float bulletDir = opponent.dir() * M_PI / 180.f;
     const auto bulletSpeed = constants::bullet::speed;
 
     const auto bulletOffset = opponent.bulletSpawnOffset();

@@ -34,7 +34,7 @@ Effect::Effect(
   const uint8_t frameCount )
   : mX {x}
   , mY {y}
-  , mAnim {frameTime}
+  , mAnim {static_cast <float> (frameTime)}
   , mFrameCount {frameCount}
 {
   mAnim.Start();

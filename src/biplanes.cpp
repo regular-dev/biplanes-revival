@@ -242,7 +242,7 @@ game_reset()
   {
     clouds.resize(8);
 
-    for ( size_t i = 0; i < clouds.size(); i++ )
+    for ( uint8_t i = 0; i < clouds.size(); i++ )
       clouds[i] = {i % 2, i};
   }
 

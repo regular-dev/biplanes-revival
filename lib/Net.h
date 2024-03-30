@@ -146,8 +146,11 @@ namespace net
 
       return
       {
-        a, b, c, d,
-        stoi(portStr)
+        static_cast <uint8_t> (a),
+        static_cast <uint8_t> (b),
+        static_cast <uint8_t> (c),
+        static_cast <uint8_t> (d),
+        static_cast <uint16_t> (std::stoi(portStr)),
       };
     }
 
@@ -525,7 +528,7 @@ namespace net
       }
     }
 
-    virtual bool SendPacket( const unsigned char data[], int size )
+    virtual bool SendPacket( const unsigned char data[], const int size )
     {
       assert( running );
       if ( address.GetAddress() == 0 )
@@ -539,7 +542,7 @@ namespace net
       return socket.Send( address, packet, size + 4 );
     }
 
-    virtual int ReceivePacket( unsigned char data[], int size )
+    virtual int ReceivePacket( unsigned char data[], const int size )
     {
       assert( running );
       unsigned char packet[size+4];
