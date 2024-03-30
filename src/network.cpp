@@ -147,12 +147,10 @@ processOpponentData(
   const Packet& opponentData,
   const Packet& opponentDataPrev )
 {
-  PlaneNetworkData data
-  {
-    .dir = opponentData.dir,
-    .pilot_x = opponentData.pilot_x,
-    .pilot_y = opponentData.pilot_y,
-  };
+  PlaneNetworkData data {};
+  data.dir = opponentData.dir;
+  data.pilot_x = opponentData.pilot_x;
+  data.pilot_y = opponentData.pilot_y;
 
   auto& planeRed = planes.at(PLANE_TYPE::RED);
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
