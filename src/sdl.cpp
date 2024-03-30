@@ -46,7 +46,7 @@ SDL_init(
 
   if ( SDL_InitSubSystem( SDL_INIT_VIDEO ) != 0 )
   {
-    log_message( "\nSDL Startup: SDL video subsystem failed to initialize! SDL Error: ", SDL_GetError() );
+    log_message( "\nSDL Startup: SDL video subsystem failed to initialize! SDL Error: ", SDL_GetError(), "\n" );
     show_warning( "SDL: Failed to initialize!", SDL_GetError() );
 
     return 1;
@@ -147,7 +147,7 @@ SDL_init(
 
   if ( ( IMG_Init(imgFlags) & imgFlags ) == false )
   {
-    log_message( "\nSDL Startup: SDL_image could not initialize! SDL_image Error: ", IMG_GetError() );
+    log_message( "\nSDL Startup: SDL_image could not initialize! SDL_image Error: ", IMG_GetError(), "\n" );
     show_warning( "SDL_image: Can't initialize!", IMG_GetError() );
 
     return 1;
@@ -163,12 +163,12 @@ SDL_init(
 
     if ( SDL_InitSubSystem( SDL_INIT_AUDIO ) != 0 )
     {
-      log_message( "\nSDL Startup: SDL audio subsystem failed to initialize! SDL Error: ", SDL_GetError() );
+      log_message( "\nSDL Startup: SDL audio subsystem failed to initialize! SDL Error: ", SDL_GetError(), "\n" );
       show_warning( "SDL: Failed to initialize audio subsystem!", SDL_GetError() );
     }
 
     else if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) != 0 )
-      log_message( "\nSDL Startup: SDL_Mixer failed to initialize! SDL_Mixer Error: %s", Mix_GetError() );
+      log_message( "\nSDL Startup: SDL_Mixer failed to initialize! SDL_Mixer Error: %s", Mix_GetError(), "\n" );
 
     else
     {
@@ -228,7 +228,7 @@ show_warning(
   const char* message )
 {
   if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message, nullptr ) < 0 )
-    log_message( "SDL Error: Unable to show warning window : ", SDL_GetError() );
+    log_message( "SDL Error: Unable to show warning window : ", SDL_GetError(), "\n" );
 }
 
 
