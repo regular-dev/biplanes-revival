@@ -246,9 +246,6 @@ setVSync(
   if ( SDL_SetHint( SDL_HINT_RENDER_VSYNC, std::to_string(enabled).c_str() ) == false )
     log_message( "Warning: Failed to set V-Sync!\n" );
 
-  if ( SDL_SetHint( SDL_HINT_PS2_DYNAMIC_VSYNC, std::to_string(enabled).c_str() ) == false )
-    log_message( "Warning: Failed to set dynamic V-Sync!\n" );
-
   if ( SDL_RenderSetVSync(gRenderer, enabled) != 0 )
     log_message( "Warning: Failed to set renderer V-Sync!\n");
 }

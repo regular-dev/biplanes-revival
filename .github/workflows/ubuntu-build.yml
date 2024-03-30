@@ -49,57 +49,11 @@ jobs:
       shell: bash
       run: |
         sudo apt update
-        sudo apt install -y ninja-build
-
-    - name: Build SDL2 from sources
-      run: |
-        mkdir -p ${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs
-        cd ${{ steps.strings.outputs.build-output-dir }}/sdl-dev-libs
-        wget https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-2.30.1.tar.gz
-        wget https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-2.8.2.tar.gz
-        wget https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-2.8.0.tar.gz
-        tar -xf SDL2-2.30.1.tar.gz
-        tar -xf SDL2_image-2.8.2.tar.gz
-        tar -xf SDL2_mixer-2.8.0.tar.gz
-        cd SDL2-2.30.1
-        cmake -S . -B build \
-          -DSDL2MIXER_OPUS=OFF \
-          -DSDL2MIXER_MIDI=OFF \
-          -DSDL2MIXER_MP3=OFF \
-          -DSDL2MIXER_MOD=OFF \
-          -DSDL2MIXER_GME=OFF \
-          -DSDL2MIXER_FLAC=OFF \
-          -DSDL2MIXER_CMD=OFF \
-          -DSDL2MIXER_WAVPACK=OFF \
-          -DSDL2MIXER_VENDORED=OFF
-        cmake --build build
-        sudo cmake --install build
-        cd ../SDL2_image-2.8.2
-        cmake -S . -B build \
-          -DSDL2MIXER_OPUS=OFF \
-          -DSDL2MIXER_MIDI=OFF \
-          -DSDL2MIXER_MP3=OFF \
-          -DSDL2MIXER_MOD=OFF \
-          -DSDL2MIXER_GME=OFF \
-          -DSDL2MIXER_FLAC=OFF \
-          -DSDL2MIXER_CMD=OFF \
-          -DSDL2MIXER_WAVPACK=OFF \
-          -DSDL2MIXER_VENDORED=OFF
-        cmake --build build
-        sudo cmake --install build
-        cd ../SDL2_mixer-2.8.0
-        cmake -S . -B build \
-          -DSDL2MIXER_OPUS=OFF \
-          -DSDL2MIXER_MIDI=OFF \
-          -DSDL2MIXER_MP3=OFF \
-          -DSDL2MIXER_MOD=OFF \
-          -DSDL2MIXER_GME=OFF \
-          -DSDL2MIXER_FLAC=OFF \
-          -DSDL2MIXER_CMD=OFF \
-          -DSDL2MIXER_WAVPACK=OFF \
-          -DSDL2MIXER_VENDORED=OFF
-        cmake --build build
-        sudo cmake --install build
+        sudo apt install -y \
+          ninja-build \
+          libsdl2-dev \
+          libsdl2-image-dev \
+          libsdl2-mixer-dev
 
     - name: Configure CMake
       run: >
