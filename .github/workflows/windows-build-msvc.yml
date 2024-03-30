@@ -81,6 +81,13 @@ jobs:
         copy SDL2_image.dll ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
         copy SDL2_mixer.dll ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
 
+    - name: Fix for wrong assets location
+      if: matrix.shared_libs_enabled == 'OFF'
+      run: >
+        mv
+        ${{ steps.strings.outputs.build-output-dir }}\bin\assets
+        ${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}
+
     - name: Upload Build Artifact
       if: matrix.shared_libs_enabled == 'OFF'
       uses: actions/upload-artifact@v4
