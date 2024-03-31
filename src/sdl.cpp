@@ -372,7 +372,15 @@ void
 setSoundVolume(
   const float normalizedVolume )
 {
-  Mix_Volume(-1, normalizedVolume * MIX_MAX_VOLUME);
+  const double newVolume =
+    normalizedVolume * MIX_MAX_VOLUME;
+
+#if SDL_MIXER_VERSION_ATLEAST(2, 6, 0)
+  Mix_MasterVolume(newVolume);
+#else
+  Mix_HaltChannel(-1);
+  Mix_Volume(-1, newVolume);
+#endif
 }
 
 

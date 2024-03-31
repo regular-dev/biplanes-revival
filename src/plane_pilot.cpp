@@ -643,8 +643,6 @@ void
 Plane::Pilot::ChuteHit(
   Plane& attacker )
 {
-//  FadeFallingSound(mAudioLoopChannel);
-
   panSound( playSound(sounds.hitChute), mX );
 
   mChuteState = CHUTE_STATE::CHUTE_DESTROYED;
