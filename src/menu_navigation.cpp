@@ -629,6 +629,13 @@ Menu::Select()
         case MENU_PAUSE::SETTINGS:
         {
           ChangeRoom(ROOMS::MENU_SETTINGS);
+
+          mInputAudioVolume = std::to_string(
+            percentageToInteger(gameState().audioVolume) );
+
+          mInputStereoDepth = std::to_string(
+            percentageToInteger(gameState().stereoDepth) );
+
           break;
         }
 
