@@ -45,22 +45,22 @@ textures_load()
   }
 
 
-  textures.menu_help = loadTexture( "assets/menu/menu_help.png" );
-  textures.menu_moving_button = loadTexture( "assets/menu/menu_moving_button.png" );
-  textures.menu_logo = loadTexture( "assets/menu/menu_logo.png" );
+  textures.menu_help = loadTexture( "assets/menu/screen_help.png" );
+  textures.menu_button = loadTexture( "assets/menu/button.png" );
+  textures.menu_logo = loadTexture( "assets/menu/screen_logo.png" );
 
 
-  textures.texture_background = loadTexture( "assets/ingame/ingame_background.png" );
-  textures.texture_barn = loadTexture( "assets/ingame/ingame_barn.png" );
-  textures.texture_biplane_b = loadTexture( "assets/ingame/biplane/ingame_biplane_b.png" );
-  textures.texture_biplane_r = loadTexture( "assets/ingame/biplane/ingame_biplane_r.png" );
-  textures.texture_bullet = loadTexture( "assets/ingame/biplane/ingame_bullet.png" );
-  textures.texture_cloud = loadTexture( "assets/ingame/ingame_cloud.png" );
-  textures.texture_cloud_opaque = loadTexture( "assets/ingame/ingame_cloud_opaque.png" );
-  textures.texture_zeppelin = loadTexture( "assets/ingame/ingame_zeppelin.png" );
+  textures.texture_background = loadTexture( "assets/ingame/background.png" );
+  textures.texture_barn = loadTexture( "assets/ingame/barn.png" );
+  textures.texture_plane_blue = loadTexture( "assets/ingame/plane_blue.png" );
+  textures.texture_plane_red = loadTexture( "assets/ingame/plane_red.png" );
+  textures.texture_bullet = loadTexture( "assets/ingame/bullet.png" );
+  textures.texture_cloud = loadTexture( "assets/ingame/cloud.png" );
+  textures.texture_cloud_opaque = loadTexture( "assets/ingame/cloud_opaque.png" );
+  textures.texture_zeppelin = loadTexture( "assets/ingame/zeppelin.png" );
   textures.font_zeppelin_score = loadTexture( "assets/ingame/font_zeppelin_score.png" );
 
-  textures.anim_smk = loadTexture( "assets/ingame/biplane/ingame_smk.png" );
+  textures.anim_smk = loadTexture( "assets/ingame/smoke.png" );
   textures.anim_smk_rect[0] =
   {
     0, 0,
@@ -77,7 +77,7 @@ textures_load()
     };
   }
 
-  textures.anim_fire = loadTexture( "assets/ingame/biplane/ingame_fire.png" );
+  textures.anim_fire = loadTexture( "assets/ingame/fire.png" );
   textures.anim_fire_rect[0] =
   {
     0, 0,
@@ -94,7 +94,7 @@ textures_load()
     };
   }
 
-  textures.anim_expl = loadTexture( "assets/ingame/biplane/ingame_expl.png" );
+  textures.anim_expl = loadTexture( "assets/ingame/explosion.png" );
   textures.anim_expl_rect[0] =
   {
     0, 0,
@@ -111,7 +111,7 @@ textures_load()
     };
   }
 
-  textures.anim_hit = loadTexture( "assets/ingame/biplane/ingame_hit.png" );
+  textures.anim_hit = loadTexture( "assets/ingame/bullet_hit.png" );
   textures.anim_hit_rect[0] =
   {
     0, 0,
@@ -128,7 +128,7 @@ textures_load()
     };
   }
 
-  textures.anim_chute = loadTexture( "assets/ingame/pilot/ingame_chute.png" );
+  textures.anim_chute = loadTexture( "assets/ingame/chute.png" );
   textures.anim_chute_rect[0] =
   {
     0, 0,
@@ -145,7 +145,7 @@ textures_load()
     };
   }
 
-  textures.anim_pilot_angel = loadTexture( "assets/ingame/pilot/ingame_angel.png" );
+  textures.anim_pilot_angel = loadTexture( "assets/ingame/pilot_angel.png" );
   textures.anim_pilot_angel_rect[0] =
   {
     0, 0,
@@ -162,13 +162,13 @@ textures_load()
     };
   }
 
-  textures.anim_pilot_fall_r = loadTexture( "assets/ingame/pilot/ingame_fall_r.png" );
-  textures.anim_pilot_fall_b = loadTexture( "assets/ingame/pilot/ingame_fall_b.png" );
+  textures.anim_pilot_fall_red = loadTexture( "assets/ingame/pilot_fall_red.png" );
+  textures.anim_pilot_fall_blue = loadTexture( "assets/ingame/pilot_fall_blue.png" );
   textures.anim_pilot_fall_rect[0] = { 0, 0, 7, 7 };
   textures.anim_pilot_fall_rect[1] = { 7, 0, 7, 7 };
 
-  textures.anim_pilot_run_r = loadTexture( "assets/ingame/pilot/ingame_run_r.png" );
-  textures.anim_pilot_run_b = loadTexture( "assets/ingame/pilot/ingame_run_b.png" );
+  textures.anim_pilot_run_red = loadTexture( "assets/ingame/pilot_run_red.png" );
+  textures.anim_pilot_run_blue = loadTexture( "assets/ingame/pilot_run_blue.png" );
   textures.anim_pilot_run_rect[0] =
   {
     0, 0,
@@ -228,16 +228,16 @@ sounds_load()
   log_message( "RESOURCES: Loading sounds..." );
 
   sounds.shoot = loadSound( "assets/sounds/shoot.ogg" );
-  sounds.hit = loadSound( "assets/sounds/hit.ogg" );
+  sounds.explosion = loadSound( "assets/sounds/explosion.ogg" );
+  sounds.hitPlane = loadSound( "assets/sounds/hit_plane.ogg" );
   sounds.hitChute = loadSound( "assets/sounds/hit_chute.ogg" );
-  sounds.hitMiss = loadSound( "assets/sounds/hit_miss.ogg" );
-  sounds.expl = loadSound( "assets/sounds/expl.ogg" );
-  sounds.fall = loadSound( "assets/sounds/fall.ogg" );
-  sounds.chute = loadSound( "assets/sounds/chute.ogg" );
-  sounds.dead = loadSound( "assets/sounds/dead.ogg" );
+  sounds.hitGround = loadSound( "assets/sounds/hit_ground.ogg" );
+  sounds.pilotFallLoop = loadSound( "assets/sounds/fall_loop.ogg" );
+  sounds.pilotChuteLoop = loadSound( "assets/sounds/chute_loop.ogg" );
+  sounds.pilotDeath = loadSound( "assets/sounds/pilot_death.ogg" );
+  sounds.pilotRescue = loadSound( "assets/sounds/pilot_rescue.ogg" );
   sounds.victory = loadSound( "assets/sounds/victory.ogg" );
-  sounds.loss = loadSound( "assets/sounds/loss.ogg" );
-  sounds.rescue = loadSound( "assets/sounds/rescue.ogg" );
+  sounds.defeat = loadSound( "assets/sounds/defeat.ogg" );
 
   log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
 }

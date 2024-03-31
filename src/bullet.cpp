@@ -87,7 +87,7 @@ Bullet::Update()
 
   if ( collidesWithSurface == true )
   {
-    panSound( playSound(sounds.hitMiss), mX );
+    panSound( playSound(sounds.hitGround), mX );
 
     effects.Spawn(new BulletImpact{mX, mY});
 

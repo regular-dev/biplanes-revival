@@ -26,16 +26,20 @@
 struct Sounds
 {
   Mix_Chunk* shoot {};
-  Mix_Chunk* hit {};
+  Mix_Chunk* explosion {};
+
+  Mix_Chunk* hitPlane {};
   Mix_Chunk* hitChute {};
-  Mix_Chunk* hitMiss {};
-  Mix_Chunk* expl {};
-  Mix_Chunk* fall {};
-  Mix_Chunk* chute {};
-  Mix_Chunk* dead {};
+  Mix_Chunk* hitGround {};
+
+  Mix_Chunk* pilotFallLoop {};
+  Mix_Chunk* pilotChuteLoop {};
+
+  Mix_Chunk* pilotDeath {};
+  Mix_Chunk* pilotRescue {};
+
   Mix_Chunk* victory {};
-  Mix_Chunk* loss {};
-  Mix_Chunk* rescue {};
+  Mix_Chunk* defeat {};
 
 
   Sounds() = default;

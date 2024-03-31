@@ -727,7 +727,7 @@ Menu::DrawButton()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.menu_moving_button,
+    textures.menu_button,
     &srcRect,
     &buttonRect );
 }

@@ -28,15 +28,15 @@ struct Textures
   SDL_Texture* main_font {};
 
   SDL_Texture* menu_help {};
-  SDL_Texture* menu_moving_button {};
+  SDL_Texture* menu_button {};
   SDL_Texture* menu_logo {};
 
   SDL_Texture* font_zeppelin_score {};
 
   SDL_Texture* texture_background {};
   SDL_Texture* texture_barn {};
-  SDL_Texture* texture_biplane_r {};
-  SDL_Texture* texture_biplane_b {};
+  SDL_Texture* texture_plane_red {};
+  SDL_Texture* texture_plane_blue {};
   SDL_Texture* texture_bullet {};
   SDL_Texture* texture_cloud {};
   SDL_Texture* texture_cloud_opaque {};
@@ -56,11 +56,11 @@ struct Textures
   SDL_Rect anim_chute_rect[3] {};
   SDL_Texture* anim_pilot_angel {};
   SDL_Rect anim_pilot_angel_rect[4] {};
-  SDL_Texture* anim_pilot_fall_r {};
-  SDL_Texture* anim_pilot_fall_b {};
+  SDL_Texture* anim_pilot_fall_red {};
+  SDL_Texture* anim_pilot_fall_blue {};
   SDL_Rect anim_pilot_fall_rect[2] {};
-  SDL_Texture* anim_pilot_run_r {};
-  SDL_Texture* anim_pilot_run_b {};
+  SDL_Texture* anim_pilot_run_red {};
+  SDL_Texture* anim_pilot_run_blue {};
   SDL_Rect anim_pilot_run_rect[3] {};
 
   SDL_Rect font_rect[95] {};

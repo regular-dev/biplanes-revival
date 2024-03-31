@@ -94,12 +94,12 @@ Plane::Draw() const
     scaleToScreenY(plane::sizeY),
   };
 
-  auto* planeTexture {textures.texture_biplane_b};
+  auto* planeTexture {textures.texture_plane_blue};
   double textureAngle {mDir - 90.0};
 
   if ( mType == PLANE_TYPE::RED )
   {
-    planeTexture = textures.texture_biplane_r;
+    planeTexture = textures.texture_plane_red;
     textureAngle = mDir + 90.0;
   }
 
@@ -692,7 +692,7 @@ Plane::Hit(
 
   if ( mHp > 0 )
   {
-    panSound( playSound(sounds.hit), mX );
+    panSound( playSound(sounds.hitPlane), mX );
 
     --mHp;
 
@@ -730,7 +730,7 @@ Plane::Explode()
   namespace spark = constants::explosion::spark;
 
 
-  panSound( playSound(sounds.expl), mX );
+  panSound( playSound(sounds.explosion), mX );
 
   const auto sparkDirFactor =
     std::sin(mDir * M_PI / 180.f);
@@ -888,7 +888,7 @@ Plane::ScoreChange(
     {
       if ( opponentPlane.isBot() == false )
       {
-        playSound(sounds.loss);
+        playSound(sounds.defeat);
         menu.setMessage(MESSAGE_TYPE::GAME_LOST);
       }
       else
@@ -911,7 +911,7 @@ Plane::ScoreChange(
   }
   else
   {
-    playSound(sounds.loss);
+    playSound(sounds.defeat);
     menu.setMessage(MESSAGE_TYPE::GAME_LOST);
   }
 

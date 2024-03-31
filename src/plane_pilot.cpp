@@ -116,8 +116,8 @@ Plane::Pilot::Draw() const
   {
     auto* const pilotTexture =
       plane->mType == PLANE_TYPE::RED
-      ? textures.anim_pilot_run_r
-      : textures.anim_pilot_run_b;
+      ? textures.anim_pilot_run_red
+      : textures.anim_pilot_run_blue;
 
     if ( mDir == 270 )
     {
@@ -143,8 +143,8 @@ Plane::Pilot::Draw() const
   {
     auto* const pilotTexture =
       plane->mType == PLANE_TYPE::RED
-      ? textures.anim_pilot_fall_r
-      : textures.anim_pilot_fall_b;
+      ? textures.anim_pilot_fall_red
+      : textures.anim_pilot_fall_blue;
 
     SDL_RenderCopyF(
       gRenderer,
@@ -592,8 +592,8 @@ Plane::Pilot::PlayFallingSound()
 
 
   const auto soundToPlay = mIsChuteOpen == true
-    ? sounds.chute
-    : sounds.fall;
+    ? sounds.pilotChuteLoop
+    : sounds.pilotFallLoop;
 
   loopSound(soundToPlay, mAudioLoopChannel);
   panSound(mAudioLoopChannel, mX);
@@ -661,7 +661,7 @@ Plane::Pilot::Death()
 {
   FadeFallingSound(mAudioLoopChannel);
 
-  panSound( playSound(sounds.dead), mX );
+  panSound( playSound(sounds.pilotDeath), mX );
 
   mIsRunning = false;
   mIsChuteOpen = false;
@@ -747,7 +747,7 @@ Plane::Pilot::Rescue()
 {
   plane->Respawn();
 
-  panSound( playSound(sounds.rescue), plane->mX );
+  panSound( playSound(sounds.pilotRescue), plane->mX );
 
   if ( gameState().isRoundFinished  == false )
     plane->mStats.rescues++;
