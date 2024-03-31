@@ -372,8 +372,8 @@ void
 setSoundVolume(
   const float normalizedVolume )
 {
-  const double newVolume =
-    normalizedVolume * MIX_MAX_VOLUME;
+  const double newVolume = std::pow(
+    normalizedVolume, M_E ) * MIX_MAX_VOLUME;
 
 #if SDL_MIXER_VERSION_ATLEAST(2, 6, 0)
   Mix_MasterVolume(newVolume);

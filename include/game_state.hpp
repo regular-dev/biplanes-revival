@@ -79,7 +79,7 @@ public:
   bool autoSkipIntro {};
   bool isVSyncEnabled {true};
   bool isAudioEnabled {true};
-  float audioVolume {1.0f};
+  float audioVolume {0.75f};
   float stereoDepth {0.4f};
 
   GAME_MODE gameMode {};
