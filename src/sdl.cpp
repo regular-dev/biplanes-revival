@@ -25,6 +25,8 @@
 #include <include/sounds.hpp>
 #include <include/utility.hpp>
 
+#include <cmath>
+
 
 int32_t DISPLAY_INDEX {};
 
