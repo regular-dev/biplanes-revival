@@ -226,10 +226,10 @@ SDL_close()
 
 void
 show_warning(
-  const char* title,
-  const char* message )
+  const std::string& title,
+  const std::string& message )
 {
-  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title, message, nullptr ) < 0 )
+  if ( SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_WARNING, title.c_str(), message.c_str(), nullptr ) < 0 )
     log_message( "SDL Error: Unable to show warning window : ", SDL_GetError(), "\n" );
 }
 
@@ -266,8 +266,8 @@ loadTexture(
 
   if ( textureSurface == nullptr )
   {
-    log_message( "\n\nResources: Unable to load image ( ", path.c_str(), " )\nSDL_image Error: ", IMG_GetError() );
-    show_warning( "Unable to load texture!", path.c_str() );
+    log_message( "\n\nResources: Unable to load image '" + path + "'\nSDL_image Error: ", IMG_GetError() );
+    show_warning( "Unable to load texture!", path );
   }
   else
   {
@@ -276,8 +276,8 @@ loadTexture(
 
     if ( loadedTexture == nullptr )
     {
-      log_message( "\n\nSDL Error: Unable to create texture from file: (", path.c_str(), ")\nSDL_image Error: ", SDL_GetError() );
-      show_warning( "Unable to create texture from file!", path.c_str() );
+      log_message( "\n\nSDL Error: Unable to create texture from file '" + path + "'\nSDL_image Error: ", SDL_GetError() );
+      show_warning( "Unable to create texture from file!", path );
     }
 
 //    Get rid of old loaded surface
@@ -298,8 +298,8 @@ loadSound(
 
   if ( soundBuf == nullptr )
   {
-    log_message( "\n\nResources: Unable to load sound from file: ( ", path.c_str(), " )\nSDL_mixer Error: ", Mix_GetError() );
-    show_warning( "Unable to load sound!", path.c_str() );
+    log_message( "\n\nResources: Unable to load sound from file '" + path + "'\nSDL_mixer Error: ", Mix_GetError() );
+    show_warning( "Unable to load sound!", path );
   }
 
   return soundBuf;

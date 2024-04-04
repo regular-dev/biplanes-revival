@@ -69,8 +69,8 @@ bool SDL_init( const bool enableVSync, const bool enableSound );
 void SDL_close();
 
 void show_warning(
-  const char*,
-  const char* );
+  const std::string&,
+  const std::string& );
 
 void setVSync( const bool enabled );
 
