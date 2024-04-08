@@ -14,10 +14,12 @@ if (WIN32)
   option(${TARGET}_DISABLE_CONSOLE "${TARGET}: Don't show console window" ON)
 endif()
 
+include(GNUInstallDirs)
 
 set_target_properties(${TARGET} PROPERTIES
   CXX_STANDARD_REQUIRED ON
   CXX_STANDARD 17
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 )
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
@@ -132,8 +134,6 @@ if (${${TARGET}_ENABLE_STEP_DEBUGGING})
   )
 endif()
 
-include(GNUInstallDirs)
-
 target_include_directories(${TARGET} PRIVATE
   ${SDL2_INCLUDE_DIR}
 
@@ -161,10 +161,6 @@ target_link_libraries(${TARGET} PUBLIC
 )
 
 if (WIN32)
-  set_target_properties(${TARGET} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
-  )
-
   target_link_libraries(${TARGET} PUBLIC
     ws2_32
     -static-libgcc

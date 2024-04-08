@@ -27,6 +27,7 @@
 
 #include <lib/picojson.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -36,6 +37,98 @@
 #define LOG_FILENAME BIPLANES_EXE_NAME ".log"
 
 
+static std::string
+get_appimage_dir()
+{
+#if defined(_WIN32) || defined(__APPLE__) || defined(__MACH__)
+  return {};
+#endif
+
+
+  const auto appImageDir = std::getenv("BIPLANES_APPIMAGE_DIR");
+
+  if (  appImageDir != nullptr &&
+        std::string{appImageDir}.empty() == false )
+    return {appImageDir};
+
+  return {};
+}
+
+static std::string
+get_config_path()
+{
+#if defined(_WIN32) || defined(__APPLE__) || defined(__MACH__)
+  return CONFIG_FILENAME;
+#endif
+
+
+  const auto appImageDir = get_appimage_dir();
+
+  if ( appImageDir.empty() == false )
+    return appImageDir + "/" CONFIG_FILENAME;
+
+
+  const auto configParentPath = std::getenv("XDG_CONFIG_HOME");
+
+  if (  configParentPath == nullptr ||
+        std::string{configParentPath}.empty() == true )
+    return CONFIG_FILENAME;
+
+  return std::string{configParentPath} + "/" CONFIG_FILENAME;
+}
+
+static std::string
+get_log_path()
+{
+#if defined(_WIN32) || defined(__APPLE__) || defined(__MACH__)
+  return LOG_FILENAME;
+#endif
+
+
+  const auto appImageDir = get_appimage_dir();
+
+  if ( appImageDir.empty() == false )
+    return appImageDir + "/" LOG_FILENAME;
+
+
+  auto logParentPath = std::getenv("XDG_STATE_HOME");
+
+  if (  logParentPath == nullptr ||
+        std::string{logParentPath}.empty() == true )
+  {
+    logParentPath = std::getenv("XDG_CACHE_HOME");
+
+    if ( logParentPath == nullptr )
+      return LOG_FILENAME;
+  }
+
+  return std::string{logParentPath} + "/" LOG_FILENAME;
+}
+
+static std::string
+get_stats_path()
+{
+#if defined(_WIN32) || defined(__APPLE__) || defined(__MACH__)
+  return STATS_FILENAME;
+#endif
+
+
+  const auto appImageDir = get_appimage_dir();
+
+  if ( appImageDir.empty() == false )
+    return appImageDir + "/" STATS_FILENAME;
+
+
+  auto statsParentPath = std::getenv("XDG_DATA_HOME");
+
+  if (  statsParentPath == nullptr ||
+        std::string{statsParentPath}.empty() == true )
+    return STATS_FILENAME;
+
+  return std::string{statsParentPath} + "/" STATS_FILENAME;
+}
+
+
 void
 settingsWrite()
 {
@@ -43,13 +136,15 @@ settingsWrite()
 
   const auto& game = gameState();
 
-  std::ofstream settings {CONFIG_FILENAME, std::ios::out};
+  const auto configPath = get_config_path();
+
+  std::ofstream settings {configPath, std::ios::out};
 
   if ( settings.is_open() == false )
   {
-    log_message( "LOG: Can't write to " CONFIG_FILENAME "!" );
+    log_message( "LOG: Can't write to '" + configPath + "' !" );
     log_message( "User settings & key binds won't be saved!\n\n" );
-    show_warning( "Warning!", "Can't write to " CONFIG_FILENAME "!\nUser settings & key binds won't be saved!" );
+    show_warning( "Warning!", "Can't write to '" + configPath + "' !\nUser settings & key binds won't be saved!" );
 
     return;
   }
@@ -259,14 +354,17 @@ logVersionAndReadSettings()
   bool settingsReadSuccess = true;
   std::string jsonErrors;
 
-  std::ifstream settings {CONFIG_FILENAME};
+  const auto configPath = get_config_path();
+  const auto statsPath = get_stats_path();
+
+  std::ifstream settings {configPath};
 
   if ( settings.is_open() == true )
     settingsReadSuccess = settingsParse( settings, jsonErrors );
 
   if ( game.output.toFile == true )
   {
-    std::ofstream logFile { LOG_FILENAME, std::ios::trunc };
+    std::ofstream logFile { get_log_path(), std::ios::trunc };
     logFile.close();
   }
 
@@ -275,14 +373,14 @@ logVersionAndReadSettings()
 
   if ( settings.is_open() == false )
   {
-    log_message( "LOG: Can't find " CONFIG_FILENAME "! " );
-    log_message( "Creating new " CONFIG_FILENAME, "\n" );
+    log_message( "LOG: Can't find '" + configPath + "'! " );
+    log_message( "Creating new '" + configPath + "'\n" );
     settingsWrite();
   }
   else if ( settingsReadSuccess == false )
   {
-    log_message( "LOG: Failed to parse " CONFIG_FILENAME "! Error:\n", jsonErrors, "\n\n" );
-    log_message( "LOG: Creating new " CONFIG_FILENAME "\n" );
+    log_message( "LOG: Failed to parse '" + configPath + "'! Error:\n", jsonErrors, "\n\n" );
+    log_message( "LOG: Creating new '" + configPath + "'\n" );
     settings.close();
     settingsWrite();
   }
@@ -293,12 +391,12 @@ logVersionAndReadSettings()
   {
     if ( statsRead() == false )
     {
-      log_message( "LOG: Failed to read " STATS_FILENAME "! " );
-      log_message( "Creating new " STATS_FILENAME "\n\n" );
+      log_message( "LOG: Failed to read '" + statsPath + "'! " );
+      log_message( "Creating new '" + statsPath + "'\n\n" );
 
       if ( stats_write() == false )
       {
-        log_message( "LOG: Failed to create " STATS_FILENAME "! " );
+        log_message( "LOG: Failed to create '" + statsPath + "'! " );
         log_message( "Player statistics won't be saved!", "\n\n" );
       }
     }
@@ -319,7 +417,7 @@ log_message(
 
   if ( game.output.toFile == true )
   {
-    std::ofstream logFile { LOG_FILENAME, std::ios::app };
+    std::ofstream logFile { get_log_path(), std::ios::app };
 
     if ( logFile.is_open() == true )
       logFile << message << buffer1 << buffer2 << buffer3;
@@ -389,7 +487,7 @@ stats_write()
 {
   log_message("OUTPUT: Writing stats", "\n");
 
-  std::ofstream statsOut { STATS_FILENAME, std::ios::trunc };
+  std::ofstream statsOut { get_stats_path(), std::ios::trunc };
 
   if ( statsOut.is_open() == false )
     return false;
@@ -423,7 +521,7 @@ stats_write()
 bool
 statsRead()
 {
-  std::ifstream statsInput {STATS_FILENAME};
+  std::ifstream statsInput {get_stats_path()};
 
   if ( statsInput.is_open() == false )
     return false;
