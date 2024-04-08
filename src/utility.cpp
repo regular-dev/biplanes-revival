@@ -391,7 +391,7 @@ logVersionAndReadSettings()
   {
     if ( statsRead() == false )
     {
-      log_message( "LOG: Failed to read '" + statsPath + "'! " );
+      log_message( "LOG: Can't find '" + statsPath + "'! " );
       log_message( "Creating new '" + statsPath + "'\n\n" );
 
       if ( stats_write() == false )

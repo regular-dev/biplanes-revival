@@ -910,8 +910,8 @@ Menu::screen_copyright()
   draw_text( "       All Rights Reserved      ", 0, 0.450f );
   draw_text( "       www.morpheme.co.uk       ", 0, 0.500f );
 
-  draw_text( "  Brought to PC on 01.04.20 by  ", 0, 0.650f );
-  draw_text( "       casqade & xion  at       ", 0, 0.700f );
+  draw_text( "    Brought to PC on 01.04.20   ", 0, 0.650f );
+  draw_text( "     by casqade and xion at     ", 0, 0.700f );
   draw_text( "     github.com/regular-dev     ", 0, 0.750f );
   draw_text( "         regular-dev.org        ", 0, 0.800f );
 }
