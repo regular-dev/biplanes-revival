@@ -24,7 +24,7 @@ set_target_properties(${TARGET} PROPERTIES
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 
-find_package(SDL2       REQUIRED)
+find_package(SDL2 2.0.10 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 

@@ -29,24 +29,6 @@
 #include <string>
 
 
-#if !SDL_VERSION_ATLEAST(2, 0, 10)
-
-typedef struct SDL_FPoint
-{
-    float x;
-    float y;
-} SDL_FPoint;
-
-typedef struct SDL_FRect
-{
-    float x;
-    float y;
-    float w;
-    float h;
-} SDL_FRect;
-
-#endif
-
 #if !SDL_VERSION_ATLEAST(2, 0, 22)
 
 SDL_FORCE_INLINE SDL_bool SDL_PointInFRect(const SDL_FPoint *p, const SDL_FRect *r)
