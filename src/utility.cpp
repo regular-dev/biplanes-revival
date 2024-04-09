@@ -717,5 +717,6 @@ size_t
 percentageToInteger(
   const float percentage )
 {
-  return std::clamp(percentage * 100.f, 0.f, 100.f);
+  return std::round(
+    std::clamp(percentage * 100.f, 0.f, 100.f) );
 }
