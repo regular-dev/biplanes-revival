@@ -79,8 +79,7 @@ jobs:
 
     - name: Generate AppImage
       run: |
-        mkdir -p ${{ steps.strings.outputs.build-output-dir }}/AppDir
-        cp -r ${{ github.workspace }}/appimage-data/AppDir ${{ steps.strings.outputs.build-output-dir }}/AppDir
+        cp -r ${{ github.workspace }}/appimage-data/AppDir ${{ steps.strings.outputs.build-output-dir }}
         cmake \
         --install ${{ steps.strings.outputs.build-output-dir }} \
         --prefix ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr
