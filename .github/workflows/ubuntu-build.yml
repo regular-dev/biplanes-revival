@@ -86,7 +86,7 @@ jobs:
         --prefix ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr
         rm -r ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr/include
         mv ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr/lib/x86_64-linux-gnu/libTimeUtils.so .
-        LD_LIBRARY_PATH=. ./linuxdeploy-x86_64.AppImage --appdir ${{ steps.strings.outputs.build-output-dir }}/AppDir --output appimage
+        LD_LIBRARY_PATH=. ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run --appdir ${{ steps.strings.outputs.build-output-dir }}/AppDir --output appimage
 
     - name: Upload AppImage Artifact
       uses: actions/upload-artifact@v4
