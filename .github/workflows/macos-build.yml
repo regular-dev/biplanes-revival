@@ -37,7 +37,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: 'ai-fsm-utility'
+        submodules: 'true'
 
     - name: Set reusable strings
       id: strings
