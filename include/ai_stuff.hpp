@@ -117,7 +117,6 @@ public:
   virtual std::vector <AiAction> actions() const;
 
   virtual void drawDebugLayer( const Plane& self ) const;
-  void printActionTemperatures() const;
 
   void setTemperature( const float );
   float temperature() const;

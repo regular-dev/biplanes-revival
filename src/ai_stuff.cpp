@@ -1893,24 +1893,6 @@ AiState::drawDebugLayer(
 }
 
 void
-AiState::printActionTemperatures() const
-{
-  log_message("action temps: ");
-
-  for ( auto& [action, temperature] : mActions )
-  {
-    const auto temperatureString = (std::stringstream {}
-      << std::fixed
-      << std::setprecision(2)
-      << temperature).str();
-
-    log_message(temperatureString + ", ");
-  }
-
-  log_message("\n");
-}
-
-void
 AiState::setTemperature(
   const float newTemperature )
 {
