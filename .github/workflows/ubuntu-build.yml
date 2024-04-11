@@ -64,10 +64,35 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
         -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_INSTALL_PREFIX=/usr
 
     - name: Build
       run: >
         cmake
         --build ${{ steps.strings.outputs.build-output-dir }}
         --config ${{ matrix.build_type }}
+
+    - name: Download linuxdeploy
+      run: |
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+    - name: Generate AppImage
+      run: |
+        mkdir -p ${{ steps.strings.outputs.build-output-dir }}/AppDir
+        cp -r ${{ github.workspace }}/appimage-data/AppDir ${{ steps.strings.outputs.build-output-dir }}/AppDir
+        cmake \
+        --install ${{ steps.strings.outputs.build-output-dir }} \
+        --prefix ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr
+        rm -r ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr/include
+        mv ${{ steps.strings.outputs.build-output-dir }}/AppDir/usr/lib/x86_64-linux-gnu/libTimeUtils.so .
+        LD_LIBRARY_PATH=. linuxdeploy-x86_64.AppImage --appdir ${{ steps.strings.outputs.build-output-dir }}/AppDir --output appimage
+
+    - name: Upload AppImage Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'Biplanes_Revival-x86_64.AppImage'
+        path: 'Biplanes_Revival-x86_64.AppImage'
+        if-no-files-found: error
+        compression-level: 9
 

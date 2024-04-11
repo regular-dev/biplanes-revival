@@ -1,0 +1,16 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=Biplanes Revival
+Comment=An old cellphone arcade "BlueTooth BiPlanes" recreated for PC
+Categories=Game;ArcadeGame;
+
+Exec=BiplanesRevival
+Icon=org.regular_dev.biplanes_revival
+Terminal=false
+
+X-AppImage-Name=Biplanes Revival
+X-AppImage-Version=1.1
+X-AppImage-Arch=x86_64
+

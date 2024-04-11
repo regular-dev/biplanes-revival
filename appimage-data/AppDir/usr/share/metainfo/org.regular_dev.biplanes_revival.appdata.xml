@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2024 Regular-dev community regular.dev.org@gmail.com -->
+<component type="desktop-application">
+  <id>org.regular_dev.biplanes_revival</id>
+  
+  <name>Biplanes Revival</name>
+  <summary>An old cellphone arcade &quot;BlueTooth BiPlanes&quot; recreated for PC</summary>
+  
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  
+  <description>
+    <p>
+      An old cellphone arcade &quot;BlueTooth BiPlanes&quot; recreated for PC
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">org.regular_dev.biplanes_revival.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/regular-dev/biplanes-revival/ai-fsm-utility/assets/menu/screen_logo.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://regular-dev.org/system/refinery/images/W1siZiIsIjIwMTkvMTAvMDcvN3hpdmQxajltOV9iYW5kaWNhbV8yMDE5XzEwXzA2XzIzXzMxXzU4Xzg4Ni5wbmciXSxbInAiLCJ0aHVtYiIsIjQ1MHg0NTBcdTAwM2UiXV0/bandicam%202019-10-06%2023-31-58-886.png?sha=581c20fff77daa31</image>
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://regular-dev.org/biplanes-revival</url>
+  
+  <content_rating type="oars-1.0">
+  </content_rating>
+  
+  <provides>
+    <binary>BiplanesRevival</binary>
+  </provides>
+  
+  <releases>
+    <release version="1.1" type="stable" date="2024-04-14">
+      <description>
+        <p>4th-year anniversary release bringing AI and lots of little improvements</p>
+      </description>
+      
+      <url>https://github.com/regular-dev/biplanes-revival/releases/tag/v1.1</url>
+    </release>
+  </releases>
+  
+  <developer id="org.regular_dev">
+    <name>Regular-dev community</name>
+  </developer>
+</component>
+
