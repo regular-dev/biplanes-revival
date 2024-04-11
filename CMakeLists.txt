@@ -112,14 +112,7 @@ target_sources(${TARGET} PRIVATE
 )
 
 
-include(FetchContent)
-
-FetchContent_Declare(TimeUtils
-  GIT_REPOSITORY https://github.com/Casqade/TimeUtils
-  GIT_TAG        main
-  GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(TimeUtils)
+add_subdirectory(deps/TimeUtils)
 
 
 target_compile_definitions(${TARGET} PRIVATE
