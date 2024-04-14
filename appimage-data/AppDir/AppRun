@@ -12,6 +12,10 @@ fi
 export LD_LIBRARY_PATH
 export BIPLANES_APPIMAGE_DIR="$(pwd)"
 
+if [ -d "$(pwd)/assets" ]; then
+  export BIPLANES_ASSETS_ROOT="$(pwd)"
+fi
+
 cd "$SELF_DIR/usr/bin"
 ./BiplanesRevival
 
