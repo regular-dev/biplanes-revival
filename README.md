@@ -4,7 +4,7 @@
 [![Windows (MSYS2)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msys2.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msys2.yml)
 [![Ubuntu](https://github.com/regular-dev/biplanes-revival/actions/workflows/ubuntu-build.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/ubuntu-build.yml)
 [![macOS](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml)
-[![GitHub Releases](https://img.shields.io/github/release/regular-dev/BiplanesRevival.svg)](https://github.com/regular-dev/biplanes-revival/releases/latest)
+[![GitHub Releases](https://img.shields.io/github/release/regular-dev/biplanes-revival.svg)](https://github.com/regular-dev/biplanes-revival/releases/latest)
 
 An old cellphone arcade "Bluetooth Biplanes"
 recreated for PC
