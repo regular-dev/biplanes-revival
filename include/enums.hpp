@@ -1,6 +1,6 @@
 /*
   Biplanes Revival
-  Copyright (C) 2019-2023 Regular-dev community
+  Copyright (C) 2019-2024 Regular-dev community
   https://regular-dev.org
   regular.dev.org@gmail.com
 
