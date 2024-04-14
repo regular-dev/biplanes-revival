@@ -9,13 +9,14 @@ recreated for PC
 
 [Singleplayer gameplay](https://github.com/regular-dev/biplanes-revival/assets/67646403/4f7d6371-6c9f-4271-a6c7-d17902a5ed2f)
 
-- [Singleplayer gameplay pt.1](https://youtu.be/mIgMNh6gGXs)
-- [Singleplayer gameplay pt.1](https://youtu.be/mIgMNh6gGXs)
+- [Singleplayer gameplay pt 1](https://youtu.be/FYtIZ7ptaSo)
+- [Singleplayer gameplay pt 2](https://youtu.be/4pWHn85Ez0o)
 - [Multiplayer gameplay (on legacy version)](https://youtu.be/mIgMNh6gGXs)
 
 
-### Windows binaries & Linux AppImage package are available at [our website](https://regular-dev.org/biplanes-revival)
-
+### Windows binaries & Linux AppImage are available for download:
+- On [our website](https://regular-dev.org/biplanes-revival)
+- On this repository's [Releases page](https://github.com/regular-dev/biplanes-revival/releases)
 
 ## Features:
 
@@ -45,6 +46,9 @@ so the link is now broken)
 
 
 ## Credits:
+
+Linux port, matchmaking and AI would never come to life without [xion's](https://github.com/xxxxxion) help. 
+Kudos to this person!
 
 Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) for upscaling the splash screen,
 making custom soundpacks and redrawing some of the sprites & frames.
