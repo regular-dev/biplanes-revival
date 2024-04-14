@@ -58,9 +58,10 @@ Not to mention countless hours of patient playtesting...
 ```bash
 sudo apt install git g++ cmake
 sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev
+git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival
 cmake .
-make
+cmake --build .
 ```
 
 ### Arch Linux:
@@ -68,10 +69,10 @@ make
 ```bash
 sudo pacman -S git gcc cmake
 sudo pacman -S sdl2 sdl2_image sdl2_mixer
-git clone https://github.com/regular-dev/biplanes-revival
+git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival
 cmake .
-make
+cmake --build .
 ```
 
 ### macOS (Sierra 10.12 and newer):
@@ -83,10 +84,10 @@ so feel free to report any issues (or successes)
 ```bash
 brew install git gcc cmake
 brew install sdl2 sdl2_image sdl2_mixer
-git clone https://github.com/regular-dev/biplanes-revival
+git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival
 cmake .
-make
+cmake --build .
 ```
 
 ### Windows (MSVC)
@@ -99,10 +100,10 @@ It's best to follow [MSVC workflow steps](https://github.com/regular-dev/biplane
 ```bash
 sudo pacman -S git
 sudo pacman -S mingw-w64-i686-cmake mingw-w64-i686-gcc mingw-w64-i686-sdl2 mingw-w64-i686-sdl2_image mingw-w64-i686-sdl2_mixer
-git clone https://github.com/regular-dev/biplanes-revival
+git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival
 cmake .
-make
+cmake --build .
 ```
 
 For sharing static Windows builds with other people
