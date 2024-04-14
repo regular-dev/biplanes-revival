@@ -1,5 +1,11 @@
 # Biplanes Revival
 
+[![Windows (MSVC)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msvc.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msvc.yml)
+[![Windows (MSYS2)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msys2.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/windows-build-msys2.yml)
+[![Ubuntu](https://github.com/regular-dev/biplanes-revival/actions/workflows/ubuntu-build.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/ubuntu-build.yml)
+[![macOS](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml)
+[![GitHub Releases](https://img.shields.io/github/release/regular-dev/BiplanesRevival.svg)](https://github.com/regular-dev/biplanes-revival/releases/latest)
+
 An old cellphone arcade "Bluetooth Biplanes"
 recreated for PC
 (originally developed by Morpheme Ltd. in 2004)
@@ -17,6 +23,7 @@ recreated for PC
 ### Windows binaries & Linux AppImage are available for download:
 - On [our website](https://regular-dev.org/biplanes-revival)
 - On this repository's [Releases page](https://github.com/regular-dev/biplanes-revival/releases)
+- On our [itch.io page](https://regular-dev.itch.io/biplanes-revival)
 
 ## Features:
 
@@ -24,7 +31,7 @@ recreated for PC
   - Immerse yourself in quick and intense dogfights
   - Shoot & dodge, bail out & respawn to outsmart your rival
   - Challenging AI with 4 difficulty levels
-  - Easy matchmaking with private sessions support
+  - Easy peer-to-peer matchmaking with private sessions support
   - Optional gameplay modifiers:
     - one-shot kills
     - extra clouds for cover
