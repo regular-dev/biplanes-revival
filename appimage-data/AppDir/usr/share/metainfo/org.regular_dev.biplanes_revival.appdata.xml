@@ -10,10 +10,22 @@
   <project_license>GPL-3.0-only</project_license>
   
   <description>
-    <p>
-      An old cellphone arcade &quot;BlueTooth BiPlanes&quot; recreated for PC
-    </p>
+    <ul>
+      <li>Easy to learn, hard to master gameplay</li>
+      <li>Immerse yourself in quick &amp; intense dogfights</li>
+      <li>Shoot &amp; dodge, bail out &amp; respawn to outsmart your rival</li>
+      <li>Challenging AI with 4 difficulty levels</li>
+      <li>Easy peer-to-peer matchmaking with private sessions support</li>
+      <li>Optional gameplay modifiers</li>
+      <li>Verbose statistics system</li>
+      <li>Moddable sounds &amp; sprites</li>
+    </ul>
   </description>
+  
+  <categories>
+    <category>Game</category>
+    <category>ArcadeGame</category>
+  </categories>
   
   <launchable type="desktop-id">org.regular_dev.biplanes_revival.desktop</launchable>
   <screenshots>
@@ -21,11 +33,16 @@
       <image>https://raw.githubusercontent.com/regular-dev/biplanes-revival/ai-fsm-utility/assets/menu/screen_logo.png</image>
     </screenshot>
     <screenshot>
-      <image>https://regular-dev.org/system/refinery/images/W1siZiIsIjIwMTkvMTAvMDcvN3hpdmQxajltOV9iYW5kaWNhbV8yMDE5XzEwXzA2XzIzXzMxXzU4Xzg4Ni5wbmciXSxbInAiLCJ0aHVtYiIsIjQ1MHg0NTBcdTAwM2UiXV0/bandicam%202019-10-06%2023-31-58-886.png?sha=581c20fff77daa31</image>
+      <image>https://regular-dev.org/system/refinery/images/W1siZiIsIjIwMjQvMDQvMTQvNHY5N3phZHk5Z19CaXBsYW5lc1Jldml2YWxfc2NyZWVuc2hvdF8xLnBuZyJdXQ/BiplanesRevival_screenshot_1.png?sha=ac4d807051bc375e</image>
+    </screenshot>
+    <screenshot>
+      <image>https://regular-dev.org/system/refinery/images/W1siZiIsIjIwMjQvMDQvMTQvNW13dXc1cHFja19CaXBsYW5lc1Jldml2YWxfc2NyZWVuc2hvdF8yLnBuZyJdXQ/BiplanesRevival_screenshot_2.png?sha=2157c2ac2626cf29</image>
     </screenshot>
   </screenshots>
   
   <url type="homepage">https://regular-dev.org/biplanes-revival</url>
+  <url type="bugtracker">https://github.com/regular-dev/biplanes-revival/issues</url>
+  <url type="contribute">https://github.com/regular-dev/biplanes-revival</url>
   
   <content_rating type="oars-1.0">
   </content_rating>
