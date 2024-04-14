@@ -6,6 +6,8 @@ on:
       - ai-fsm-utility
     paths-ignore:
       - '**/README.md'
+      - 'appimage-data/**'
+      - 'assets/**'
 
   pull_request:
     branches:
