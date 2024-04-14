@@ -3,7 +3,7 @@ name: Build (macOS)
 on:
   push:
     branches:
-      - ai-fsm-utility
+      - master
     paths-ignore:
       - '**/README.md'
       - 'appimage-data/**'
@@ -11,7 +11,7 @@ on:
 
   pull_request:
     branches:
-      - ai-fsm-utility
+      - master
 
 jobs:
   build-macos:

@@ -54,7 +54,7 @@ so the link is now broken)
 
 ## Credits:
 
-Linux port, matchmaking and AI would never come to life without [xion's](https://github.com/xxxxxion) help. 
+Linux port, matchmaking and AI would never come to life without [xion's](https://github.com/xxxxxion) help.
 Kudos to this person!
 
 Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) for upscaling the splash screen,
@@ -104,7 +104,7 @@ cmake --build .
 ### Windows (MSVC)
 
 You'll need to help CMake find SDL2 development libraries.
-It's best to follow [MSVC workflow steps](https://github.com/regular-dev/biplanes-revival/blob/master/.github/workflows/windows-build-msvc.yml#L41) for reference
+It's best to follow [MSVC workflow steps](https://github.com/regular-dev/biplanes-revival/blob/master/.github/workflows/windows-build-msvc.yml#L62-L64) for reference
 
 ### Windows (MSYS2 mingw32 environment):
 

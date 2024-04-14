@@ -3,14 +3,14 @@ name: Build (Windows MSVC)
 on:
   push:
     branches:
-      - ai-fsm-utility
+      - master
     paths-ignore:
       - '**/README.md'
       - 'appimage-data/**'
 
   pull_request:
     branches:
-      - ai-fsm-utility
+      - master
 
 jobs:
   build-msvc:

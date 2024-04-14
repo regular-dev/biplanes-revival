@@ -3,14 +3,14 @@ name: Build (Windows MSYS2)
 on:
   push:
     branches:
-      - ai-fsm-utility
+      - master
     paths-ignore:
       - '**/README.md'
       - 'appimage-data/**'
 
   pull_request:
     branches:
-      - ai-fsm-utility
+      - master
 
 jobs:
   build-msys2:
