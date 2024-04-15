@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - '**/README.md'
       - 'appimage-data/**'
+      - 'flatpak-data/**'
 
   pull_request:
     branches:

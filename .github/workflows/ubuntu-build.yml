@@ -6,6 +6,7 @@ on:
       - master
     paths-ignore:
       - '**/README.md'
+      - 'flatpak-data/**'
 
   pull_request:
     branches:
