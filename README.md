@@ -51,6 +51,24 @@ from "Networking for Game Programmers" by Glenn Fiedler](http://www.gaffer.org/n
 and reworked his site,
 so the link is now broken)
 
+## Modding:
+
+- Windows users can modify 
+resources in the ```assets``` directory.
+
+- AppImage users will have to 
+download & extract [game assets](https://github.com/regular-dev/biplanes-revival/releases/download/v1.1/assets.zip) 
+next to the executable, 
+so the game will load resources 
+from there instead. 
+
+- Flatpak users will have to
+download & extract [game assets](https://github.com/regular-dev/biplanes-revival/releases/download/v1.1/assets.zip) 
+anywhere inside ```~/.var/app/org.regular_dev.biplanes_revival``` 
+and run the game supplied with ***full*** path to parent directory 
+of the extracted assets like so:
+```flatpak run --env=BIPLANES_ASSETS_ROOT=/home/{YOUR_USERNAME}/.var/app/org.regular_dev.biplanes_revival org.regular_dev.biplanes_revival```
+
 
 ## Credits:
 
