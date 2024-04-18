@@ -23,6 +23,11 @@
     </ul>
   </description>
 
+  <branding>
+    <color type="primary" scheme_preference="light">#009aef</color>
+    <color type="primary" scheme_preference="dark">#009aef</color>
+  </branding>
+
   <categories>
     <category>Game</category>
     <category>ArcadeGame</category>
@@ -50,6 +55,10 @@
 
   <content_rating type="oars-1.0">
   </content_rating>
+
+  <recommends>
+    <control>keyboard</control>
+  </recommends>
 
   <provides>
     <binary>BiplanesRevival</binary>
