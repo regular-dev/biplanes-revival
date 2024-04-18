@@ -104,7 +104,7 @@ cmake --build .
 ### Windows (MSVC)
 
 You'll need to help CMake find SDL2 development libraries.
-It's best to follow [MSVC workflow steps](https://github.com/regular-dev/biplanes-revival/blob/master/.github/workflows/windows-build-msvc.yml#L62-L64) for reference
+It's best to follow [MSVC workflow steps](https://github.com/regular-dev/biplanes-revival/blob/master/.github/workflows/windows-build-msvc.yml#L63-L65) for reference
 
 ### Windows (MSYS2 mingw32 environment):
 
