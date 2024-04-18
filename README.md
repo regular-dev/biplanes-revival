@@ -6,7 +6,16 @@
 [![macOS](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml/badge.svg)](https://github.com/regular-dev/biplanes-revival/actions/workflows/macos-build.yml)
 [![GitHub Releases](https://img.shields.io/github/release/regular-dev/biplanes-revival.svg)](https://github.com/regular-dev/biplanes-revival/releases/latest)
 
-An old cellphone arcade "Bluetooth Biplanes"
+<a href="https://regular-dev.itch.io/biplanes-revival">
+<img width="150" alt="Available on itch.io" src="https://static.itch.io/images/badge-color.svg" />
+</a>
+<a href='https://flathub.org/apps/org.regular_dev.biplanes_revival'>
+<img width='150' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
+</a>
+
+---
+
+An old cellphone arcade "BlueTooth BiPlanes"
 recreated for PC
 (originally developed by Morpheme Ltd. in 2004)
 
@@ -17,13 +26,20 @@ recreated for PC
 
 - [Singleplayer gameplay pt 1](https://youtu.be/FYtIZ7ptaSo)
 - [Singleplayer gameplay pt 2](https://youtu.be/4pWHn85Ez0o)
-- [Multiplayer gameplay (on legacy version)](https://youtu.be/mIgMNh6gGXs)
+- [Multiplayer gameplay (legacy version)](https://youtu.be/mIgMNh6gGXs)
 
 
-### Windows binaries & Linux AppImage are available for download:
-- On [our website](https://regular-dev.org/biplanes-revival)
-- On this repository's [Releases page](https://github.com/regular-dev/biplanes-revival/releases)
-- On our [itch.io page](https://regular-dev.itch.io/biplanes-revival)
+## Download the game:
+
+- From [our website](https://regular-dev.org/biplanes-revival)
+- From our [itch.io page](https://regular-dev.itch.io/biplanes-revival)
+- From [Flathub](https://flathub.org/apps/org.regular_dev.biplanes_revival)
+- From this repository's [Releases page](https://github.com/regular-dev/biplanes-revival/releases)
+
+Custom soundpacks are available
+on our [website](https://regular-dev.org/biplanes-revival) 
+and on our [itch.io page](https://regular-dev.itch.io/biplanes-revival)
+
 
 ## Features:
 
@@ -50,6 +66,9 @@ from "Networking for Game Programmers" by Glenn Fiedler](http://www.gaffer.org/n
 (author moved to other domain
 and reworked his site,
 so the link is now broken)
+
+### If you're interested in history of this project, you can read our [devlog](https://regular-dev.itch.io/biplanes-revival/devlog/714967/5th-year-anniversary-update)
+
 
 ## Modding:
 
