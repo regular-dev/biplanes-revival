@@ -241,7 +241,7 @@ public:
     SDL_FRect ChuteHitbox() const;
 
     void PlayFallingSound();
-    void FadeFallingSound( const int channel );
+    void FadeFallingSound();
 
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );

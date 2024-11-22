@@ -67,10 +67,10 @@ Menu::Select()
           ChangeRoom(ROOMS::MENU_SETTINGS);
 
           mInputAudioVolume = std::to_string(
-            percentageToInteger(gameState().audioVolume) );
+            fractionToPercentage(gameState().audioVolume) );
 
           mInputStereoDepth = std::to_string(
-            percentageToInteger(gameState().stereoDepth) );
+            fractionToPercentage(gameState().stereoDepth) );
 
           break;
         }
@@ -631,10 +631,10 @@ Menu::Select()
           ChangeRoom(ROOMS::MENU_SETTINGS);
 
           mInputAudioVolume = std::to_string(
-            percentageToInteger(gameState().audioVolume) );
+            fractionToPercentage(gameState().audioVolume) );
 
           mInputStereoDepth = std::to_string(
-            percentageToInteger(gameState().stereoDepth) );
+            fractionToPercentage(gameState().stereoDepth) );
 
           break;
         }

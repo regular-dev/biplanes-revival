@@ -192,7 +192,7 @@ Menu::EndTyping(
 
       else
         mInputAudioVolume = std::to_string(
-          percentageToInteger(gameState().audioVolume) );
+          fractionToPercentage(gameState().audioVolume) );
 
       setSoundVolume(gameState().audioVolume);
     }
@@ -205,7 +205,7 @@ Menu::EndTyping(
 
       else
         mInputStereoDepth = std::to_string(
-          percentageToInteger(gameState().stereoDepth) );
+          fractionToPercentage(gameState().stereoDepth) );
 
       break;
     }

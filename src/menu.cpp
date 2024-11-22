@@ -76,8 +76,8 @@ Menu::Menu()
   mInputPortClient = std::to_string(REMOTE_PORT);
   mInputPassword = MMAKE_PASSWORD;
   mInputScoreToWin = std::to_string(gameState().winScore);
-  mInputAudioVolume = std::to_string(percentageToInteger(gameState().audioVolume));
-  mInputStereoDepth = std::to_string(percentageToInteger(gameState().stereoDepth));
+  mInputAudioVolume = std::to_string(fractionToPercentage(gameState().audioVolume));
+  mInputStereoDepth = std::to_string(fractionToPercentage(gameState().stereoDepth));
 
   mConnectedMessageTimer = {constants::menu::connectedMessageTimeout};
   mIntroAutoSkipTimer = {constants::menu::introAutoSkipTimeout};

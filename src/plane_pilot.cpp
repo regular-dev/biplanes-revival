@@ -572,13 +572,11 @@ Plane::Pilot::ChuteHitbox() const
 }
 
 void
-Plane::Pilot::FadeFallingSound(
-  const int channel )
+Plane::Pilot::FadeFallingSound()
 {
-  if ( Mix_Playing(channel) == true )
-    Mix_FadeOutChannel(
-      channel,
-      constants::audioFadeDuration );
+  Mix_FadeOutChannel(
+    mAudioLoopChannel,
+    constants::audioFadeDuration );
 }
 
 void
@@ -657,7 +655,7 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   panSound( playSound(sounds.pilotDeath), mX );
 
@@ -727,7 +725,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   mY = constants::pilot::groundCollision;
 
@@ -757,7 +755,7 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   mIsRunning = false;
   mIsChuteOpen = false;

@@ -714,9 +714,9 @@ checkPercentage(
 }
 
 size_t
-percentageToInteger(
-  const float percentage )
+fractionToPercentage(
+  const float fraction )
 {
   return std::round(
-    std::clamp(percentage * 100.f, 0.f, 100.f) );
+    std::clamp(fraction * 100.f, 0.f, 100.f) );
 }
