@@ -65,7 +65,7 @@ Menu::screen_mp_mmake()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true
@@ -186,7 +186,7 @@ Menu::screen_mp_dc_host()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true

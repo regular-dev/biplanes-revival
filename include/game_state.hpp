@@ -74,7 +74,7 @@ public:
     bool oneShotKills {};
     bool alternativeHitboxes {};
 
-  } features {};
+  } features {}, featuresLocal {};
 
   bool autoSkipIntro {};
   bool isVSyncEnabled {true};

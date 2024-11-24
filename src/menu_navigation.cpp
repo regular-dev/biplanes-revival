@@ -163,6 +163,8 @@ Menu::Select()
             planeRed.setBot(true);
           }
 
+          gameState().features = gameState().featuresLocal;
+
           game_init_sp();
           ChangeRoom(ROOMS::GAME);
 
@@ -177,7 +179,7 @@ Menu::Select()
 
         case MENU_SP_SETUP::EXTRA_CLOUDS:
         {
-          auto& extraClouds = gameState().features.extraClouds;
+          auto& extraClouds = gameState().featuresLocal.extraClouds;
           extraClouds = !extraClouds;
 
           settingsWrite();
@@ -186,7 +188,7 @@ Menu::Select()
 
         case MENU_SP_SETUP::ONESHOT_KILLS:
         {
-          auto& oneshotKills = gameState().features.oneShotKills;
+          auto& oneshotKills = gameState().featuresLocal.oneShotKills;
           oneshotKills = !oneshotKills;
 
           settingsWrite();
@@ -195,7 +197,7 @@ Menu::Select()
 
         case MENU_SP_SETUP::ALT_HITBOXES:
         {
-          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          auto& altHitboxes = gameState().featuresLocal.alternativeHitboxes;
           altHitboxes = !altHitboxes;
 
           settingsWrite();
@@ -313,6 +315,8 @@ Menu::Select()
           matchmaker->setPassword(
             MMAKE_PASSWORD_PREFIX + MMAKE_PASSWORD );
 
+          gameState().features = gameState().featuresLocal;
+
           if ( matchmaker->initNewSession() == true )
             ChangeRoom(ROOMS::MENU_MP_MMAKE_FIND_GAME);
 
@@ -327,7 +331,7 @@ Menu::Select()
 
         case MENU_MP_MMAKE::EXTRA_CLOUDS:
         {
-          auto& extraClouds = gameState().features.extraClouds;
+          auto& extraClouds = gameState().featuresLocal.extraClouds;
           extraClouds = !extraClouds;
 
           settingsWrite();
@@ -336,7 +340,7 @@ Menu::Select()
 
         case MENU_MP_MMAKE::ONESHOT_KILLS:
         {
-          auto& oneShotKills = gameState().features.oneShotKills;
+          auto& oneShotKills = gameState().featuresLocal.oneShotKills;
           oneShotKills = !oneShotKills;
 
           settingsWrite();
@@ -345,7 +349,7 @@ Menu::Select()
 
         case MENU_MP_MMAKE::ALT_HITBOXES:
         {
-          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          auto& altHitboxes = gameState().featuresLocal.alternativeHitboxes;
           altHitboxes = !altHitboxes;
 
           settingsWrite();
@@ -417,6 +421,8 @@ Menu::Select()
           planeBlue.setBot(false);
           planeRed.setBot(false);
 
+          gameState().features = gameState().featuresLocal;
+
           if ( game_init_mp() != 0 )
           {
             log_message( "\nLOG: Failed to initialize game!\n\n" );
@@ -438,7 +444,7 @@ Menu::Select()
 
         case MENU_MP_DC_HOST::EXTRA_CLOUDS:
         {
-          auto& extraClouds = gameState().features.extraClouds;
+          auto& extraClouds = gameState().featuresLocal.extraClouds;
           extraClouds = !extraClouds;
 
           settingsWrite();
@@ -447,7 +453,7 @@ Menu::Select()
 
         case MENU_MP_DC_HOST::ONESHOT_KILLS:
         {
-          auto& oneShotKills = gameState().features.oneShotKills;
+          auto& oneShotKills = gameState().featuresLocal.oneShotKills;
           oneShotKills = !oneShotKills;
 
           settingsWrite();
@@ -456,7 +462,7 @@ Menu::Select()
 
         case MENU_MP_DC_HOST::ALT_HITBOXES:
         {
-          auto& altHitboxes = gameState().features.alternativeHitboxes;
+          auto& altHitboxes = gameState().featuresLocal.alternativeHitboxes;
           altHitboxes = !altHitboxes;
 
           settingsWrite();

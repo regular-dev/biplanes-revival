@@ -150,9 +150,9 @@ settingsWrite()
   }
 
   picojson::object jsonAutoFill;
-  jsonAutoFill["ExtraClouds"]     = picojson::value( game.features.extraClouds );
-  jsonAutoFill["OneShotKills"]    = picojson::value( game.features.oneShotKills );
-  jsonAutoFill["AltHitboxes"]     = picojson::value( game.features.alternativeHitboxes );
+  jsonAutoFill["ExtraClouds"]     = picojson::value( game.featuresLocal.extraClouds );
+  jsonAutoFill["OneShotKills"]    = picojson::value( game.featuresLocal.oneShotKills );
+  jsonAutoFill["AltHitboxes"]     = picojson::value( game.featuresLocal.alternativeHitboxes );
 
   jsonAutoFill["LOCAL_PORT"]      = picojson::value( (double) LOCAL_PORT );
   jsonAutoFill["REMOTE_PORT"]     = picojson::value( (double) REMOTE_PORT );
@@ -220,13 +220,13 @@ settingsParse(
   {
     auto& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
-    try { game.features.extraClouds = jsonAutoFill.at( "ExtraClouds" ).get <bool> (); }
+    try { game.featuresLocal.extraClouds = jsonAutoFill.at( "ExtraClouds" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.features.oneShotKills = jsonAutoFill.at( "OneShotKills" ).get <bool> (); }
+    try { game.featuresLocal.oneShotKills = jsonAutoFill.at( "OneShotKills" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.features.alternativeHitboxes = jsonAutoFill.at( "AltHitboxes" ).get <bool> (); }
+    try { game.featuresLocal.alternativeHitboxes = jsonAutoFill.at( "AltHitboxes" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
     try { LOCAL_PORT = jsonAutoFill.at( "LOCAL_PORT" ).get <double> (); }

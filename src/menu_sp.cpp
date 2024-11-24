@@ -104,7 +104,7 @@ Menu::screen_sp_setup()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true
