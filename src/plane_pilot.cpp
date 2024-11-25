@@ -675,14 +675,14 @@ Plane::Pilot::Kill(
   Plane& killedBy )
 {
   Death();
-  killedBy.ScoreChange(2);
-
 
   if ( gameState().isRoundFinished == false )
   {
     plane->mStats.pilot_deaths++;
     killedBy.mStats.pilot_hits++;
   }
+
+  killedBy.ScoreChange(2);
 }
 
 void

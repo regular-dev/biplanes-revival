@@ -714,13 +714,13 @@ Plane::Hit(
     return;
 
 
-  attacker.ScoreChange(1);
-
   if ( gameState().isRoundFinished == false )
   {
     mStats.plane_deaths++;
     attacker.mStats.plane_kills++;
   }
+
+  attacker.ScoreChange(1);
 }
 
 // DIE
