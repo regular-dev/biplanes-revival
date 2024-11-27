@@ -477,19 +477,6 @@ Plane::CollisionsUpdate()
     Crash();
     eventPush(EVENTS::PLANE_DEATH);
   }
-
-
-  if ( mHasJumped == true || mIsBot == true )
-    return;
-
-
-  for ( auto& cloud : clouds )
-  {
-    if ( cloud.isHit(mX, mY) == true )
-      cloud.setTransparent();
-    else
-      cloud.setOpaque();
-  }
 }
 
 // UPDATE ABANDONED PLANE
@@ -982,6 +969,26 @@ Plane::isHit(
     (SDL_Vector {x, y} - hitboxCenter).length();
 
   return distance <= constants::plane::hitboxRadius;
+}
+
+bool
+Plane::isInCloud(
+  const Cloud& cloud ) const
+{
+  if ( isDead() == true || mIsLocal == false )
+    return false;
+
+
+  if ( mHasJumped == true )
+    return pilot.isInCloud(cloud);
+
+
+  if ( mIsBot == true &&
+       gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+    return false;
+
+
+  return cloud.isHit(mX, mY);
 }
 
 PLANE_TYPE

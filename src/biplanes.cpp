@@ -652,7 +652,15 @@ draw_game()
   effects.Draw();
 
   for ( auto& cloud : clouds )
+  {
+    cloud.setOpaque();
+
+    if ( playerPlane.isInCloud(cloud) == true ||
+         opponentPlane.isInCloud(cloud) == true )
+      cloud.setTransparent();
+
     cloud.Draw();
+  }
 
 
   if ( networkState().isOpponentConnected == true )

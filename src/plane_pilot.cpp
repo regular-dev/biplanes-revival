@@ -381,18 +381,6 @@ Plane::Pilot::FallUpdate()
   CoordinatesWrap();
 
   HitGroundCheck();
-
-  if ( plane->mIsBot == true || plane->mIsLocal == false )
-    return;
-
-
-  for ( auto& cloud : clouds )
-  {
-    if ( cloud.isHit( mX, mY ) == true )
-      cloud.setTransparent();
-    else
-      cloud.setOpaque();
-  }
 }
 
 void
@@ -821,4 +809,20 @@ Plane::Pilot::ChuteIsHit(
   const auto chuteHitbox = ChuteHitbox();
 
   return SDL_PointInFRect(&hitPoint, &chuteHitbox);
+}
+
+bool
+Plane::Pilot::isInCloud(
+  const Cloud& cloud ) const
+{
+  if ( mIsDead == true || plane->mIsLocal == false )
+    return false;
+
+
+  if ( plane->mIsBot == true &&
+       gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+    return false;
+
+
+  return cloud.isHit(mX, mY);
 }
