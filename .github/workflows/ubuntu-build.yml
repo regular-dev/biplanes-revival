@@ -6,6 +6,9 @@ on:
       - master
     paths-ignore:
       - '**/README.md'
+      - '.github/workflows/macos-build.yml'
+      - '.github/workflows/windows-build-msvc.yml'
+      - '.github/workflows/windows-build-msys2.yml'
       - 'flatpak-data/**'
 
   pull_request:

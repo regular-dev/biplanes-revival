@@ -6,6 +6,9 @@ on:
       - master
     paths-ignore:
       - '**/README.md'
+      - '.github/workflows/ubuntu-build.yml'
+      - '.github/workflows/windows-build-msvc.yml'
+      - '.github/workflows/windows-build-msys2.yml'
       - 'appimage-data/**'
       - 'assets/**'
       - 'flatpak-data/**'
