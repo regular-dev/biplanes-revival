@@ -2,8 +2,6 @@ name: Build (Windows MSVC)
 
 on:
   push:
-    branches:
-      - master
     paths-ignore:
       - '**/README.md'
       - '.github/workflows/macos-build.yml'
@@ -13,8 +11,6 @@ on:
       - 'flatpak-data/**'
 
   pull_request:
-    branches:
-      - master
 
 jobs:
   build-msvc:
