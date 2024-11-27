@@ -129,8 +129,11 @@ cmake --build .
 MacBooks for runtime testing unfortunately,
 so feel free to report any issues (or successes)
 
+It's [confirmed](https://github.com/regular-dev/biplanes-revival/issues/2#issuecomment-2501199862) the game works on macOS 12.
+
 ```bash
 brew install git gcc cmake
+brew install jpeg-xl
 brew install sdl2 sdl2_image sdl2_mixer
 git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival
