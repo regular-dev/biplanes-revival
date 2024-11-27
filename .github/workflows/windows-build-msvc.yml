@@ -31,7 +31,16 @@ jobs:
         - {
             os: windows-latest,
             cc: "cl",
-            cxx: "cl"
+            cxx: "cl",
+            arch: "x86",
+            cmake-arch-args: "-T host=x86 -A Win32"
+          }
+        - {
+            os: windows-latest,
+            cc: "cl",
+            cxx: "cl",
+            arch: "x64",
+            cmake-arch-args: ""
           }
 
     steps:
@@ -63,6 +72,7 @@ jobs:
         -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DBUILD_SHARED_LIBS=${{ matrix.shared_libs_enabled }}
+        ${{ matrix.config.cmake-arch-args }}
         -DSDL2_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2-2.30.1
         -DSDL2_IMAGE_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2_image-2.8.2
         -DSDL2_MIXER_PATH=${{ steps.strings.outputs.build-output-dir }}\sdl-dev-libs\SDL2_mixer-2.8.0
@@ -78,9 +88,9 @@ jobs:
       run: |
         mkdir SDL_deps
         cd SDL_deps
-        Invoke-WebRequest https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-2.30.1-win32-x64.zip -OutFile SDL2.zip
-        Invoke-WebRequest https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-2.8.2-win32-x64.zip -OutFile SDL2_image.zip
-        Invoke-WebRequest https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-2.8.0-win32-x64.zip -OutFile SDL2_mixer.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL/releases/download/release-2.30.1/SDL2-2.30.1-win32-${{ matrix.config.arch }}.zip -OutFile SDL2.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.2/SDL2_image-2.8.2-win32-${{ matrix.config.arch }}.zip -OutFile SDL2_image.zip
+        Invoke-WebRequest https://github.com/libsdl-org/SDL_mixer/releases/download/release-2.8.0/SDL2_mixer-2.8.0-win32-${{ matrix.config.arch }}.zip -OutFile SDL2_mixer.zip
         7z x -y SDL2.zip
         7z x -y SDL2_image.zip
         7z x -y SDL2_mixer.zip
@@ -99,7 +109,7 @@ jobs:
       if: matrix.shared_libs_enabled == 'OFF'
       uses: actions/upload-artifact@v4
       with:
-        name: 'windows-msvc-x64'
+        name: 'windows-msvc-${{ matrix.config.arch }}'
         path: '${{ steps.strings.outputs.build-output-dir }}\bin\${{ matrix.build_type }}'
         if-no-files-found: error
         compression-level: 9
