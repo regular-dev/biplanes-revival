@@ -37,6 +37,39 @@ struct Controls
   Controls() = default;
 };
 
+struct KeyBindings
+{
+  SDL_Scancode throttleUp {};
+  SDL_Scancode throttleDown {};
+  SDL_Scancode turnLeft {};
+  SDL_Scancode turnRight {};
+
+  SDL_Scancode fire {};
+  SDL_Scancode jump {};
+
+
+  KeyBindings() = default;
+
+  void verifyAndFix( const KeyBindings& fallback );
+};
+
+
+namespace bindings
+{
+
+extern KeyBindings player1;
+extern KeyBindings player2;
+
+namespace defaults
+{
+
+extern const KeyBindings player1;
+extern const KeyBindings player2;
+
+} // namespace defaults
+
+} // namespace bindings
+
 
 void readKeyboardInput();
 
@@ -44,24 +77,9 @@ bool isKeyDown( const SDL_Scancode );
 bool isKeyPressed( const SDL_Scancode );
 bool isKeyReleased( const SDL_Scancode );
 
-Controls getLocalControls();
+Controls getLocalControls( const KeyBindings& = bindings::player1 );
 void processPlaneControls( Plane&, const Controls& );
 
 void assignKeyBinding(
   SDL_Scancode& targetBinding,
   const SDL_Scancode newBinding );
-
-
-extern const SDL_Scancode DEFAULT_THROTTLE_UP;
-extern const SDL_Scancode DEFAULT_THROTTLE_DOWN;
-extern const SDL_Scancode DEFAULT_TURN_LEFT;
-extern const SDL_Scancode DEFAULT_TURN_RIGHT;
-extern const SDL_Scancode DEFAULT_FIRE;
-extern const SDL_Scancode DEFAULT_JUMP;
-
-extern SDL_Scancode THROTTLE_UP;
-extern SDL_Scancode THROTTLE_DOWN;
-extern SDL_Scancode TURN_LEFT;
-extern SDL_Scancode TURN_RIGHT;
-extern SDL_Scancode FIRE;
-extern SDL_Scancode JUMP;

@@ -43,7 +43,8 @@ Menu::Menu()
     {ROOMS::MENU_SPLASH, 0},
     {ROOMS::MENU_MAIN, MENU_MAIN::EXIT},
     {ROOMS::MENU_SETTINGS, MENU_SETTINGS::BACK},
-    {ROOMS::MENU_SETTINGS_CONTROLS, MENU_SETTINGS_CONTROLS::BACK},
+    {ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1, MENU_SETTINGS_CONTROLS::BACK},
+    {ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2, MENU_SETTINGS_CONTROLS::BACK},
     {ROOMS::MENU_HELP, 0},
 
     {ROOMS::MENU_SP, MENU_SP::BACK},
@@ -67,6 +68,8 @@ Menu::Menu()
     {ROOMS::MENU_MP_DC_HOST, MENU_MP_DC_HOST::BACK},
     {ROOMS::MENU_MP_DC_JOIN, MENU_MP_DC_JOIN::BACK},
     {ROOMS::MENU_MP_DC_HELP, 0},
+
+    {ROOMS::MENU_MP_HOTSEAT, MENU_MP_HOTSEAT::BACK},
 
     {ROOMS::MENU_PAUSE, MENU_PAUSE::DISCONNECT},
   };
@@ -363,13 +366,20 @@ Menu::DrawMenu()
       break;
     }
 
+    case ROOMS::MENU_MP_HOTSEAT:
+    {
+      screen_mp_hotseat();
+      break;
+    }
+
     case ROOMS::MENU_SETTINGS:
     {
       screen_settings();
       break;
     }
 
-    case ROOMS::MENU_SETTINGS_CONTROLS:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2:
     {
       screen_controls();
       break;
@@ -492,21 +502,55 @@ Menu::DrawMenu()
       const auto& planeRed = planes.at(PLANE_TYPE::RED);
       const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
 
-      if ( game.gameMode != GAME_MODE::BOT_VS_BOT )
+
+      switch (game.gameMode)
       {
-        const auto& playerPlane =
-          planeRed.isBot() == false && planeRed.isLocal() == true
-          ? planeRed : planeBlue;
+        case GAME_MODE::BOT_VS_BOT:
+          break;
 
-//        TODO: move away magic number
-        const float offsetInLetters =
-          playerPlane.type() == PLANE_TYPE::BLUE
-          ? 1.0f : 7.0f;
+        case GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT:
+        {
+          {
+//            TODO: move away magic number
+            const float offsetInLetters = 7.0f;
 
-        draw_text( "It's You!",
-          playerPlane.x() - offsetInLetters * constants::text::sizeX,
-          playerPlane.y() - 0.1f ); // TODO: move to constants
+            draw_text( "Player 1",
+              planeRed.x() - offsetInLetters * constants::text::sizeX,
+              planeRed.y() - 0.1f ); // TODO: move to constants
+          }
+
+          {
+//            TODO: move away magic number
+            const float offsetInLetters = 1.0f;
+
+            draw_text( "Player 2",
+              planeBlue.x() - offsetInLetters * constants::text::sizeX,
+              planeBlue.y() - 0.1f ); // TODO: move to constants
+          }
+
+          break;
+        }
+
+        case GAME_MODE::HUMAN_VS_BOT:
+        case GAME_MODE::HUMAN_VS_HUMAN:
+        {
+          const auto& playerPlane =
+            planeRed.isBot() == false && planeRed.isLocal() == true
+            ? planeRed : planeBlue;
+
+//          TODO: move away magic number
+          const float offsetInLetters =
+            playerPlane.type() == PLANE_TYPE::BLUE
+            ? 1.0f : 7.0f;
+
+          draw_text( "It's You!",
+            playerPlane.x() - offsetInLetters * constants::text::sizeX,
+            playerPlane.y() - 0.1f ); // TODO: move to constants
+
+          break;
+        }
       }
+
 
       if ( game.gameMode != GAME_MODE::HUMAN_VS_HUMAN )
         break;
@@ -853,20 +897,42 @@ Menu::screen_controls()
   DrawButton();
 
 
-  draw_text( "CONTROLS            ",        0.025f, 0.2855f );
+  std::string title = "CONTROLS - PLAYER ";
+  std::string togglePlayerText = "Edit Player 2 bindings";
+
+  if ( mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1 )
+    title += "1";
+
+  else if ( mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2 )
+  {
+    title += "2";
+    togglePlayerText = "Edit Player 1 bindings";
+  }
+
+
+  std:: string ssss = "Player 2";
+
+  auto playerBindings = bindings::player1;
+
+  if ( mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2 )
+    playerBindings = bindings::player2;
+
+
+  draw_text( title,                         0.025f, 0.2855f );
   draw_text( "Accelerate          ",        0.025f, 0.2855f + 0.0721f );
-  draw_text( SDL_GetScancodeName(THROTTLE_UP),   0.700f, 0.2855f + 0.0721f );
+  draw_text( SDL_GetScancodeName(playerBindings.throttleUp),   0.700f, 0.2855f + 0.0721f );
   draw_text( "Decelerate          ",        0.025f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( SDL_GetScancodeName(THROTTLE_DOWN), 0.700f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( SDL_GetScancodeName(playerBindings.throttleDown), 0.700f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Turn Anti-Clockwise ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( SDL_GetScancodeName(TURN_LEFT),     0.700f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( SDL_GetScancodeName(playerBindings.turnLeft),     0.700f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Turn Clockwise      ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 3.f );
-  draw_text( SDL_GetScancodeName(TURN_RIGHT),    0.700f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( SDL_GetScancodeName(playerBindings.turnRight),    0.700f, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Fire                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 4.f );
-  draw_text( SDL_GetScancodeName(FIRE),          0.700f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( SDL_GetScancodeName(playerBindings.fire),          0.700f, 0.2855f + 0.0721f + button::sizeY * 4.f );
   draw_text( "Eject               ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 5.f );
-  draw_text( SDL_GetScancodeName(JUMP),          0.700f, 0.2855f + 0.0721f + button::sizeY * 5.f );
-  draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 6.f );
+  draw_text( SDL_GetScancodeName(playerBindings.jump),          0.700f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+  draw_text( togglePlayerText,              0.025f, 0.2855f + 0.0721f + button::sizeY * 6.f );
+  draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 7.f );
 
   if ( menu.isDefiningKey() == true )
   {

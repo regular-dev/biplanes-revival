@@ -906,7 +906,16 @@ Plane::ScoreChange(
     else
     {
       playSound(sounds.victory);
-      menu.setMessage(MESSAGE_TYPE::GAME_WON);
+
+      if ( game.gameMode != GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT )
+        menu.setMessage(MESSAGE_TYPE::GAME_WON);
+      else
+      {
+        if ( mType == PLANE_TYPE::BLUE )
+          menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
+        else
+          menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
+      }
     }
   }
   else
@@ -923,7 +932,8 @@ Plane::ScoreChange(
 
   updateRecentStats();
 
-  if ( game.gameMode != GAME_MODE::BOT_VS_BOT )
+  if ( game.gameMode == GAME_MODE::HUMAN_VS_BOT ||
+       game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
     updateTotalStats();
 }
 

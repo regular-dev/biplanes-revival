@@ -235,6 +235,13 @@ Menu::Select()
           break;
         }
 
+        case MENU_MP::HOTSEAT:
+        {
+          gameState().gameMode = GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT;
+          ChangeRoom(ROOMS::MENU_MP_HOTSEAT);
+          break;
+        }
+
         case MENU_MP::HELP:
         {
           ChangeRoom(ROOMS::MENU_MP_HELP_PAGE1);
@@ -541,13 +548,83 @@ Menu::Select()
       break;
     }
 
+    case ROOMS::MENU_MP_HOTSEAT:
+    {
+      switch (mSelectedItem)
+      {
+        case MENU_MP_HOTSEAT::START:
+        {
+          auto& gameMode = gameState().gameMode;
+          auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
+          auto& planeRed = planes.at(PLANE_TYPE::RED);
+
+          planeBlue.setLocal(true);
+          planeRed.setLocal(true);
+
+          planeBlue.setBot(false);
+          planeRed.setBot(false);
+
+          gameState().features = gameState().featuresLocal;
+
+          game_init_sp();
+          ChangeRoom(ROOMS::GAME);
+
+          break;
+        }
+
+        case MENU_MP_HOTSEAT::WIN_SCORE:
+        {
+          ToggleTyping(MENU_SPECIFY::WIN_SCORE);
+          break;
+        }
+
+        case MENU_MP_HOTSEAT::EXTRA_CLOUDS:
+        {
+          auto& extraClouds = gameState().featuresLocal.extraClouds;
+          extraClouds = !extraClouds;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_HOTSEAT::ONESHOT_KILLS:
+        {
+          auto& oneshotKills = gameState().featuresLocal.oneShotKills;
+          oneshotKills = !oneshotKills;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_HOTSEAT::ALT_HITBOXES:
+        {
+          auto& altHitboxes = gameState().featuresLocal.alternativeHitboxes;
+          altHitboxes = !altHitboxes;
+
+          settingsWrite();
+          break;
+        }
+
+        case MENU_MP_HOTSEAT::BACK:
+        {
+          GoBack();
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      break;
+    }
+
     case ROOMS::MENU_SETTINGS:
     {
       switch (mSelectedItem)
       {
         case MENU_SETTINGS::CONTROLS:
         {
-          ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS);
+          ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1);
           break;
         }
 
@@ -574,7 +651,8 @@ Menu::Select()
       break;
     }
 
-    case ROOMS::MENU_SETTINGS_CONTROLS:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2:
     {
       switch (mSelectedItem)
       {
@@ -611,6 +689,16 @@ Menu::Select()
         case MENU_SETTINGS_CONTROLS::EJECT:
         {
           ToggleDefiningKey(MENU_SETTINGS_CONTROLS::EJECT);
+          break;
+        }
+
+        case MENU_SETTINGS_CONTROLS::TOGGLE_PLAYER_PAGE:
+        {
+          if ( mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1 )
+            ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2);
+          else
+            ChangeRoom(ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1);
+
           break;
         }
 
@@ -828,6 +916,12 @@ Menu::GoBack()
       break;
     }
 
+    case ROOMS::MENU_MP_HOTSEAT:
+    {
+      ChangeRoom(ROOMS::MENU_MP);
+      break;
+    }
+
     case ROOMS::MENU_SETTINGS:
     {
       if ( gameState().isPaused == true )
@@ -838,7 +932,8 @@ Menu::GoBack()
       break;
     }
 
-    case ROOMS::MENU_SETTINGS_CONTROLS:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1:
+    case ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2:
     {
       if ( mIsDefiningKey ==  true )
         ToggleDefiningKey(mKeyToDefine);

@@ -167,12 +167,19 @@ settingsWrite()
   jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth );
 
   picojson::object jsonControls;
-  jsonControls["FIRE"]            = picojson::value( (double) FIRE );
-  jsonControls["JUMP"]            = picojson::value( (double) JUMP );
-  jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) THROTTLE_DOWN );
-  jsonControls["THROTTLE_UP"]     = picojson::value( (double) THROTTLE_UP );
-  jsonControls["TURN_LEFT"]       = picojson::value( (double) TURN_LEFT );
-  jsonControls["TURN_RIGHT"]      = picojson::value( (double) TURN_RIGHT );
+  jsonControls["FIRE"]            = picojson::value( (double) bindings::player1.fire );
+  jsonControls["JUMP"]            = picojson::value( (double) bindings::player1.jump );
+  jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) bindings::player1.throttleDown );
+  jsonControls["THROTTLE_UP"]     = picojson::value( (double) bindings::player1.throttleUp );
+  jsonControls["TURN_LEFT"]       = picojson::value( (double) bindings::player1.turnLeft );
+  jsonControls["TURN_RIGHT"]      = picojson::value( (double) bindings::player1.turnRight );
+
+  jsonControls["FIRE_P2"]            = picojson::value( (double) bindings::player2.fire );
+  jsonControls["JUMP_P2"]            = picojson::value( (double) bindings::player2.jump );
+  jsonControls["THROTTLE_DOWN_P2"]   = picojson::value( (double) bindings::player2.throttleDown );
+  jsonControls["THROTTLE_UP_P2"]     = picojson::value( (double) bindings::player2.throttleUp );
+  jsonControls["TURN_LEFT_P2"]       = picojson::value( (double) bindings::player2.turnLeft );
+  jsonControls["TURN_RIGHT_P2"]      = picojson::value( (double) bindings::player2.turnRight );
 
   picojson::object jsonUtility;
   jsonUtility["LogToConsole"]     = picojson::value( game.output.toConsole );
@@ -283,42 +290,46 @@ settingsParse(
   {
     auto& jsonControls = jsonValue["Controls"].get <picojson::object> ();
 
-    try { FIRE = (SDL_Scancode) jsonControls.at( "FIRE" ).get <double> (); }
+    try { bindings::player1.fire = (SDL_Scancode) jsonControls.at( "FIRE" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { JUMP = (SDL_Scancode) jsonControls.at( "JUMP" ).get <double> (); }
+    try { bindings::player1.jump = (SDL_Scancode) jsonControls.at( "JUMP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_DOWN = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
+    try { bindings::player1.throttleDown = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_UP = (SDL_Scancode) jsonControls.at( "THROTTLE_UP" ).get <double> (); }
+    try { bindings::player1.throttleUp = (SDL_Scancode) jsonControls.at( "THROTTLE_UP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_LEFT = (SDL_Scancode) jsonControls.at( "TURN_LEFT" ).get <double> (); }
+    try { bindings::player1.turnLeft = (SDL_Scancode) jsonControls.at( "TURN_LEFT" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_RIGHT = (SDL_Scancode) jsonControls.at( "TURN_RIGHT" ).get <double> (); }
+    try { bindings::player1.turnRight = (SDL_Scancode) jsonControls.at( "TURN_RIGHT" ).get <double> (); }
     catch ( const std::exception& ) {};
 
 
-    if ( FIRE >= SDL_NUM_SCANCODES )
-      FIRE = DEFAULT_FIRE;
+    try { bindings::player2.fire = (SDL_Scancode) jsonControls.at( "FIRE_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( JUMP >= SDL_NUM_SCANCODES )
-      JUMP = DEFAULT_JUMP;
+    try { bindings::player2.jump = (SDL_Scancode) jsonControls.at( "JUMP_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( THROTTLE_DOWN >= SDL_NUM_SCANCODES )
-      THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
+    try { bindings::player2.throttleDown = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( THROTTLE_UP >= SDL_NUM_SCANCODES )
-      THROTTLE_UP = DEFAULT_THROTTLE_UP;
+    try { bindings::player2.throttleUp = (SDL_Scancode) jsonControls.at( "THROTTLE_UP_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( TURN_LEFT >= SDL_NUM_SCANCODES )
-      TURN_LEFT = DEFAULT_TURN_LEFT;
+    try { bindings::player2.turnLeft = (SDL_Scancode) jsonControls.at( "TURN_LEFT_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( TURN_RIGHT >= SDL_NUM_SCANCODES )
-      TURN_RIGHT = DEFAULT_TURN_RIGHT;
+    try { bindings::player2.turnRight = (SDL_Scancode) jsonControls.at( "TURN_RIGHT_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
+
+
+    bindings::player1.verifyAndFix(bindings::defaults::player1);
+    bindings::player2.verifyAndFix(bindings::defaults::player2);
   }
   catch ( const std::exception& ) {};
 

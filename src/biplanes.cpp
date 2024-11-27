@@ -384,16 +384,39 @@ game_loop_sp()
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  const auto playerPlane =
-    planeBlue.isBot() == false
-    ? &planeBlue
-    : planeRed.isBot() == false
-      ? &planeRed
-      : nullptr;
+  switch (game.gameMode)
+  {
+    case GAME_MODE::HUMAN_VS_BOT:
+    {
+      const auto playerPlane =
+        planeBlue.isBot() == false
+        ? &planeBlue
+        : planeRed.isBot() == false
+          ? &planeRed
+          : nullptr;
 
 
-  if ( playerPlane != nullptr )
-    processPlaneControls(*playerPlane, getLocalControls());
+      if ( playerPlane != nullptr )
+        processPlaneControls(
+          *playerPlane, getLocalControls() );
+
+      break;
+    }
+
+    case GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT:
+    {
+      processPlaneControls(
+        planeBlue, getLocalControls(bindings::player2) );
+
+      processPlaneControls(
+        planeRed, getLocalControls(bindings::player1) );
+
+      break;
+    }
+
+    default:
+      break;
+  }
 
   aiController.update();
 

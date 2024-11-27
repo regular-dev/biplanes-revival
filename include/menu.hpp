@@ -106,6 +106,8 @@ public:
   void screen_mp_dc_host();
   void screen_mp_dc_join();
 
+  void screen_mp_hotseat();
+
   void screen_mp_dc_help();
   void screen_mp_help_page1();
   void screen_mp_help_page2();

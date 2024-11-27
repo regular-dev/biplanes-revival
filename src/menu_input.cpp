@@ -407,43 +407,49 @@ Menu::UpdateDefiningKey()
   if (  windowEvent.type == SDL_KEYDOWN &&
         windowEvent.key.repeat == 0 )
   {
+    auto& playerBindings =
+      mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+        ? bindings::player1
+        : bindings::player2;
+
+
     const auto newKey = windowEvent.key.keysym.scancode;
 
     switch (mKeyToDefine)
     {
       case MENU_SETTINGS_CONTROLS::ACCELERATE:
       {
-        assignKeyBinding(THROTTLE_UP, newKey);
+        assignKeyBinding(playerBindings.throttleUp, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::DECELERATE:
       {
-        assignKeyBinding(THROTTLE_DOWN, newKey);
+        assignKeyBinding(playerBindings.throttleDown, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::LEFT:
       {
-        assignKeyBinding(TURN_LEFT, newKey);
+        assignKeyBinding(playerBindings.turnLeft, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::RIGHT:
       {
-        assignKeyBinding(TURN_RIGHT, newKey);
+        assignKeyBinding(playerBindings.turnRight, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::SHOOT:
       {
-        assignKeyBinding(FIRE, newKey);
+        assignKeyBinding(playerBindings.fire, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::EJECT:
       {
-        assignKeyBinding(JUMP, newKey);
+        assignKeyBinding(playerBindings.jump, newKey);
         break;
       }
 
@@ -453,53 +459,81 @@ Menu::UpdateDefiningKey()
 
     mIsDefiningKey = false;
     SDL_FlushEvent(SDL_KEYDOWN);
-
-    return;
   }
 }
 
 void
 Menu::ResetKey()
 {
-  if ( mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS )
+  if ( mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1 &&
+       mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2 )
     return;
+
+
+  auto& playerBindings =
+    mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+      ? bindings::player1
+      : bindings::player2;
+
+  const auto defaultBindings =
+    mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+      ? bindings::defaults::player1
+      : bindings::defaults::player2;
 
 
   switch (mSelectedItem)
   {
     case MENU_SETTINGS_CONTROLS::ACCELERATE:
     {
-      assignKeyBinding(THROTTLE_UP, DEFAULT_THROTTLE_UP);
+      assignKeyBinding(
+        playerBindings.throttleUp,
+        defaultBindings.throttleUp );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::DECELERATE:
     {
-      assignKeyBinding(THROTTLE_DOWN, DEFAULT_THROTTLE_DOWN);
+      assignKeyBinding(
+        playerBindings.throttleDown,
+        defaultBindings.throttleDown );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::LEFT:
     {
-      assignKeyBinding(TURN_LEFT, DEFAULT_TURN_LEFT);
+      assignKeyBinding(
+        playerBindings.turnLeft,
+        defaultBindings.turnLeft );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::RIGHT:
     {
-      assignKeyBinding(TURN_RIGHT, DEFAULT_TURN_RIGHT);
+      assignKeyBinding(
+        playerBindings.turnRight,
+        defaultBindings.turnRight );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::SHOOT:
     {
-      assignKeyBinding(FIRE, DEFAULT_FIRE);
+      assignKeyBinding(
+        playerBindings.fire,
+        defaultBindings.fire );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::EJECT:
     {
-      assignKeyBinding(JUMP, DEFAULT_JUMP);
+      assignKeyBinding(
+        playerBindings.jump,
+        defaultBindings.jump );
+
       break;
     }
 

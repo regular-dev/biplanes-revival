@@ -26,19 +26,60 @@
 #include <cstring>
 
 
-const SDL_Scancode DEFAULT_THROTTLE_UP   = SDL_SCANCODE_UP;
-const SDL_Scancode DEFAULT_THROTTLE_DOWN = SDL_SCANCODE_DOWN;
-const SDL_Scancode DEFAULT_TURN_LEFT     = SDL_SCANCODE_LEFT;
-const SDL_Scancode DEFAULT_TURN_RIGHT    = SDL_SCANCODE_RIGHT;
-const SDL_Scancode DEFAULT_FIRE          = SDL_SCANCODE_SPACE;
-const SDL_Scancode DEFAULT_JUMP          = SDL_SCANCODE_LCTRL;
+namespace bindings
+{
 
-SDL_Scancode THROTTLE_UP   = DEFAULT_THROTTLE_UP;
-SDL_Scancode THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
-SDL_Scancode TURN_LEFT     = DEFAULT_TURN_LEFT;
-SDL_Scancode TURN_RIGHT    = DEFAULT_TURN_RIGHT;
-SDL_Scancode FIRE          = DEFAULT_FIRE;
-SDL_Scancode JUMP          = DEFAULT_JUMP;
+KeyBindings player1 = defaults::player1;
+KeyBindings player2 = defaults::player2;
+
+namespace defaults
+{
+
+const KeyBindings player1
+{
+//  THROTTLE_UP
+  SDL_SCANCODE_UP,
+
+//  THROTTLE_DOWN
+  SDL_SCANCODE_DOWN,
+
+//  TURN_LEFT
+  SDL_SCANCODE_LEFT,
+
+//  TURN_RIGHT
+  SDL_SCANCODE_RIGHT,
+
+//  FIRE
+  SDL_SCANCODE_SPACE,
+
+//  JUMP
+  SDL_SCANCODE_LCTRL,
+};
+
+const KeyBindings player2
+{
+//  THROTTLE_UP
+  SDL_SCANCODE_I,
+
+//  THROTTLE_DOWN
+  SDL_SCANCODE_K,
+
+//  TURN_LEFT
+  SDL_SCANCODE_J,
+
+//  TURN_RIGHT
+  SDL_SCANCODE_L,
+
+//  FIRE
+  SDL_SCANCODE_E,
+
+//  JUMP
+  SDL_SCANCODE_Q,
+};
+
+} // namespace defaults
+
+} // namespace bindings
 
 
 struct
@@ -48,6 +89,29 @@ struct
 
 } static keyboardState {};
 
+
+void
+KeyBindings::verifyAndFix(
+  const KeyBindings& fallback )
+{
+  if ( fire >= SDL_NUM_SCANCODES )
+    fire = fallback.fire;
+
+  if ( jump >= SDL_NUM_SCANCODES )
+    jump = fallback.jump;
+
+  if ( throttleDown >= SDL_NUM_SCANCODES )
+    throttleDown = fallback.throttleDown;
+
+  if ( throttleUp >= SDL_NUM_SCANCODES )
+    throttleUp = fallback.throttleUp;
+
+  if ( turnLeft >= SDL_NUM_SCANCODES )
+    turnLeft = fallback.turnLeft;
+
+  if ( turnRight >= SDL_NUM_SCANCODES )
+    turnRight = fallback.turnRight;
+}
 
 void
 readKeyboardInput()
@@ -94,51 +158,73 @@ assignKeyBinding(
   SDL_Scancode& targetBinding,
   const SDL_Scancode newBinding )
 {
-  if ( newBinding == THROTTLE_UP )
-    THROTTLE_UP = targetBinding;
+  if ( false )
+    ;
 
-  else if ( newBinding == THROTTLE_DOWN )
-    THROTTLE_DOWN = targetBinding;
+  else if ( newBinding == bindings::player1.throttleUp )
+    bindings::player1.throttleUp = targetBinding;
 
-  else if ( newBinding == TURN_LEFT )
-    TURN_LEFT = targetBinding;
+  else if ( newBinding == bindings::player2.throttleUp )
+    bindings::player2.throttleUp = targetBinding;
 
-  else if ( newBinding == TURN_RIGHT )
-    TURN_RIGHT = targetBinding;
+  else if ( newBinding == bindings::player1.throttleDown )
+    bindings::player1.throttleDown = targetBinding;
 
-  else if ( newBinding == FIRE )
-    FIRE = targetBinding;
+  else if ( newBinding == bindings::player2.throttleDown )
+    bindings::player2.throttleDown = targetBinding;
 
-  else if ( newBinding == JUMP )
-    JUMP = targetBinding;
+  else if ( newBinding == bindings::player1.turnLeft )
+    bindings::player1.turnLeft = targetBinding;
+
+  else if ( newBinding == bindings::player2.turnLeft )
+    bindings::player2.turnLeft = targetBinding;
+
+  else if ( newBinding == bindings::player1.turnRight )
+    bindings::player1.turnRight = targetBinding;
+
+  else if ( newBinding == bindings::player2.turnRight )
+    bindings::player2.turnRight = targetBinding;
+
+  else if ( newBinding == bindings::player1.fire )
+    bindings::player1.fire = targetBinding;
+
+  else if ( newBinding == bindings::player2.fire )
+    bindings::player2.fire = targetBinding;
+
+  else if ( newBinding == bindings::player1.jump )
+    bindings::player1.jump = targetBinding;
+
+  else if ( newBinding == bindings::player2.jump )
+    bindings::player2.jump = targetBinding;
 
 
   targetBinding = newBinding;
 }
 
 Controls
-getLocalControls()
+getLocalControls(
+  const KeyBindings& bindings )
 {
   Controls controls {};
 
-  if (  isKeyDown(THROTTLE_UP) == true &&
-        isKeyDown(THROTTLE_DOWN) == false )
+  if (  isKeyDown(bindings.throttleUp) == true &&
+        isKeyDown(bindings.throttleDown) == false )
     controls.throttle = PLANE_THROTTLE::THROTTLE_INCREASE;
 
-  else if ( isKeyDown(THROTTLE_DOWN) == true &&
-            isKeyDown(THROTTLE_UP) == false )
+  else if ( isKeyDown(bindings.throttleDown) == true &&
+            isKeyDown(bindings.throttleUp) == false )
     controls.throttle = PLANE_THROTTLE::THROTTLE_DECREASE;
 
   else
     controls.throttle = PLANE_THROTTLE::THROTTLE_IDLE;
 
 
-  if (  isKeyDown(TURN_LEFT) == true &&
-        isKeyDown(TURN_RIGHT) == false )
+  if (  isKeyDown(bindings.turnLeft) == true &&
+        isKeyDown(bindings.turnRight) == false )
     controls.pitch = PLANE_PITCH::PITCH_LEFT;
 
-  else if ( isKeyDown(TURN_RIGHT) == true &&
-            isKeyDown(TURN_LEFT) == false )
+  else if ( isKeyDown(bindings.turnRight) == true &&
+            isKeyDown(bindings.turnLeft) == false )
     controls.pitch = PLANE_PITCH::PITCH_RIGHT;
 
   else
@@ -146,14 +232,14 @@ getLocalControls()
 
 
 //  SHOOT
-  if ( isKeyDown(FIRE) == true )
+  if ( isKeyDown(bindings.fire) == true )
     controls.shoot = true;
   else
     controls.shoot = false;
 
 
 //  EJECT
-  if ( isKeyDown(JUMP) == true )
+  if ( isKeyDown(bindings.jump) == true )
     controls.jump = true;
   else
     controls.jump = false;
