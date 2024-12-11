@@ -693,7 +693,10 @@ bool
 checkScoreToWin(
   const std::string& score )
 {
-  if ( score.length() > 3 )
+  const auto maxWinScoreTextLength =
+    std::to_string(constants::maxWinScore).size();
+
+  if ( score.length() > maxWinScoreTextLength )
     return false;
 
   for ( const auto& digit : score )
@@ -701,11 +704,10 @@ checkScoreToWin(
       return false;
 
   const auto scoreNum = std::stoi(score);
-  const auto maxScore = std::numeric_limits <uint8_t>::max();
 
   return
     scoreNum >= 0 &&
-    scoreNum <= maxScore;
+    scoreNum <= constants::maxWinScore;
 }
 
 bool
