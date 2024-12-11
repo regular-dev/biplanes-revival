@@ -96,23 +96,26 @@ Menu::screen_mp_mmake()
     ? "On" : "Off";
 
 
+  const auto valueOffset =
+    1.f - constants::menu::border::thicknessX - constants::text::sizeX * 15;
+
   draw_text( "MATCHMAKING   ",    0.025f, 0.2855f );
   draw_text( "Find Game     ",    0.040f, 0.2855f + 0.0721f );
   draw_text( "Password:     ",    0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputPassword,      0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputPassword,      valueOffset, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( extraClouds,         0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,         valueOffset, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
-  draw_text( oneShotKills,        0.500f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,        valueOffset, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Alt. hitboxes: ",   0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
-  draw_text( altHitboxes,         0.500f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,         valueOffset, 0.2855f + 0.0721f + button::sizeY * 4.f );
   draw_text( "Back          ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::PASSWORD) == true )
   {
-    draw_text( "Press [RETURN] to finish", 0.25f, 0.6f );
-    draw_text( " specifying password... ", 0.25f, 0.65f );
+    draw_text( "Press [RETURN] to finish", 0.25f, 0.725f );
+    draw_text( " specifying password... ", 0.25f, 0.775f );
 
     return;
   }
@@ -231,8 +234,8 @@ Menu::screen_mp_dc_host()
 
   if ( isSpecifyingVar(MENU_SPECIFY::PORT) == true )
   {
-    draw_text( "Press [RETURN] to finish    ",  0.250f, 0.60f );
-    draw_text( "     specifying port...     ",  0.250f, 0.65f );
+    draw_text( "Press [RETURN] to finish    ",  0.250f, 0.725f );
+    draw_text( "     specifying port...     ",  0.250f, 0.775f );
 
     return;
   }
