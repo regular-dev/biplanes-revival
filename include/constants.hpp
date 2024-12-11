@@ -107,6 +107,8 @@ namespace constants
     static constexpr double introAutoSkipTimeout {3.0};
     static constexpr double connectedMessageTimeout {3.0};
 
+    static constexpr size_t maxInputFieldTextLength {15};
+
     namespace header
     {
       static constexpr float sizeX {1.f};

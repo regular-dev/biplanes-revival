@@ -69,6 +69,8 @@ void
 Menu::screen_mp_mmake()
 {
   namespace button = constants::menu::button;
+  namespace menu = constants::menu;
+  namespace text = constants::text;
 
 
   setRenderColor(constants::colors::background);
@@ -97,7 +99,7 @@ Menu::screen_mp_mmake()
 
 
   const auto valueOffset =
-    1.f - constants::menu::border::thicknessX - constants::text::sizeX * 15;
+    1.f - menu::border::thicknessX - text::sizeX * menu::maxInputFieldTextLength;
 
   draw_text( "MATCHMAKING   ",    0.025f, 0.2855f );
   draw_text( "Find Game     ",    0.040f, 0.2855f + 0.0721f );

@@ -227,6 +227,9 @@ Menu::EndTyping(
 void
 Menu::UpdateTyping()
 {
+  const auto maxInputFieldTextLength = constants::menu::maxInputFieldTextLength;
+
+
   if ( mSpecifyingVarState[MENU_SPECIFY::IP] == true )
   {
     if ( windowEvent.type == SDL_KEYDOWN )
@@ -244,7 +247,7 @@ Menu::UpdateTyping()
 
     if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( mInputIp.length() < 15 )
+      if ( mInputIp.length() < maxInputFieldTextLength )
         mInputIp += windowEvent.text.text;
     }
 
@@ -304,7 +307,7 @@ Menu::UpdateTyping()
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if (  mInputPassword.length() < 15 &&
+      if (  mInputPassword.length() < maxInputFieldTextLength &&
             checkPass( {windowEvent.text.text} ) == true )
         mInputPassword += windowEvent.text.text;
     }

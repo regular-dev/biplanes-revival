@@ -20,6 +20,7 @@
 
 #include <include/utility.hpp>
 #include <include/sdl.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/controls.hpp>
 #include <include/stats.hpp>
@@ -614,7 +615,8 @@ std::string
 checkIp(
   const std::string& ipAddress )
 {
-  if ( ipAddress.length() == 0 || ipAddress.length() > 15 )
+  if ( ipAddress.length() == 0 ||
+       ipAddress.length() > constants::menu::maxInputFieldTextLength )
     return {};
 
   std::stringstream stream {ipAddress};
@@ -666,7 +668,7 @@ checkPass(
   if ( password.length() == 0 )
     return true;
 
-  if ( password.length() > 15 )
+  if ( password.length() > constants::menu::maxInputFieldTextLength )
     return false;
 
 
