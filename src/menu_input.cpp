@@ -244,15 +244,8 @@ Menu::UpdateTyping()
 
     if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
-      {
-        if ( mInputIp.length() < 15 )
-          mInputIp += windowEvent.text.text;
-      }
+      if ( mInputIp.length() < 15 )
+        mInputIp += windowEvent.text.text;
     }
 
     return;
@@ -282,15 +275,8 @@ Menu::UpdateTyping()
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
-      {
-        if ( inputPort.length() < 5 )
-          inputPort += windowEvent.text.text;
-      }
+      if ( inputPort.length() < 5 )
+        inputPort += windowEvent.text.text;
     }
 
     if ( mCurrentRoom == ROOMS::MENU_MP_DC_HOST )
@@ -318,16 +304,9 @@ Menu::UpdateTyping()
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
-      {
-        if (  mInputPassword.length() < 15 &&
-              checkPass( {windowEvent.text.text} ) == true )
-          mInputPassword += windowEvent.text.text;
-      }
+      if (  mInputPassword.length() < 15 &&
+            checkPass( {windowEvent.text.text} ) == true )
+        mInputPassword += windowEvent.text.text;
     }
 
     return;
