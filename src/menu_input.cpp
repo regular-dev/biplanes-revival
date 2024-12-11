@@ -322,10 +322,12 @@ Menu::UpdateTyping()
               SDL_GetModState() & KMOD_CTRL ) == false )
       {
         if (  mInputPassword.length() < 15 &&
-              checkPass( {windowEvent.text.text} ) == false )
+              checkPass( {windowEvent.text.text} ) == true )
           mInputPassword += windowEvent.text.text;
       }
     }
+
+    return;
   }
 
   if ( mSpecifyingVarState[MENU_SPECIFY::WIN_SCORE] == true )
