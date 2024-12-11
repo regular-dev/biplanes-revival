@@ -67,16 +67,16 @@ Menu::UpdateControls()
   {
     auto& game = gameState();
 
-    if (  isKeyPressed(SDL_SCANCODE_DOWN) ||
+    if (  isKeyPressed(SDL_SCANCODE_DOWN) == true ||
           isKeyPressed(SDL_SCANCODE_S) == true )
       MenuItemNext();
 
-    else if ( isKeyPressed(SDL_SCANCODE_UP) ||
+    else if ( isKeyPressed(SDL_SCANCODE_UP) == true ||
               isKeyPressed(SDL_SCANCODE_W) == true )
       MenuItemPrevious();
 
-    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) ||
-              isKeyPressed(SDL_SCANCODE_LEFT) ||
+    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true ||
+              isKeyPressed(SDL_SCANCODE_LEFT) == true ||
               isKeyPressed(SDL_SCANCODE_A) == true )
       GoBack();
 
@@ -96,8 +96,8 @@ Menu::UpdateControls()
     }
   }
 
-  if (  isKeyPressed(SDL_SCANCODE_RETURN) ||
-        isKeyPressed(SDL_SCANCODE_RIGHT) ||
+  if (  isKeyPressed(SDL_SCANCODE_RETURN) == true ||
+        isKeyPressed(SDL_SCANCODE_RIGHT) == true ||
         isKeyPressed(SDL_SCANCODE_D) == true )
     Select();
 }
