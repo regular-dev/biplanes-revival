@@ -51,7 +51,14 @@ Menu::UpdateControls()
 
 
   if ( mIsTyping == true )
+  {
     UpdateTyping();
+
+    if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )
+      Select();
+
+    return;
+  }
 
   else if ( mIsDefiningKey == true )
     return UpdateDefiningKey();
