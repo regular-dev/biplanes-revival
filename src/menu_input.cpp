@@ -248,7 +248,13 @@ Menu::UpdateTyping()
     if ( windowEvent.type == SDL_TEXTINPUT )
     {
       if ( mInputIp.length() < maxInputFieldTextLength )
-        mInputIp += windowEvent.text.text;
+      {
+        for ( const auto& digit : windowEvent.text.text )
+          if ( std::isdigit(digit) == true || digit == '.' )
+            mInputIp += digit;
+          else
+            break;
+      }
     }
 
     return;
@@ -279,7 +285,13 @@ Menu::UpdateTyping()
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
       if ( inputPort.length() < 5 )
-        inputPort += windowEvent.text.text;
+      {
+        for ( const auto& digit : windowEvent.text.text )
+          if ( std::isdigit(digit) == true )
+            inputPort += digit;
+          else
+            break;
+      }
     }
 
     if ( mCurrentRoom == ROOMS::MENU_MP_DC_HOST )
