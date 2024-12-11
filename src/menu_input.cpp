@@ -227,8 +227,6 @@ Menu::EndTyping(
 void
 Menu::UpdateTyping()
 {
-  SDL_StartTextInput();
-
   if ( mSpecifyingVarState[MENU_SPECIFY::IP] == true )
   {
     if ( windowEvent.type == SDL_KEYDOWN )
@@ -255,8 +253,6 @@ Menu::UpdateTyping()
         if ( mInputIp.length() < 15 )
           mInputIp += windowEvent.text.text;
       }
-
-      SDL_StopTextInput();
     }
 
     return;
