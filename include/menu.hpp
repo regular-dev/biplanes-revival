@@ -46,14 +46,12 @@ class Menu
   bool mIsTyping {};
   MENU_SETTINGS_CONTROLS mKeyToDefine {};
   bool mIsDefiningKey {};
+  bool mIsEditingSlider {};
 
   std::string mInputIp {};
   std::string mInputPortHost {};
   std::string mInputPortClient {};
   std::string mInputPassword {};
-  std::string mInputScoreToWin {};
-  std::string mInputAudioVolume {};
-  std::string mInputStereoDepth {};
 
   MESSAGE_TYPE mCurrentMessage {};
   Timer mConnectedMessageTimer {0.0};
@@ -71,6 +69,7 @@ public:
   void UpdateControls();
   void UpdateTyping();
   void UpdateDefiningKey();
+  void UpdateSliderEditing();
   void AnimateButton();
   void MenuItemNext();
   void MenuItemPrevious();
@@ -80,6 +79,8 @@ public:
   void EndTyping( const MENU_SPECIFY );
   void ToggleDefiningKey( const MENU_SETTINGS_CONTROLS );
   void UpdateDefiningKey( const MENU_SETTINGS_CONTROLS );
+  void ToggleSliderEditing( const MENU_SPECIFY );
+  void EndSliderEditing( const MENU_SPECIFY );
   void ResetKey();
   void ReturnToMainMenu();
 
@@ -119,8 +120,8 @@ public:
   void screen_mp_help_page8();
 
 
-  bool isSpecifyingVar( const MENU_SPECIFY ) const;
   bool isDefiningKey() const;
+  bool isSpecifyingVar( const MENU_SPECIFY ) const;
 
   ROOMS currentRoom() const;
   MESSAGE_TYPE currentMessage() const;

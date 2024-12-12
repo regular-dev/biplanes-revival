@@ -65,13 +65,6 @@ Menu::Select()
         case MENU_MAIN::SETTINGS:
         {
           ChangeRoom(ROOMS::MENU_SETTINGS);
-
-          mInputAudioVolume = std::to_string(
-            fractionToPercentage(gameState().audioVolume) );
-
-          mInputStereoDepth = std::to_string(
-            fractionToPercentage(gameState().stereoDepth) );
-
           break;
         }
 
@@ -98,7 +91,6 @@ Menu::Select()
         case MENU_SP::SETUP_GAME:
         {
           ChangeRoom(ROOMS::MENU_SP_SETUP);
-          mInputScoreToWin = std::to_string(gameState().winScore);
           break;
         }
 
@@ -173,7 +165,7 @@ Menu::Select()
 
         case MENU_SP_SETUP::WIN_SCORE:
         {
-          ToggleTyping(MENU_SPECIFY::WIN_SCORE);
+          ToggleSliderEditing(MENU_SPECIFY::WIN_SCORE);
           break;
         }
 
@@ -574,7 +566,7 @@ Menu::Select()
 
         case MENU_MP_HOTSEAT::WIN_SCORE:
         {
-          ToggleTyping(MENU_SPECIFY::WIN_SCORE);
+          ToggleSliderEditing(MENU_SPECIFY::WIN_SCORE);
           break;
         }
 
@@ -630,13 +622,13 @@ Menu::Select()
 
         case MENU_SETTINGS::AUDIO_VOLUME:
         {
-          ToggleTyping(MENU_SPECIFY::AUDIO_VOLUME);
+          ToggleSliderEditing(MENU_SPECIFY::AUDIO_VOLUME);
           break;
         }
 
         case MENU_SETTINGS::STEREO_DEPTH:
         {
-          ToggleTyping(MENU_SPECIFY::STEREO_DEPTH);
+          ToggleSliderEditing(MENU_SPECIFY::STEREO_DEPTH);
           break;
         }
 
@@ -723,13 +715,6 @@ Menu::Select()
         case MENU_PAUSE::SETTINGS:
         {
           ChangeRoom(ROOMS::MENU_SETTINGS);
-
-          mInputAudioVolume = std::to_string(
-            fractionToPercentage(gameState().audioVolume) );
-
-          mInputStereoDepth = std::to_string(
-            fractionToPercentage(gameState().stereoDepth) );
-
           break;
         }
 

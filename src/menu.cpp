@@ -78,9 +78,6 @@ Menu::Menu()
   mInputPortHost = std::to_string(LOCAL_PORT);
   mInputPortClient = std::to_string(REMOTE_PORT);
   mInputPassword = MMAKE_PASSWORD;
-  mInputScoreToWin = std::to_string(gameState().winScore);
-  mInputAudioVolume = std::to_string(fractionToPercentage(gameState().audioVolume));
-  mInputStereoDepth = std::to_string(fractionToPercentage(gameState().stereoDepth));
 
   mConnectedMessageTimer = {constants::menu::connectedMessageTimeout};
   mIntroAutoSkipTimer = {constants::menu::introAutoSkipTimeout};
@@ -823,14 +820,21 @@ Menu::screen_settings()
   DrawButton();
 
 
-  draw_text( "SETTINGS       ",       0.025f, 0.2855f );
-  draw_text( "Controls       ",       0.040f, 0.2855f + 0.0721f );
-  draw_text( "Audio volume:  ",       0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputAudioVolume + "%", 0.500f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Audio panning: ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( mInputStereoDepth + "%", 0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( "Reset stats    ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
-  draw_text( "Back           ",       0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  const auto audioVolumeText =
+    std::to_string(gameState().audioVolume) + "%";
+
+  const auto stereoDepthText =
+    std::to_string(gameState().stereoDepth) + "%";
+
+
+  draw_text( "SETTINGS       ", 0.025f, 0.2855f );
+  draw_text( "Controls       ", 0.040f, 0.2855f + 0.0721f );
+  draw_text( "Audio volume:  ", 0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( audioVolumeText,   0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Audio panning: ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( stereoDepthText,   0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Reset stats    ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Back           ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::AUDIO_VOLUME) == true )
@@ -934,7 +938,7 @@ Menu::screen_controls()
   draw_text( togglePlayerText,              0.025f, 0.2855f + 0.0721f + button::sizeY * 6.f );
   draw_text( "Back                ",        0.025f, 0.2855f + 0.0721f + button::sizeY * 7.f );
 
-  if ( menu.isDefiningKey() == true )
+  if ( mIsDefiningKey == true )
   {
     draw_text( "     Press the key you wish    ", 0.025f, 0.05f );
     draw_text( "  to assign to this function.  ", 0.025f, 0.05f * 2.0f );

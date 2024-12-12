@@ -42,4 +42,4 @@ bool checkPass( const std::string& );
 bool checkScoreToWin( const std::string& );
 bool checkPercentage( const std::string& );
 
-size_t fractionToPercentage( const float );
+size_t fractionToPercentage( const double );

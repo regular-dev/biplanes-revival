@@ -178,7 +178,7 @@ SDL_init(
     {
       Mix_AllocateChannels(16);
       Mix_ReserveChannels(2);
-      setSoundVolume(gameState().audioVolume);
+      setSoundVolume(gameState().audioVolume / 100.f);
       soundInitialized = true;
     }
 

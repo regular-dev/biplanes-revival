@@ -79,8 +79,8 @@ public:
   bool autoSkipIntro {};
   bool isVSyncEnabled {true};
   bool isAudioEnabled {true};
-  float audioVolume {0.75f};
-  float stereoDepth {0.4f};
+  uint8_t audioVolume {75};
+  uint8_t stereoDepth {40};
 
   GAME_MODE gameMode {};
   DIFFICULTY botDifficulty {DIFFICULTY::EASY};

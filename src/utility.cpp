@@ -164,8 +164,8 @@ settingsWrite()
   jsonConfig["AutoSkipIntro"]     = picojson::value( game.autoSkipIntro );
   jsonConfig["EnableAudio"]       = picojson::value( game.isAudioEnabled );
   jsonConfig["EnableVSync"]       = picojson::value( game.isVSyncEnabled );
-  jsonConfig["AudioVolume"]       = picojson::value( game.audioVolume );
-  jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth );
+  jsonConfig["AudioVolume"]       = picojson::value( game.audioVolume / 100. );
+  jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth / 100. );
 
   picojson::object jsonControls;
   jsonControls["FIRE"]            = picojson::value( (double) bindings::player1.fire );
@@ -252,6 +252,7 @@ settingsParse(
     try { SERVER_IP = jsonAutoFill.at( "SERVER_IP" ).get <std::string> (); }
     catch ( const std::exception& ) {};
 
+
     if ( checkIp(SERVER_IP).empty() == true )
       SERVER_IP = DEFAULT_SERVER_IP;
 
@@ -265,6 +266,10 @@ settingsParse(
 
   try
   {
+    double audioVolume {};
+    double stereoDepth {};
+
+
     auto& jsonConfig = jsonValue["Config"].get <picojson::object> ();
 
     try { game.autoSkipIntro = jsonConfig.at( "AutoSkipIntro" ).get <bool> (); }
@@ -276,14 +281,18 @@ settingsParse(
     try { game.isVSyncEnabled = jsonConfig.at( "EnableVSync" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.audioVolume = jsonConfig.at( "AudioVolume" ).get <double> (); }
-    catch ( const std::exception& ) {};
+    try { audioVolume = jsonConfig.at( "AudioVolume" ).get <double> (); }
+    catch ( const std::exception& ) { audioVolume = game.audioVolume / 100.; };
 
-    try { game.stereoDepth = jsonConfig.at( "StereoDepth" ).get <double> (); }
-    catch ( const std::exception& ) {};
+    try { stereoDepth = jsonConfig.at( "StereoDepth" ).get <double> (); }
+    catch ( const std::exception& ) { stereoDepth = game.stereoDepth / 100.; };
 
-    game.stereoDepth = std::clamp(game.stereoDepth, 0.f, 1.f);
-    game.audioVolume = std::clamp(game.audioVolume, 0.f, 1.f);
+
+    if ( audioVolume >= 0.0 && audioVolume <= 1.0 )
+      game.audioVolume = fractionToPercentage(audioVolume);
+
+    if ( stereoDepth >= 0.0 && stereoDepth <= 1.0 )
+      game.stereoDepth = fractionToPercentage(stereoDepth);
   }
   catch ( const std::exception& ) {};
 
@@ -730,8 +739,8 @@ checkPercentage(
 
 size_t
 fractionToPercentage(
-  const float fraction )
+  const double fraction )
 {
   return std::round(
-    std::clamp(fraction * 100.f, 0.f, 100.f) );
+    std::clamp(fraction * 100., 0., 100.) );
 }
