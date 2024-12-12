@@ -360,7 +360,8 @@ panSound(
   if ( Mix_Playing(channel) == false )
     return;
 
-  const auto panDepth = gameState().stereoDepth;
+  const float panDepth =
+    gameState().stereoDepth / 100.f;
 
   const uint8_t left = 255 - 255 * pan * panDepth;
   const uint8_t right = 255 - 255 * (1.0f - pan) * panDepth;
