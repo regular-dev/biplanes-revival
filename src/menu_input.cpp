@@ -363,33 +363,33 @@ Menu::UpdateSliderEditing()
   if ( isKeyPressed(SDL_SCANCODE_LEFT) == true ||
        isKeyPressed(SDL_SCANCODE_A) == true )
   {
-    if ( *sliderValue > 0 )
-      --*sliderValue;
-  }
-
-  else if ( isKeyPressed(SDL_SCANCODE_DOWN) == true ||
-            isKeyPressed(SDL_SCANCODE_S) == true )
-  {
     if ( *sliderValue >= 10 )
       *sliderValue -= 10;
     else
       *sliderValue = 0;
   }
 
-  else if ( isKeyPressed(SDL_SCANCODE_RIGHT) == true ||
-            isKeyPressed(SDL_SCANCODE_D) == true )
+  else if ( isKeyPressed(SDL_SCANCODE_DOWN) == true ||
+            isKeyPressed(SDL_SCANCODE_S) == true )
   {
-    if ( *sliderValue < maxSliderValue )
-      ++*sliderValue;
+    if ( *sliderValue > 0 )
+      --*sliderValue;
   }
 
-  else if ( isKeyPressed(SDL_SCANCODE_UP) == true ||
-            isKeyPressed(SDL_SCANCODE_W) == true )
+  else if ( isKeyPressed(SDL_SCANCODE_RIGHT) == true ||
+            isKeyPressed(SDL_SCANCODE_D) == true )
   {
     if ( *sliderValue < maxSliderValue - 10 )
       *sliderValue += 10;
     else
       *sliderValue = maxSliderValue;
+  }
+
+  else if ( isKeyPressed(SDL_SCANCODE_UP) == true ||
+            isKeyPressed(SDL_SCANCODE_W) == true )
+  {
+    if ( *sliderValue < maxSliderValue )
+      ++*sliderValue;
   }
 }
 
