@@ -94,8 +94,9 @@ of the extracted assets like so:
 Linux port, matchmaking and AI would never come to life without [xion's](https://github.com/xxxxxion) help.
 Kudos to this person!
 
-Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) for upscaling the splash screen,
-making custom soundpacks and redrawing some of the sprites & frames.
+Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) 
+for his artistic help (upscaling the splash screen,
+making custom soundpacks & cozy Christmas theme, redrawing some of the sprites & frames, etc.).
 Not to mention countless hours of patient playtesting...
 
 
