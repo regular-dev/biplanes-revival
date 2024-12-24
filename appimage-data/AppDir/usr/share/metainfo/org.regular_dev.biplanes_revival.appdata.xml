@@ -65,6 +65,24 @@
   </provides>
 
   <releases>
+    <release version="1.2" type="stable" date="2024-12-24">
+      <description>
+        <p>New features:</p>
+        <ul>
+          <li>Added hotseat multiplayer mode</li>
+          <li>Support for background animation layer (e.g. snowfall)</li>
+        </ul>
+        <p>Fixes:</p>
+        <ul>
+          <li>Broken UI input fields</li>
+          <li>Audio volume reduction over time</li>
+          <li>Menu text offsets<li>
+        </ul>
+      </description>
+
+      <url>https://github.com/regular-dev/biplanes-revival/releases/tag/v1.2</url>
+    </release>
+
     <release version="1.1" type="stable" date="2024-04-14">
       <description>
         <p>5th-year anniversary release bringing AI and lots of little improvements</p>
