@@ -381,18 +381,6 @@ Plane::Pilot::FallUpdate()
   CoordinatesWrap();
 
   HitGroundCheck();
-
-  if ( plane->mIsBot == true || plane->mIsLocal == false )
-    return;
-
-
-  for ( auto& cloud : clouds )
-  {
-    if ( cloud.isHit( mX, mY ) == true )
-      cloud.setTransparent();
-    else
-      cloud.setOpaque();
-  }
 }
 
 void
@@ -572,13 +560,11 @@ Plane::Pilot::ChuteHitbox() const
 }
 
 void
-Plane::Pilot::FadeFallingSound(
-  const int channel )
+Plane::Pilot::FadeFallingSound()
 {
-  if ( Mix_Playing(channel) == true )
-    Mix_FadeOutChannel(
-      channel,
-      constants::audioFadeDuration );
+  Mix_FadeOutChannel(
+    mAudioLoopChannel,
+    constants::audioFadeDuration );
 }
 
 void
@@ -657,7 +643,7 @@ Plane::Pilot::ChuteHit(
 void
 Plane::Pilot::Death()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   panSound( playSound(sounds.pilotDeath), mX );
 
@@ -677,14 +663,14 @@ Plane::Pilot::Kill(
   Plane& killedBy )
 {
   Death();
-  killedBy.ScoreChange(2);
-
 
   if ( gameState().isRoundFinished == false )
   {
     plane->mStats.pilot_deaths++;
     killedBy.mStats.pilot_hits++;
   }
+
+  killedBy.ScoreChange(2);
 }
 
 void
@@ -727,7 +713,7 @@ Plane::Pilot::HitGroundCheck()
 void
 Plane::Pilot::FallSurvive()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   mY = constants::pilot::groundCollision;
 
@@ -757,7 +743,7 @@ Plane::Pilot::Rescue()
 void
 Plane::Pilot::Respawn()
 {
-  FadeFallingSound(mAudioLoopChannel);
+  FadeFallingSound();
 
   mIsRunning = false;
   mIsChuteOpen = false;
@@ -823,4 +809,20 @@ Plane::Pilot::ChuteIsHit(
   const auto chuteHitbox = ChuteHitbox();
 
   return SDL_PointInFRect(&hitPoint, &chuteHitbox);
+}
+
+bool
+Plane::Pilot::isInCloud(
+  const Cloud& cloud ) const
+{
+  if ( mIsDead == true || plane->mIsLocal == false )
+    return false;
+
+
+  if ( plane->mIsBot == true &&
+       gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+    return false;
+
+
+  return cloud.isHit(mX, mY);
 }

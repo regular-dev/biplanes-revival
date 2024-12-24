@@ -94,12 +94,12 @@ Plane::Draw() const
     scaleToScreenY(plane::sizeY),
   };
 
-  auto* planeTexture {textures.texture_plane_blue};
+  auto* planeTexture {textures.plane_blue};
   double textureAngle {mDir - 90.0};
 
   if ( mType == PLANE_TYPE::RED )
   {
-    planeTexture = textures.texture_plane_red;
+    planeTexture = textures.plane_red;
     textureAngle = mDir + 90.0;
   }
 
@@ -477,19 +477,6 @@ Plane::CollisionsUpdate()
     Crash();
     eventPush(EVENTS::PLANE_DEATH);
   }
-
-
-  if ( mHasJumped == true || mIsBot == true )
-    return;
-
-
-  for ( auto& cloud : clouds )
-  {
-    if ( cloud.isHit(mX, mY) == true )
-      cloud.setTransparent();
-    else
-      cloud.setOpaque();
-  }
 }
 
 // UPDATE ABANDONED PLANE
@@ -714,13 +701,13 @@ Plane::Hit(
     return;
 
 
-  attacker.ScoreChange(1);
-
   if ( gameState().isRoundFinished == false )
   {
     mStats.plane_deaths++;
     attacker.mStats.plane_kills++;
   }
+
+  attacker.ScoreChange(1);
 }
 
 // DIE
@@ -906,7 +893,16 @@ Plane::ScoreChange(
     else
     {
       playSound(sounds.victory);
-      menu.setMessage(MESSAGE_TYPE::GAME_WON);
+
+      if ( game.gameMode != GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT )
+        menu.setMessage(MESSAGE_TYPE::GAME_WON);
+      else
+      {
+        if ( mType == PLANE_TYPE::BLUE )
+          menu.setMessage(MESSAGE_TYPE::BLUE_SIDE_WON);
+        else
+          menu.setMessage(MESSAGE_TYPE::RED_SIDE_WON);
+      }
     }
   }
   else
@@ -923,7 +919,8 @@ Plane::ScoreChange(
 
   updateRecentStats();
 
-  if ( game.gameMode != GAME_MODE::BOT_VS_BOT )
+  if ( game.gameMode == GAME_MODE::HUMAN_VS_BOT ||
+       game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
     updateTotalStats();
 }
 
@@ -972,6 +969,26 @@ Plane::isHit(
     (SDL_Vector {x, y} - hitboxCenter).length();
 
   return distance <= constants::plane::hitboxRadius;
+}
+
+bool
+Plane::isInCloud(
+  const Cloud& cloud ) const
+{
+  if ( isDead() == true || mIsLocal == false )
+    return false;
+
+
+  if ( mHasJumped == true )
+    return pilot.isInCloud(cloud);
+
+
+  if ( mIsBot == true &&
+       gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+    return false;
+
+
+  return cloud.isHit(mX, mY);
 }
 
 PLANE_TYPE

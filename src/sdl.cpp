@@ -37,6 +37,8 @@ SDL_Event windowEvent {};
 static bool soundInitialized {};
 static bool vsyncEnabled {};
 
+static int globalAudioVolume {-1};
+
 
 bool
 SDL_init(
@@ -174,8 +176,9 @@ SDL_init(
 
     else
     {
+      Mix_AllocateChannels(16);
       Mix_ReserveChannels(2);
-      setSoundVolume(gameState().audioVolume);
+      setSoundVolume(gameState().audioVolume / 100.f);
       soundInitialized = true;
     }
 
@@ -338,7 +341,10 @@ loopSound(
     return Mix_PlayChannel(-1, sound, 0);
 
   if ( Mix_Playing(channel) == false )
+  {
+    Mix_Volume(channel, globalAudioVolume);
     return Mix_PlayChannel(channel, sound, 0);
+  }
 
   return channel;
 }
@@ -354,7 +360,8 @@ panSound(
   if ( Mix_Playing(channel) == false )
     return;
 
-  const auto panDepth = gameState().stereoDepth;
+  const float panDepth =
+    gameState().stereoDepth / 100.f;
 
   const uint8_t left = 255 - 255 * pan * panDepth;
   const uint8_t right = 255 - 255 * (1.0f - pan) * panDepth;
@@ -376,14 +383,15 @@ void
 setSoundVolume(
   const float normalizedVolume )
 {
-  const double newVolume = std::pow(
+  globalAudioVolume = std::pow(
     normalizedVolume, 0.5 * M_E ) * MIX_MAX_VOLUME;
 
 #if SDL_MIXER_VERSION_ATLEAST(2, 6, 0)
-  Mix_MasterVolume(newVolume);
+  Mix_MasterVolume(globalAudioVolume);
+  globalAudioVolume = MIX_MAX_VOLUME;
 #else
   Mix_HaltChannel(-1);
-  Mix_Volume(-1, newVolume);
+  Mix_Volume(-1, globalAudioVolume);
 #endif
 }
 

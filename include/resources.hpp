@@ -22,4 +22,6 @@
 
 
 void textures_load();
+void textures_unload();
 void sounds_load();
+void sounds_unload();

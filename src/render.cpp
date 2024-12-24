@@ -110,7 +110,6 @@ draw_background()
   setRenderColor(colors::background);
   SDL_RenderClear(gRenderer);
 
-
   const SDL_FRect backgroundRect
   {
     toWindowSpaceX(0.0f),
@@ -121,9 +120,33 @@ draw_background()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_background,
+    textures.background,
     nullptr,
     &backgroundRect );
+
+
+  static size_t bgAnimFrame {};
+
+  if ( textures.anim_background != nullptr &&
+       textures.anim_background[bgAnimFrame] != nullptr )
+    SDL_RenderCopyF(
+      gRenderer,
+      textures.anim_background[bgAnimFrame],
+      nullptr,
+      &backgroundRect );
+
+
+  static Timer bgAnimation {constants::backgroundAnimationFrameTime};
+
+  bgAnimation.Update();
+
+  if ( bgAnimation.isReady() == true )
+  {
+    bgAnimation.Start();
+
+    if ( ++bgAnimFrame >= textures.anim_background_frame_count )
+      bgAnimFrame = 0;
+  }
 }
 
 void
@@ -177,7 +200,7 @@ draw_barn()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_barn,
+    textures.barn,
     nullptr,
     &barnRect );
 }
@@ -220,14 +243,32 @@ draw_barn_collision_layer()
 void
 draw_score()
 {
+  const auto maxWinScoreTextLength =
+    std::to_string(constants::maxWinScore).size();
+
+
   const auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   const auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  const auto text =
-    std::to_string(planeBlue.score()) + "-" +
+  auto textBlueScore =
+    std::to_string(planeBlue.score());
+
+  auto textRedScore =
     std::to_string(planeRed.score());
 
-  draw_text( text, 0.45f, 0.5f );
+  while ( textBlueScore.size() < maxWinScoreTextLength )
+    textBlueScore.insert(textBlueScore.begin(), ' ');
+
+  while ( textRedScore.size() < maxWinScoreTextLength )
+    textRedScore.push_back(' ');
+
+  const auto text =
+    textBlueScore + "-" + textRedScore;
+
+  const auto textOffset =
+    0.5f - constants::text::sizeX * text.size() / 2.f;
+
+  draw_text( text, textOffset, 0.5f );
 }
 
 void

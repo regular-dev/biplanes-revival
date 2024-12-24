@@ -104,7 +104,7 @@ Menu::screen_sp_setup()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true
@@ -118,10 +118,13 @@ Menu::screen_sp_setup()
     features.alternativeHitboxes == true
     ? "On" : "Off";
 
+  const auto winScoreText = std::to_string(gameState().winScore);
+
+
   draw_text( "SETUP GAME    ",    0.025f, 0.2855f );
   draw_text( "Start Game    ",    0.040f, 0.2855f + 0.0721f );
   draw_text( "Score to win: ",    0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputScoreToWin,    0.550f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( winScoreText,        0.550f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( extraClouds,         0.550f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );

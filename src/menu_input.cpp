@@ -51,7 +51,24 @@ Menu::UpdateControls()
 
 
   if ( mIsTyping == true )
+  {
     UpdateTyping();
+
+    if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )
+      Select();
+
+    return;
+  }
+
+  else if ( mIsEditingSlider == true )
+  {
+    UpdateSliderEditing();
+
+    if ( isKeyPressed(SDL_SCANCODE_RETURN) == true )
+      Select();
+
+    return;
+  }
 
   else if ( mIsDefiningKey == true )
     return UpdateDefiningKey();
@@ -60,16 +77,16 @@ Menu::UpdateControls()
   {
     auto& game = gameState();
 
-    if (  isKeyPressed(SDL_SCANCODE_DOWN) ||
+    if (  isKeyPressed(SDL_SCANCODE_DOWN) == true ||
           isKeyPressed(SDL_SCANCODE_S) == true )
       MenuItemNext();
 
-    else if ( isKeyPressed(SDL_SCANCODE_UP) ||
+    else if ( isKeyPressed(SDL_SCANCODE_UP) == true ||
               isKeyPressed(SDL_SCANCODE_W) == true )
       MenuItemPrevious();
 
-    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) ||
-              isKeyPressed(SDL_SCANCODE_LEFT) ||
+    else if ( isKeyPressed(SDL_SCANCODE_ESCAPE) == true ||
+              isKeyPressed(SDL_SCANCODE_LEFT) == true ||
               isKeyPressed(SDL_SCANCODE_A) == true )
       GoBack();
 
@@ -89,8 +106,8 @@ Menu::UpdateControls()
     }
   }
 
-  if (  isKeyPressed(SDL_SCANCODE_RETURN) ||
-        isKeyPressed(SDL_SCANCODE_RIGHT) ||
+  if (  isKeyPressed(SDL_SCANCODE_RETURN) == true ||
+        isKeyPressed(SDL_SCANCODE_RIGHT) == true ||
         isKeyPressed(SDL_SCANCODE_D) == true )
     Select();
 }
@@ -114,6 +131,7 @@ Menu::EndTyping(
   mIsTyping = false;
   mSpecifyingVarState[varToSpecify] = false;
   SDL_StopTextInput();
+
 
   switch (varToSpecify)
   {
@@ -165,51 +183,6 @@ Menu::EndTyping(
       break;
     }
 
-    case MENU_SPECIFY::WIN_SCORE:
-    {
-      const auto defaultWinScore = constants::defaultWinScore;
-
-      if ( mInputScoreToWin.empty() == true )
-        mInputScoreToWin = defaultWinScore;
-
-
-      if ( checkScoreToWin(mInputScoreToWin) == true )
-        gameState().winScore = std::stoi(mInputScoreToWin);
-      else
-      {
-        gameState().winScore = defaultWinScore;
-        mInputScoreToWin = std::to_string(defaultWinScore);
-      }
-
-      break;
-    }
-
-    case MENU_SPECIFY::AUDIO_VOLUME:
-    {
-      if ( checkPercentage(mInputAudioVolume) == true )
-        gameState().audioVolume =
-          std::stoi(mInputAudioVolume) / 100.f;
-
-      else
-        mInputAudioVolume = std::to_string(
-          percentageToInteger(gameState().audioVolume) );
-
-      setSoundVolume(gameState().audioVolume);
-    }
-
-    case MENU_SPECIFY::STEREO_DEPTH:
-    {
-      if ( checkPercentage(mInputStereoDepth) == true )
-        gameState().stereoDepth =
-          std::stoi(mInputStereoDepth) / 100.f;
-
-      else
-        mInputStereoDepth = std::to_string(
-          percentageToInteger(gameState().stereoDepth) );
-
-      break;
-    }
-
     default:
       break;
   }
@@ -220,7 +193,8 @@ Menu::EndTyping(
 void
 Menu::UpdateTyping()
 {
-  SDL_StartTextInput();
+  const auto maxInputFieldTextLength = constants::menu::maxInputFieldTextLength;
+
 
   if ( mSpecifyingVarState[MENU_SPECIFY::IP] == true )
   {
@@ -239,17 +213,14 @@ Menu::UpdateTyping()
 
     if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
+      if ( mInputIp.length() < maxInputFieldTextLength )
       {
-        if ( mInputIp.length() < 15 )
-          mInputIp += windowEvent.text.text;
+        for ( const auto& digit : windowEvent.text.text )
+          if ( std::isdigit(digit) == true || digit == '.' )
+            mInputIp += digit;
+          else
+            break;
       }
-
-      SDL_StopTextInput();
     }
 
     return;
@@ -279,14 +250,13 @@ Menu::UpdateTyping()
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
+      if ( inputPort.length() < 5 )
       {
-        if ( inputPort.length() < 5 )
-          inputPort += windowEvent.text.text;
+        for ( const auto& digit : windowEvent.text.text )
+          if ( std::isdigit(digit) == true )
+            inputPort += digit;
+          else
+            break;
       }
     }
 
@@ -315,68 +285,111 @@ Menu::UpdateTyping()
 
     else if ( windowEvent.type == SDL_TEXTINPUT )
     {
-      if ( (  ( windowEvent.text.text[0] == 'c' ||
-                windowEvent.text.text[0] == 'C') &&
-              ( windowEvent.text.text[0] == 'v' ||
-                windowEvent.text.text[0] == 'V' ) &&
-              SDL_GetModState() & KMOD_CTRL ) == false )
-      {
-        if (  mInputPassword.length() < 15 &&
-              checkPass( {windowEvent.text.text} ) == false )
-          mInputPassword += windowEvent.text.text;
-      }
+      if (  mInputPassword.length() < maxInputFieldTextLength &&
+            checkPass( {windowEvent.text.text} ) == true )
+        mInputPassword += windowEvent.text.text;
     }
+
+    return;
   }
+}
+
+void
+Menu::ToggleSliderEditing( const MENU_SPECIFY varToSpecify )
+{
+  if ( mIsEditingSlider == true )
+    return EndSliderEditing(varToSpecify);
+
+  mIsEditingSlider = true;
+  mSpecifyingVarState[varToSpecify] = true;
+}
+
+void
+Menu::EndSliderEditing(
+  const MENU_SPECIFY varToSpecify )
+{
+  mIsEditingSlider = false;
+  mSpecifyingVarState[varToSpecify] = false;
+
+
+  switch (varToSpecify)
+  {
+    case MENU_SPECIFY::WIN_SCORE:
+    {
+      break;
+    }
+
+    case MENU_SPECIFY::AUDIO_VOLUME:
+    {
+      setSoundVolume(gameState().audioVolume / 100.f);
+      break;
+    }
+
+    case MENU_SPECIFY::STEREO_DEPTH:
+    {
+      break;
+    }
+
+    default:
+      break;
+  }
+
+
+  settingsWrite();
+}
+
+void
+Menu::UpdateSliderEditing()
+{
+  uint8_t* sliderValue {};
 
   if ( mSpecifyingVarState[MENU_SPECIFY::WIN_SCORE] == true )
-  {
-    if ( windowEvent.type == SDL_KEYDOWN )
-    {
-      if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputScoreToWin.length() > 0 )
-        mInputScoreToWin.pop_back();
-    }
+    sliderValue = &gameState().winScore;
 
-    else if ( windowEvent.type == SDL_TEXTINPUT )
-    {
-      if ( mInputScoreToWin.length() < 3 )
-        mInputScoreToWin += windowEvent.text.text;
-    }
+  else if ( mSpecifyingVarState[MENU_SPECIFY::AUDIO_VOLUME] == true )
+    sliderValue = &gameState().audioVolume;
 
+  else if ( mSpecifyingVarState[MENU_SPECIFY::STEREO_DEPTH] == true )
+    sliderValue = &gameState().stereoDepth;
+
+
+  if ( sliderValue == nullptr )
     return;
+
+
+  const uint8_t maxSliderValue = 100;
+
+
+  if ( isKeyPressed(SDL_SCANCODE_LEFT) == true ||
+       isKeyPressed(SDL_SCANCODE_A) == true )
+  {
+    if ( *sliderValue >= 10 )
+      *sliderValue -= 10;
+    else
+      *sliderValue = 0;
   }
 
-  if ( mSpecifyingVarState[MENU_SPECIFY::AUDIO_VOLUME] == true )
+  else if ( isKeyPressed(SDL_SCANCODE_DOWN) == true ||
+            isKeyPressed(SDL_SCANCODE_S) == true )
   {
-    if ( windowEvent.type == SDL_KEYDOWN )
-    {
-      if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputAudioVolume.length() > 0 )
-        mInputAudioVolume.pop_back();
-    }
-
-    else if ( windowEvent.type == SDL_TEXTINPUT )
-    {
-      if ( mInputAudioVolume.length() < 3 )
-        mInputAudioVolume += windowEvent.text.text;
-    }
-
-    return;
+    if ( *sliderValue > 0 )
+      --*sliderValue;
   }
 
-  if ( mSpecifyingVarState[MENU_SPECIFY::STEREO_DEPTH] == true )
+  else if ( isKeyPressed(SDL_SCANCODE_RIGHT) == true ||
+            isKeyPressed(SDL_SCANCODE_D) == true )
   {
-    if ( windowEvent.type == SDL_KEYDOWN )
-    {
-      if ( windowEvent.key.keysym.sym == SDLK_BACKSPACE && mInputStereoDepth.length() > 0 )
-        mInputStereoDepth.pop_back();
-    }
+    if ( *sliderValue < maxSliderValue - 10 )
+      *sliderValue += 10;
+    else
+      *sliderValue = maxSliderValue;
+  }
 
-    else if ( windowEvent.type == SDL_TEXTINPUT )
-    {
-      if ( mInputStereoDepth.length() < 3 )
-        mInputStereoDepth += windowEvent.text.text;
-    }
-
-    return;
+  else if ( isKeyPressed(SDL_SCANCODE_UP) == true ||
+            isKeyPressed(SDL_SCANCODE_W) == true )
+  {
+    if ( *sliderValue < maxSliderValue )
+      ++*sliderValue;
   }
 }
 
@@ -407,43 +420,49 @@ Menu::UpdateDefiningKey()
   if (  windowEvent.type == SDL_KEYDOWN &&
         windowEvent.key.repeat == 0 )
   {
+    auto& playerBindings =
+      mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+        ? bindings::player1
+        : bindings::player2;
+
+
     const auto newKey = windowEvent.key.keysym.scancode;
 
     switch (mKeyToDefine)
     {
       case MENU_SETTINGS_CONTROLS::ACCELERATE:
       {
-        assignKeyBinding(THROTTLE_UP, newKey);
+        assignKeyBinding(playerBindings.throttleUp, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::DECELERATE:
       {
-        assignKeyBinding(THROTTLE_DOWN, newKey);
+        assignKeyBinding(playerBindings.throttleDown, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::LEFT:
       {
-        assignKeyBinding(TURN_LEFT, newKey);
+        assignKeyBinding(playerBindings.turnLeft, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::RIGHT:
       {
-        assignKeyBinding(TURN_RIGHT, newKey);
+        assignKeyBinding(playerBindings.turnRight, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::SHOOT:
       {
-        assignKeyBinding(FIRE, newKey);
+        assignKeyBinding(playerBindings.fire, newKey);
         break;
       }
 
       case MENU_SETTINGS_CONTROLS::EJECT:
       {
-        assignKeyBinding(JUMP, newKey);
+        assignKeyBinding(playerBindings.jump, newKey);
         break;
       }
 
@@ -453,53 +472,81 @@ Menu::UpdateDefiningKey()
 
     mIsDefiningKey = false;
     SDL_FlushEvent(SDL_KEYDOWN);
-
-    return;
   }
 }
 
 void
 Menu::ResetKey()
 {
-  if ( mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS )
+  if ( mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1 &&
+       mCurrentRoom != ROOMS::MENU_SETTINGS_CONTROLS_PLAYER2 )
     return;
+
+
+  auto& playerBindings =
+    mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+      ? bindings::player1
+      : bindings::player2;
+
+  const auto defaultBindings =
+    mCurrentRoom == ROOMS::MENU_SETTINGS_CONTROLS_PLAYER1
+      ? bindings::defaults::player1
+      : bindings::defaults::player2;
 
 
   switch (mSelectedItem)
   {
     case MENU_SETTINGS_CONTROLS::ACCELERATE:
     {
-      assignKeyBinding(THROTTLE_UP, DEFAULT_THROTTLE_UP);
+      assignKeyBinding(
+        playerBindings.throttleUp,
+        defaultBindings.throttleUp );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::DECELERATE:
     {
-      assignKeyBinding(THROTTLE_DOWN, DEFAULT_THROTTLE_DOWN);
+      assignKeyBinding(
+        playerBindings.throttleDown,
+        defaultBindings.throttleDown );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::LEFT:
     {
-      assignKeyBinding(TURN_LEFT, DEFAULT_TURN_LEFT);
+      assignKeyBinding(
+        playerBindings.turnLeft,
+        defaultBindings.turnLeft );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::RIGHT:
     {
-      assignKeyBinding(TURN_RIGHT, DEFAULT_TURN_RIGHT);
+      assignKeyBinding(
+        playerBindings.turnRight,
+        defaultBindings.turnRight );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::SHOOT:
     {
-      assignKeyBinding(FIRE, DEFAULT_FIRE);
+      assignKeyBinding(
+        playerBindings.fire,
+        defaultBindings.fire );
+
       break;
     }
 
     case MENU_SETTINGS_CONTROLS::EJECT:
     {
-      assignKeyBinding(JUMP, DEFAULT_JUMP);
+      assignKeyBinding(
+        playerBindings.jump,
+        defaultBindings.jump );
+
       break;
     }
 

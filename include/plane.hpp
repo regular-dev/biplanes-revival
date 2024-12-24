@@ -138,6 +138,7 @@ public:
   SDL_FPoint bulletSpawnOffset() const;
 
   bool isHit( const float, const float ) const;
+  bool isInCloud( const Cloud& ) const;
   bool isDead() const;
   bool hasJumped() const;
 
@@ -241,7 +242,7 @@ public:
     SDL_FRect ChuteHitbox() const;
 
     void PlayFallingSound();
-    void FadeFallingSound( const int channel );
+    void FadeFallingSound();
 
     void Bail( const float planeX, const float planeY, const float bailDir );
     void ChuteHit( Plane& attacker );
@@ -259,6 +260,7 @@ public:
 
     bool isHit( const float, const float ) const;
     bool ChuteIsHit( const float, const float ) const;
+    bool isInCloud( const Cloud& ) const;
 
     float x() const;
     float y() const;

@@ -30,6 +30,7 @@ namespace constants
   static constexpr uint32_t tickRate {120};
   static constexpr uint32_t packetSendRate {60};
   static constexpr uint8_t defaultWinScore {10};
+  static constexpr uint8_t maxWinScore {100};
 
 
   static constexpr float baseWidth {256.f};
@@ -37,6 +38,8 @@ namespace constants
   static constexpr float aspectRatio {baseWidth / baseHeight};
 
   static constexpr int audioFadeDuration {500}; // milliseconds
+
+  static constexpr float backgroundAnimationFrameTime {0.08f};
 
 
   namespace colors
@@ -106,6 +109,8 @@ namespace constants
 
     static constexpr double introAutoSkipTimeout {3.0};
     static constexpr double connectedMessageTimeout {3.0};
+
+    static constexpr size_t maxInputFieldTextLength {15};
 
     namespace header
     {

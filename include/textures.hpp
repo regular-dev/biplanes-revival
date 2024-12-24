@@ -33,14 +33,14 @@ struct Textures
 
   SDL_Texture* font_zeppelin_score {};
 
-  SDL_Texture* texture_background {};
-  SDL_Texture* texture_barn {};
-  SDL_Texture* texture_plane_red {};
-  SDL_Texture* texture_plane_blue {};
-  SDL_Texture* texture_bullet {};
-  SDL_Texture* texture_cloud {};
-  SDL_Texture* texture_cloud_opaque {};
-  SDL_Texture* texture_zeppelin {};
+  SDL_Texture* background {};
+  SDL_Texture* barn {};
+  SDL_Texture* plane_red {};
+  SDL_Texture* plane_blue {};
+  SDL_Texture* bullet {};
+  SDL_Texture* cloud {};
+  SDL_Texture* cloud_opaque {};
+  SDL_Texture* zeppelin {};
 
   SDL_Texture* anim_smk {};
   SDL_Rect anim_smk_rect[6] {};
@@ -65,6 +65,9 @@ struct Textures
 
   SDL_Rect font_rect[95] {};
   SDL_Rect zeppelin_score_rect[20] {};
+
+  SDL_Texture** anim_background {};
+  size_t anim_background_frame_count {};
 
 
   Textures() = default;

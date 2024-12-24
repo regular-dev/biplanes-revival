@@ -41,6 +41,7 @@ class Timer;
 
 struct Color;
 struct Controls;
+struct KeyBindings;
 struct Sizes;
 struct Sounds;
 struct Statistics;

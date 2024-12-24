@@ -94,8 +94,9 @@ of the extracted assets like so:
 Linux port, matchmaking and AI would never come to life without [xion's](https://github.com/xxxxxion) help.
 Kudos to this person!
 
-Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) for upscaling the splash screen,
-making custom soundpacks and redrawing some of the sprites & frames.
+Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig) 
+for his artistic help (upscaling the splash screen,
+making custom soundpacks & cozy Christmas theme, redrawing some of the sprites & frames, etc.).
 Not to mention countless hours of patient playtesting...
 
 
@@ -129,8 +130,11 @@ cmake --build .
 MacBooks for runtime testing unfortunately,
 so feel free to report any issues (or successes)
 
+It's [confirmed](https://github.com/regular-dev/biplanes-revival/issues/2#issuecomment-2501199862) the game works on macOS 12.
+
 ```bash
 brew install git gcc cmake
+brew install jpeg-xl
 brew install sdl2 sdl2_image sdl2_mixer
 git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
 cd biplanes-revival

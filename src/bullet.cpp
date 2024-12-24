@@ -158,7 +158,7 @@ Bullet::Draw() const
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_bullet,
+    textures.bullet,
     nullptr,
     &bulletRect );
 }

@@ -230,6 +230,10 @@ main(
   if ( gameState().output.stats == true )
     stats_write();
 
+  stopSound(-1);
+  sounds_unload();
+  textures_unload();
+
   SDL_close();
 
   return 0;
@@ -384,16 +388,39 @@ game_loop_sp()
   auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
   auto& planeRed = planes.at(PLANE_TYPE::RED);
 
-  const auto playerPlane =
-    planeBlue.isBot() == false
-    ? &planeBlue
-    : planeRed.isBot() == false
-      ? &planeRed
-      : nullptr;
+  switch (game.gameMode)
+  {
+    case GAME_MODE::HUMAN_VS_BOT:
+    {
+      const auto playerPlane =
+        planeBlue.isBot() == false
+        ? &planeBlue
+        : planeRed.isBot() == false
+          ? &planeRed
+          : nullptr;
 
 
-  if ( playerPlane != nullptr )
-    processPlaneControls(*playerPlane, getLocalControls());
+      if ( playerPlane != nullptr )
+        processPlaneControls(
+          *playerPlane, getLocalControls() );
+
+      break;
+    }
+
+    case GAME_MODE::HUMAN_VS_HUMAN_HOTSEAT:
+    {
+      processPlaneControls(
+        planeBlue, getLocalControls(bindings::player2) );
+
+      processPlaneControls(
+        planeRed, getLocalControls(bindings::player1) );
+
+      break;
+    }
+
+    default:
+      break;
+  }
 
   aiController.update();
 
@@ -629,7 +656,15 @@ draw_game()
   effects.Draw();
 
   for ( auto& cloud : clouds )
+  {
+    cloud.setOpaque();
+
+    if ( playerPlane.isInCloud(cloud) == true ||
+         opponentPlane.isInCloud(cloud) == true )
+      cloud.setTransparent();
+
     cloud.Draw();
+  }
 
 
   if ( networkState().isOpponentConnected == true )

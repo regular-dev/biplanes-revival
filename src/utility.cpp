@@ -20,6 +20,7 @@
 
 #include <include/utility.hpp>
 #include <include/sdl.hpp>
+#include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/controls.hpp>
 #include <include/stats.hpp>
@@ -150,9 +151,9 @@ settingsWrite()
   }
 
   picojson::object jsonAutoFill;
-  jsonAutoFill["ExtraClouds"]     = picojson::value( game.features.extraClouds );
-  jsonAutoFill["OneShotKills"]    = picojson::value( game.features.oneShotKills );
-  jsonAutoFill["AltHitboxes"]     = picojson::value( game.features.alternativeHitboxes );
+  jsonAutoFill["ExtraClouds"]     = picojson::value( game.featuresLocal.extraClouds );
+  jsonAutoFill["OneShotKills"]    = picojson::value( game.featuresLocal.oneShotKills );
+  jsonAutoFill["AltHitboxes"]     = picojson::value( game.featuresLocal.alternativeHitboxes );
 
   jsonAutoFill["LOCAL_PORT"]      = picojson::value( (double) LOCAL_PORT );
   jsonAutoFill["REMOTE_PORT"]     = picojson::value( (double) REMOTE_PORT );
@@ -163,16 +164,23 @@ settingsWrite()
   jsonConfig["AutoSkipIntro"]     = picojson::value( game.autoSkipIntro );
   jsonConfig["EnableAudio"]       = picojson::value( game.isAudioEnabled );
   jsonConfig["EnableVSync"]       = picojson::value( game.isVSyncEnabled );
-  jsonConfig["AudioVolume"]       = picojson::value( game.audioVolume );
-  jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth );
+  jsonConfig["AudioVolume"]       = picojson::value( game.audioVolume / 100. );
+  jsonConfig["StereoDepth"]       = picojson::value( game.stereoDepth / 100. );
 
   picojson::object jsonControls;
-  jsonControls["FIRE"]            = picojson::value( (double) FIRE );
-  jsonControls["JUMP"]            = picojson::value( (double) JUMP );
-  jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) THROTTLE_DOWN );
-  jsonControls["THROTTLE_UP"]     = picojson::value( (double) THROTTLE_UP );
-  jsonControls["TURN_LEFT"]       = picojson::value( (double) TURN_LEFT );
-  jsonControls["TURN_RIGHT"]      = picojson::value( (double) TURN_RIGHT );
+  jsonControls["FIRE"]            = picojson::value( (double) bindings::player1.fire );
+  jsonControls["JUMP"]            = picojson::value( (double) bindings::player1.jump );
+  jsonControls["THROTTLE_DOWN"]   = picojson::value( (double) bindings::player1.throttleDown );
+  jsonControls["THROTTLE_UP"]     = picojson::value( (double) bindings::player1.throttleUp );
+  jsonControls["TURN_LEFT"]       = picojson::value( (double) bindings::player1.turnLeft );
+  jsonControls["TURN_RIGHT"]      = picojson::value( (double) bindings::player1.turnRight );
+
+  jsonControls["FIRE_P2"]            = picojson::value( (double) bindings::player2.fire );
+  jsonControls["JUMP_P2"]            = picojson::value( (double) bindings::player2.jump );
+  jsonControls["THROTTLE_DOWN_P2"]   = picojson::value( (double) bindings::player2.throttleDown );
+  jsonControls["THROTTLE_UP_P2"]     = picojson::value( (double) bindings::player2.throttleUp );
+  jsonControls["TURN_LEFT_P2"]       = picojson::value( (double) bindings::player2.turnLeft );
+  jsonControls["TURN_RIGHT_P2"]      = picojson::value( (double) bindings::player2.turnRight );
 
   picojson::object jsonUtility;
   jsonUtility["LogToConsole"]     = picojson::value( game.output.toConsole );
@@ -220,13 +228,13 @@ settingsParse(
   {
     auto& jsonAutoFill = jsonValue["AutoFill"].get <picojson::object> ();
 
-    try { game.features.extraClouds = jsonAutoFill.at( "ExtraClouds" ).get <bool> (); }
+    try { game.featuresLocal.extraClouds = jsonAutoFill.at( "ExtraClouds" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.features.oneShotKills = jsonAutoFill.at( "OneShotKills" ).get <bool> (); }
+    try { game.featuresLocal.oneShotKills = jsonAutoFill.at( "OneShotKills" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.features.alternativeHitboxes = jsonAutoFill.at( "AltHitboxes" ).get <bool> (); }
+    try { game.featuresLocal.alternativeHitboxes = jsonAutoFill.at( "AltHitboxes" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
     try { LOCAL_PORT = jsonAutoFill.at( "LOCAL_PORT" ).get <double> (); }
@@ -244,6 +252,7 @@ settingsParse(
     try { SERVER_IP = jsonAutoFill.at( "SERVER_IP" ).get <std::string> (); }
     catch ( const std::exception& ) {};
 
+
     if ( checkIp(SERVER_IP).empty() == true )
       SERVER_IP = DEFAULT_SERVER_IP;
 
@@ -257,6 +266,10 @@ settingsParse(
 
   try
   {
+    double audioVolume {};
+    double stereoDepth {};
+
+
     auto& jsonConfig = jsonValue["Config"].get <picojson::object> ();
 
     try { game.autoSkipIntro = jsonConfig.at( "AutoSkipIntro" ).get <bool> (); }
@@ -268,14 +281,18 @@ settingsParse(
     try { game.isVSyncEnabled = jsonConfig.at( "EnableVSync" ).get <bool> (); }
     catch ( const std::exception& ) {};
 
-    try { game.audioVolume = jsonConfig.at( "AudioVolume" ).get <double> (); }
-    catch ( const std::exception& ) {};
+    try { audioVolume = jsonConfig.at( "AudioVolume" ).get <double> (); }
+    catch ( const std::exception& ) { audioVolume = game.audioVolume / 100.; };
 
-    try { game.stereoDepth = jsonConfig.at( "StereoDepth" ).get <double> (); }
-    catch ( const std::exception& ) {};
+    try { stereoDepth = jsonConfig.at( "StereoDepth" ).get <double> (); }
+    catch ( const std::exception& ) { stereoDepth = game.stereoDepth / 100.; };
 
-    game.stereoDepth = std::clamp(game.stereoDepth, 0.f, 1.f);
-    game.audioVolume = std::clamp(game.audioVolume, 0.f, 1.f);
+
+    if ( audioVolume >= 0.0 && audioVolume <= 1.0 )
+      game.audioVolume = fractionToPercentage(audioVolume);
+
+    if ( stereoDepth >= 0.0 && stereoDepth <= 1.0 )
+      game.stereoDepth = fractionToPercentage(stereoDepth);
   }
   catch ( const std::exception& ) {};
 
@@ -283,42 +300,46 @@ settingsParse(
   {
     auto& jsonControls = jsonValue["Controls"].get <picojson::object> ();
 
-    try { FIRE = (SDL_Scancode) jsonControls.at( "FIRE" ).get <double> (); }
+    try { bindings::player1.fire = (SDL_Scancode) jsonControls.at( "FIRE" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { JUMP = (SDL_Scancode) jsonControls.at( "JUMP" ).get <double> (); }
+    try { bindings::player1.jump = (SDL_Scancode) jsonControls.at( "JUMP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_DOWN = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
+    try { bindings::player1.throttleDown = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { THROTTLE_UP = (SDL_Scancode) jsonControls.at( "THROTTLE_UP" ).get <double> (); }
+    try { bindings::player1.throttleUp = (SDL_Scancode) jsonControls.at( "THROTTLE_UP" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_LEFT = (SDL_Scancode) jsonControls.at( "TURN_LEFT" ).get <double> (); }
+    try { bindings::player1.turnLeft = (SDL_Scancode) jsonControls.at( "TURN_LEFT" ).get <double> (); }
     catch ( const std::exception& ) {};
 
-    try { TURN_RIGHT = (SDL_Scancode) jsonControls.at( "TURN_RIGHT" ).get <double> (); }
+    try { bindings::player1.turnRight = (SDL_Scancode) jsonControls.at( "TURN_RIGHT" ).get <double> (); }
     catch ( const std::exception& ) {};
 
 
-    if ( FIRE >= SDL_NUM_SCANCODES )
-      FIRE = DEFAULT_FIRE;
+    try { bindings::player2.fire = (SDL_Scancode) jsonControls.at( "FIRE_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( JUMP >= SDL_NUM_SCANCODES )
-      JUMP = DEFAULT_JUMP;
+    try { bindings::player2.jump = (SDL_Scancode) jsonControls.at( "JUMP_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( THROTTLE_DOWN >= SDL_NUM_SCANCODES )
-      THROTTLE_DOWN = DEFAULT_THROTTLE_DOWN;
+    try { bindings::player2.throttleDown = (SDL_Scancode) jsonControls.at( "THROTTLE_DOWN_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( THROTTLE_UP >= SDL_NUM_SCANCODES )
-      THROTTLE_UP = DEFAULT_THROTTLE_UP;
+    try { bindings::player2.throttleUp = (SDL_Scancode) jsonControls.at( "THROTTLE_UP_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( TURN_LEFT >= SDL_NUM_SCANCODES )
-      TURN_LEFT = DEFAULT_TURN_LEFT;
+    try { bindings::player2.turnLeft = (SDL_Scancode) jsonControls.at( "TURN_LEFT_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
 
-    if ( TURN_RIGHT >= SDL_NUM_SCANCODES )
-      TURN_RIGHT = DEFAULT_TURN_RIGHT;
+    try { bindings::player2.turnRight = (SDL_Scancode) jsonControls.at( "TURN_RIGHT_P2" ).get <double> (); }
+    catch ( const std::exception& ) {};
+
+
+    bindings::player1.verifyAndFix(bindings::defaults::player1);
+    bindings::player2.verifyAndFix(bindings::defaults::player2);
   }
   catch ( const std::exception& ) {};
 
@@ -603,7 +624,8 @@ std::string
 checkIp(
   const std::string& ipAddress )
 {
-  if ( ipAddress.length() == 0 || ipAddress.length() > 15 )
+  if ( ipAddress.length() == 0 ||
+       ipAddress.length() > constants::menu::maxInputFieldTextLength )
     return {};
 
   std::stringstream stream {ipAddress};
@@ -655,7 +677,7 @@ checkPass(
   if ( password.length() == 0 )
     return true;
 
-  if ( password.length() > 15 )
+  if ( password.length() > constants::menu::maxInputFieldTextLength )
     return false;
 
 
@@ -680,7 +702,10 @@ bool
 checkScoreToWin(
   const std::string& score )
 {
-  if ( score.length() > 3 )
+  const auto maxWinScoreTextLength =
+    std::to_string(constants::maxWinScore).size();
+
+  if ( score.length() > maxWinScoreTextLength )
     return false;
 
   for ( const auto& digit : score )
@@ -688,11 +713,10 @@ checkScoreToWin(
       return false;
 
   const auto scoreNum = std::stoi(score);
-  const auto maxScore = std::numeric_limits <uint8_t>::max();
 
   return
     scoreNum >= 0 &&
-    scoreNum <= maxScore;
+    scoreNum <= constants::maxWinScore;
 }
 
 bool
@@ -714,9 +738,9 @@ checkPercentage(
 }
 
 size_t
-percentageToInteger(
-  const float percentage )
+fractionToPercentage(
+  const double fraction )
 {
   return std::round(
-    std::clamp(percentage * 100.f, 0.f, 100.f) );
+    std::clamp(fraction * 100., 0., 100.) );
 }

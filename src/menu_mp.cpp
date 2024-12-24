@@ -45,14 +45,32 @@ Menu::screen_mp()
   draw_text( "TWO PLAYER GAME", 0.250f, 0.2855f );
   draw_text( "Matchmaking    ", 0.255f, 0.2855f + 0.0721f );
   draw_text( "Direct Connect ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( "Help           ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( "Back           ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Hotseat match  ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "Help           ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Back           ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+
+
+  switch (mSelectedItem)
+  {
+    case MENU_MP::HOTSEAT:
+    {
+      draw_text( "   You'd better connect      ", 0.005f, 0.65f );
+      draw_text( "       a second keyboard!    ", 0.005f, 0.7f );
+
+      break;
+    }
+
+    default:
+      break;
+  }
 }
 
 void
 Menu::screen_mp_mmake()
 {
   namespace button = constants::menu::button;
+  namespace menu = constants::menu;
+  namespace text = constants::text;
 
 
   setRenderColor(constants::colors::background);
@@ -65,7 +83,7 @@ Menu::screen_mp_mmake()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true
@@ -80,23 +98,26 @@ Menu::screen_mp_mmake()
     ? "On" : "Off";
 
 
+  const auto valueOffset =
+    1.f - menu::border::thicknessX - text::sizeX * menu::maxInputFieldTextLength;
+
   draw_text( "MATCHMAKING   ",    0.025f, 0.2855f );
   draw_text( "Find Game     ",    0.040f, 0.2855f + 0.0721f );
   draw_text( "Password:     ",    0.040f, 0.2855f + 0.0721f + button::sizeY );
-  draw_text( mInputPassword,      0.500f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( mInputPassword,      valueOffset, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Extra clouds: ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
-  draw_text( extraClouds,         0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,         valueOffset, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "One-shot kills: ",  0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
-  draw_text( oneShotKills,        0.500f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,        valueOffset, 0.2855f + 0.0721f + button::sizeY * 3.f );
   draw_text( "Alt. hitboxes: ",   0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
-  draw_text( altHitboxes,         0.500f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,         valueOffset, 0.2855f + 0.0721f + button::sizeY * 4.f );
   draw_text( "Back          ",    0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
 
 
   if ( isSpecifyingVar(MENU_SPECIFY::PASSWORD) == true )
   {
-    draw_text( "Press [RETURN] to finish", 0.25f, 0.6f );
-    draw_text( " specifying password... ", 0.25f, 0.65f );
+    draw_text( "Press [RETURN] to finish", 0.25f, 0.725f );
+    draw_text( " specifying password... ", 0.25f, 0.775f );
 
     return;
   }
@@ -186,7 +207,7 @@ Menu::screen_mp_dc_host()
   DrawButton();
 
 
-  const auto& features = gameState().features;
+  const auto& features = gameState().featuresLocal;
 
   const std::string extraClouds =
     features.extraClouds == true
@@ -215,8 +236,8 @@ Menu::screen_mp_dc_host()
 
   if ( isSpecifyingVar(MENU_SPECIFY::PORT) == true )
   {
-    draw_text( "Press [RETURN] to finish    ",  0.250f, 0.60f );
-    draw_text( "     specifying port...     ",  0.250f, 0.65f );
+    draw_text( "Press [RETURN] to finish    ",  0.250f, 0.725f );
+    draw_text( "     specifying port...     ",  0.250f, 0.775f );
 
     return;
   }
@@ -332,6 +353,75 @@ Menu::screen_mp_dc_join()
     }
 
     default:
+      break;
+  }
+}
+
+void
+Menu::screen_mp_hotseat()
+{
+  namespace button = constants::menu::button;
+
+
+  setRenderColor(constants::colors::background);
+  SDL_RenderClear(gRenderer);
+
+  draw_background();
+  draw_barn();
+
+  DrawMenuRect();
+  DrawButton();
+
+
+  const auto& features = gameState().featuresLocal;
+
+  const std::string extraClouds =
+    features.extraClouds == true
+    ? "On" : "Off";
+
+  const std::string oneShotKills =
+    features.oneShotKills == true
+    ? "On" : "Off";
+
+  const std::string altHitboxes =
+    features.alternativeHitboxes == true
+    ? "On" : "Off";
+
+  const auto winScoreText = std::to_string(gameState().winScore);
+
+
+  draw_text( "SETUP HOTSEAT GAME", 0.025f, 0.2855f );
+  draw_text( "Start Game        ", 0.040f, 0.2855f + 0.0721f );
+  draw_text( "Score to win:     ", 0.040f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( winScoreText,         0.550f, 0.2855f + 0.0721f + button::sizeY );
+  draw_text( "Extra clouds:     ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( extraClouds,          0.550f, 0.2855f + 0.0721f + button::sizeY * 2.f );
+  draw_text( "One-shot kills:   ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( oneShotKills,         0.550f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+  draw_text( "Alt. hitboxes:    ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( altHitboxes,          0.550f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+  draw_text( "Back              ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 5.f );
+
+
+  if ( isSpecifyingVar(MENU_SPECIFY::WIN_SCORE) == true )
+  {
+    draw_text( "Press [RETURN] to finish", 0.250f, 0.725f );
+    draw_text( "specifying win score... ", 0.250f, 0.775f );
+
+    return;
+  }
+
+
+  switch (mSelectedItem)
+  {
+    case MENU_SP_SETUP::WIN_SCORE:
+      draw_text( "Press [RETURN] to specify score", 0.005f, 0.725f );
+      break;
+
+    case MENU_SP_SETUP::ALT_HITBOXES:
+      draw_text( "Enable alternative plane hitbox ", 0.005f, 0.725f );
+      draw_text( " More challenge for experienced ", 0.005f, 0.775f );
+      draw_text( "                       players  ", 0.005f, 0.825f );
       break;
   }
 }
