@@ -94,12 +94,12 @@ Plane::Draw() const
     scaleToScreenY(plane::sizeY),
   };
 
-  auto* planeTexture {textures.texture_plane_blue};
+  auto* planeTexture {textures.plane_blue};
   double textureAngle {mDir - 90.0};
 
   if ( mType == PLANE_TYPE::RED )
   {
-    planeTexture = textures.texture_plane_red;
+    planeTexture = textures.plane_red;
     textureAngle = mDir + 90.0;
   }
 

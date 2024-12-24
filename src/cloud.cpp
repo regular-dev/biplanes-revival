@@ -133,8 +133,8 @@ Cloud::Draw()
 
   auto* const cloudTexture =
     mIsOpaque == true
-    ? textures.texture_cloud_opaque
-    : textures.texture_cloud;
+    ? textures.cloud_opaque
+    : textures.cloud;
 
   const SDL_FRect cloudRect
   {

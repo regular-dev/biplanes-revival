@@ -267,7 +267,7 @@ Menu::screen_help()
 
   SDL_RenderCopyExF(
     gRenderer,
-    textures.texture_plane_blue,
+    textures.plane_blue,
     nullptr,
     &planeRect,
     337.5,

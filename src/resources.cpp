@@ -26,6 +26,8 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <vector>
+#include <filesystem>
 
 #define ASSETS_DIRNAME "assets"
 
@@ -74,14 +76,14 @@ textures_load()
   textures.menu_logo = loadTexture( assetsRoot + "/menu/screen_logo.png" );
 
 
-  textures.texture_background = loadTexture( assetsRoot + "/ingame/background.png" );
-  textures.texture_barn = loadTexture( assetsRoot + "/ingame/barn.png" );
-  textures.texture_plane_blue = loadTexture( assetsRoot + "/ingame/plane_blue.png" );
-  textures.texture_plane_red = loadTexture( assetsRoot + "/ingame/plane_red.png" );
-  textures.texture_bullet = loadTexture( assetsRoot + "/ingame/bullet.png" );
-  textures.texture_cloud = loadTexture( assetsRoot + "/ingame/cloud.png" );
-  textures.texture_cloud_opaque = loadTexture( assetsRoot + "/ingame/cloud_opaque.png" );
-  textures.texture_zeppelin = loadTexture( assetsRoot + "/ingame/zeppelin.png" );
+  textures.background = loadTexture( assetsRoot + "/ingame/background.png" );
+  textures.barn = loadTexture( assetsRoot + "/ingame/barn.png" );
+  textures.plane_blue = loadTexture( assetsRoot + "/ingame/plane_blue.png" );
+  textures.plane_red = loadTexture( assetsRoot + "/ingame/plane_red.png" );
+  textures.bullet = loadTexture( assetsRoot + "/ingame/bullet.png" );
+  textures.cloud = loadTexture( assetsRoot + "/ingame/cloud.png" );
+  textures.cloud_opaque = loadTexture( assetsRoot + "/ingame/cloud_opaque.png" );
+  textures.zeppelin = loadTexture( assetsRoot + "/ingame/zeppelin.png" );
   textures.font_zeppelin_score = loadTexture( assetsRoot + "/ingame/font_zeppelin_score.png" );
 
   textures.anim_smk = loadTexture( assetsRoot + "/ingame/smoke.png" );
@@ -240,6 +242,31 @@ textures_load()
       6,
       5, 6,
     };
+  }
+
+
+  std::vector <SDL_Texture*> backgroundFrames {};
+
+  for ( size_t i {}; ; ++i )
+  {
+    const auto filename =
+      assetsRoot + "/ingame/background_animation/frame" + std::to_string(i) + ".png";
+
+    if ( std::filesystem::exists(filename) == false )
+    {
+      textures.anim_background_frame_count = i;
+      break;
+    }
+    else
+      backgroundFrames.push_back(loadTexture(filename));
+  }
+
+  if ( backgroundFrames.empty() == false )
+  {
+    textures.anim_background = new SDL_Texture*[backgroundFrames.size()];
+
+    for (  size_t i {}; i < backgroundFrames.size(); ++i )
+      textures.anim_background[i] = backgroundFrames[i];
   }
 
 

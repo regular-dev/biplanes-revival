@@ -110,7 +110,6 @@ draw_background()
   setRenderColor(colors::background);
   SDL_RenderClear(gRenderer);
 
-
   const SDL_FRect backgroundRect
   {
     toWindowSpaceX(0.0f),
@@ -121,9 +120,33 @@ draw_background()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_background,
+    textures.background,
     nullptr,
     &backgroundRect );
+
+
+  static size_t bgAnimFrame {};
+
+  if ( textures.anim_background != nullptr &&
+       textures.anim_background[bgAnimFrame] != nullptr )
+    SDL_RenderCopyF(
+      gRenderer,
+      textures.anim_background[bgAnimFrame],
+      nullptr,
+      &backgroundRect );
+
+
+  static Timer bgAnimation {constants::backgroundAnimationFrameTime};
+
+  bgAnimation.Update();
+
+  if ( bgAnimation.isReady() == true )
+  {
+    bgAnimation.Start();
+
+    if ( ++bgAnimFrame >= textures.anim_background_frame_count )
+      bgAnimFrame = 0;
+  }
 }
 
 void
@@ -177,7 +200,7 @@ draw_barn()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_barn,
+    textures.barn,
     nullptr,
     &barnRect );
 }

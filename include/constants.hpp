@@ -39,6 +39,8 @@ namespace constants
 
   static constexpr int audioFadeDuration {500}; // milliseconds
 
+  static constexpr float backgroundAnimationFrameTime {0.08f};
+
 
   namespace colors
   {

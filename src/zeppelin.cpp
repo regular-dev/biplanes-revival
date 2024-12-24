@@ -78,7 +78,7 @@ Zeppelin::Draw()
 
   SDL_RenderCopyF(
     gRenderer,
-    textures.texture_zeppelin,
+    textures.zeppelin,
     nullptr,
     &zeppelinRect );
 
