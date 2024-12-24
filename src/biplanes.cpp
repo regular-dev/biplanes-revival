@@ -230,6 +230,10 @@ main(
   if ( gameState().output.stats == true )
     stats_write();
 
+  stopSound(-1);
+  sounds_unload();
+  textures_unload();
+
   SDL_close();
 
   return 0;

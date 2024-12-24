@@ -274,6 +274,47 @@ textures_load()
 }
 
 void
+textures_unload()
+{
+  log_message( "RESOURCES: Unloading textures..." );
+
+
+  SDL_DestroyTexture(textures.main_font);
+  SDL_DestroyTexture(textures.menu_help);
+  SDL_DestroyTexture(textures.menu_button);
+  SDL_DestroyTexture(textures.menu_logo);
+  SDL_DestroyTexture(textures.font_zeppelin_score);
+  SDL_DestroyTexture(textures.background);
+  SDL_DestroyTexture(textures.barn);
+  SDL_DestroyTexture(textures.plane_red);
+  SDL_DestroyTexture(textures.plane_blue);
+  SDL_DestroyTexture(textures.bullet);
+  SDL_DestroyTexture(textures.cloud);
+  SDL_DestroyTexture(textures.cloud_opaque);
+  SDL_DestroyTexture(textures.zeppelin);
+  SDL_DestroyTexture(textures.anim_smk);
+  SDL_DestroyTexture(textures.anim_fire);
+  SDL_DestroyTexture(textures.anim_expl);
+  SDL_DestroyTexture(textures.anim_hit);
+  SDL_DestroyTexture(textures.anim_chute);
+  SDL_DestroyTexture(textures.anim_pilot_angel);
+  SDL_DestroyTexture(textures.anim_pilot_fall_red);
+  SDL_DestroyTexture(textures.anim_pilot_fall_blue);
+  SDL_DestroyTexture(textures.anim_pilot_run_red);
+  SDL_DestroyTexture(textures.anim_pilot_run_blue);
+
+  for ( size_t i {}; i < textures.anim_background_frame_count; ++i )
+    SDL_DestroyTexture(textures.anim_background[i]);
+
+  delete[] textures.anim_background;
+
+  textures = {};
+
+
+  log_message( "\nRESOURCES: Finished unloading textures!\n\n" );
+}
+
+void
 sounds_load()
 {
   log_message( "RESOURCES: Loading sounds..." );
@@ -293,5 +334,30 @@ sounds_load()
   sounds.victory = loadSound( assetsRoot + "/sounds/victory.ogg" );
   sounds.defeat = loadSound( assetsRoot + "/sounds/defeat.ogg" );
 
+
   log_message( "\nRESOURCES: Finished loading sounds!\n\n" );
+}
+
+void
+sounds_unload()
+{
+  log_message( "RESOURCES: Unloading sounds..." );
+
+
+  Mix_FreeChunk(sounds.shoot);
+  Mix_FreeChunk(sounds.explosion);
+  Mix_FreeChunk(sounds.hitPlane);
+  Mix_FreeChunk(sounds.hitChute);
+  Mix_FreeChunk(sounds.hitGround);
+  Mix_FreeChunk(sounds.pilotFallLoop);
+  Mix_FreeChunk(sounds.pilotChuteLoop);
+  Mix_FreeChunk(sounds.pilotDeath);
+  Mix_FreeChunk(sounds.pilotRescue);
+  Mix_FreeChunk(sounds.victory);
+  Mix_FreeChunk(sounds.defeat);
+
+  sounds = {};
+
+
+  log_message( "\nRESOURCES: Finished unloading sounds!\n\n" );
 }
