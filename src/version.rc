@@ -1,5 +1,5 @@
-#define VER_FILEVERSION       1,1,0
-#define VER_FILEVERSION_STR   "1.1.0"
+#define VER_FILEVERSION       1,2,1
+#define VER_FILEVERSION_STR   "1.2.1"
 
 
 VS_VERSION_INFO VERSIONINFO
@@ -14,7 +14,7 @@ PRODUCTVERSION VER_FILEVERSION
        VALUE "Comments", "written by casqade & XioN"
        VALUE "FileVersion", VER_FILEVERSION_STR
        VALUE "FileDescription", "Biplanes Revival: An old cellphone game recreated for PC"
-       VALUE "LegalCopyright", "Copyright (C) 2024 https://regular-dev.org (GPLv3)"
+       VALUE "LegalCopyright", "Copyright (C) 2025 https://regular-dev.org (GPLv3)"
        VALUE "OriginalFilename", "BiplanesRevival.exe"
        VALUE "ProductName", "Biplanes Revival"
        VALUE "ProductVersion", VER_FILEVERSION_STR
