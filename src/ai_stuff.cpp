@@ -470,9 +470,84 @@ AiTemperature::Weights::FromTime(
   };
 }
 
+struct AiOscillationFixer
+{
+  AiAction mPreviousDirection {};
+  size_t mSwitchedDirectionsCounter {};
+
+
+  bool fixOscillation( AiAction& newDirection, const size_t maxDirectionSwitchesAllowed );
+};
+
+bool
+AiOscillationFixer::fixOscillation(
+  AiAction& newDirection,
+  const size_t maxDirectionSwitchesAllowed )
+{
+  bool result {};
+
+  switch (newDirection)
+  {
+    case AiAction::TurnLeft:
+    {
+      if ( mPreviousDirection == AiAction::TurnRight )
+      {
+        if ( ++mSwitchedDirectionsCounter > maxDirectionSwitchesAllowed )
+        {
+          mSwitchedDirectionsCounter = 0;
+
+          newDirection = mPreviousDirection;
+          result = true;
+        }
+      }
+      else
+        mSwitchedDirectionsCounter = 0;
+
+      mPreviousDirection = newDirection;
+
+      break;
+    }
+
+    case AiAction::TurnRight:
+    {
+      if ( mPreviousDirection == AiAction::TurnLeft )
+      {
+        if ( ++mSwitchedDirectionsCounter > maxDirectionSwitchesAllowed )
+        {
+          mSwitchedDirectionsCounter = 0;
+
+          newDirection = mPreviousDirection;
+          result = true;
+        }
+      }
+      else
+        mSwitchedDirectionsCounter = 0;
+
+      mPreviousDirection = newDirection;
+
+      break;
+    }
+
+    default:
+    {
+      mPreviousDirection = AiAction::Idle;
+      mSwitchedDirectionsCounter = 0;
+
+      break;
+    }
+  }
+
+
+  return result;
+}
+
 
 class AiStatePlane : public AiState
 {
+protected:
+  AiOscillationFixer mOscillationFixer {};
+
+
 public:
   AiStatePlane( const AiTemperature& temperature );
 
@@ -812,6 +887,16 @@ AiStatePlane::update(
 
       const size_t dirIndex = std::round(dirToTargetAbsolute / plane::pitchStep);
 
+      if ( isOpponentBehind == true &&
+           opponent.y() > self.y() &&
+           opponent.speed() < plane::maxSpeedBase )
+      {
+        mInterestMap[5] = 0.01f;
+        mInterestMap[11] = 0.01f;
+
+        continue;
+      }
+
       mInterestMap[dirIndex % mInterestMap.size()] = distance;
     }
 
@@ -916,14 +1001,9 @@ AiStatePlane::update(
     const auto dirToOpponentInverted = std::fmod(
       dirToOpponentAbsolute + 180.f, 360.f );
 
-    const size_t dirToOpponentIndex =
-    angleToPitchIndex(dirToOpponentAbsolute);
-
     const size_t dirToOpponentInvertedIndex =
-    angleToPitchIndex(dirToOpponentInverted);
+      angleToPitchIndex(dirToOpponentInverted);
 
-    mDangerMap[dirToOpponentIndex % mDangerMap.size()] +=
-      0.5f * (1.f - opponentDistanceFactor);
     mDangerMap[dirToOpponentInvertedIndex % mDangerMap.size()] +=
       0.5f * (1.f - opponentDistanceFactor);
   }
@@ -972,8 +1052,10 @@ AiStatePlane::update(
 
     const auto pathStartRight = (selfDirIndex + 1) % mDangerMap.size();
 
-    float lowestPathSumLeft {1000.f};
-    float lowestPathSumRight {1000.f};
+    float lowestDangerSumLeft {1000.f};
+    float lowestDangerSumRight {1000.f};
+    float highestDangerSumLeft {0.f};
+    float highestDangerSumRight {0.f};
 
     for ( auto&& [interest, slot] : sortedInterestDirs )
     {
@@ -983,29 +1065,40 @@ AiStatePlane::update(
       const auto slotStepsLeft = mDangerMap.countSlotDistance(selfDirIndex, slot, -1);
       const auto slotStepsRight = mDangerMap.countSlotDistance(selfDirIndex, slot, +1);
 
-      const auto pathSumLeft = mDangerMap.sum(pathStartLeft, slot, -1) / slotStepsLeft;
-      const auto pathSumRight = mDangerMap.sum(pathStartRight, slot, +1) / slotStepsRight;
+      const auto dangerSumLeft = mDangerMap.sum(pathStartLeft, slot, -1) / slotStepsLeft;
+      const auto dangerSumRight = mDangerMap.sum(pathStartRight, slot, +1) / slotStepsRight;
 
-      lowestPathSumLeft = std::min(lowestPathSumLeft, pathSumLeft);
-      lowestPathSumRight = std::min(lowestPathSumRight, pathSumRight);
+      lowestDangerSumLeft = std::min(lowestDangerSumLeft, dangerSumLeft);
+      lowestDangerSumRight = std::min(lowestDangerSumRight, dangerSumRight);
+
+      highestDangerSumLeft = std::max(highestDangerSumLeft, dangerSumLeft);
+      highestDangerSumRight = std::max(highestDangerSumRight, dangerSumRight);
     }
 
-    if ( std::abs(lowestPathSumLeft - lowestPathSumRight) < 0.1f )
+    if ( std::abs(lowestDangerSumLeft - lowestDangerSumRight) < 0.1f )
     {
       const auto dirToInterestRelative = get_angle_relative(
         self.dir(),
         maxInterestSlot * plane::pitchStep );
 
+      if ( dirToInterestRelative == 180.f || dirToInterestRelative == -180.f )
+      {
+        if ( highestDangerSumRight > highestDangerSumLeft )
+          actions.push_back(AiAction::TurnLeft);
+        else
+          actions.push_back(AiAction::TurnRight);
+      }
+      else
       if ( dirToInterestRelative > 0 )
         actions.push_back(AiAction::TurnRight);
       else
         actions.push_back(AiAction::TurnLeft);
     }
 
-    else if ( lowestPathSumLeft < lowestPathSumRight )
+    else if ( lowestDangerSumLeft < lowestDangerSumRight )
       actions.push_back(AiAction::TurnLeft);
 
-    else if ( lowestPathSumLeft > lowestPathSumRight )
+    else if ( lowestDangerSumLeft > lowestDangerSumRight )
       actions.push_back(AiAction::TurnRight);
 
 
@@ -1179,6 +1272,40 @@ AiStatePlane::update(
 
   std::sort(actions.begin(), actions.end());
   actions.erase(std::unique(actions.begin(), actions.end()), actions.end());
+
+
+  if ( false && self.canTurn() == true && self.type() == PLANE_TYPE::RED )
+  {
+    auto wantsLeftTurn = std::find(
+      actions.begin(), actions.end(),
+      AiAction::TurnLeft );
+
+    if ( wantsLeftTurn != actions.end() )
+    {
+      if ( mOscillationFixer.fixOscillation(*wantsLeftTurn, 2) )
+        mActions[AiAction::TurnLeft].set(0.f);
+    }
+
+
+    auto wantsRightTurn = std::find(
+      actions.begin(), actions.end(),
+      AiAction::TurnRight );
+
+    if ( wantsRightTurn != actions.end() )
+    {
+      if ( mOscillationFixer.fixOscillation(*wantsRightTurn, 2) )
+        mActions[AiAction::TurnRight].set(0.f);
+    }
+
+
+    if ( wantsLeftTurn == actions.end() &&
+         wantsRightTurn == actions.end() )
+    {
+      auto dummyAction = AiAction::Idle;
+      mOscillationFixer.fixOscillation(dummyAction, 2);
+    }
+  }
+
 
   for ( auto& [action, temperature] : mActions )
   {
