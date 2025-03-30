@@ -27,12 +27,15 @@
 #include <include/network_state.hpp>
 #include <include/render.hpp>
 #include <include/biplanes.hpp>
-#include <include/matchmake.hpp>
 #include <include/controls.hpp>
 #include <include/plane.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
+
+#if !defined(__EMSCRIPTEN__)
+  #include <include/matchmake.hpp>
+#endif
 
 
 Menu::Menu()
@@ -272,6 +275,7 @@ Menu::DrawMenu()
     {
       screen_mp_mmake();
 
+#if !defined(__EMSCRIPTEN__)
       auto& network = networkState();
 
       const auto mmakeState = network.matchmaker->state();
@@ -335,6 +339,7 @@ Menu::DrawMenu()
 
         break;
       }
+#endif
 
       break;
     }

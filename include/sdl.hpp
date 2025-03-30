@@ -22,9 +22,15 @@
 
 #include <include/fwd.hpp>
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_mixer.h>
+#if !defined(__EMSCRIPTEN__)
+  #include <SDL.h>
+  #include <SDL_image.h>
+  #include <SDL_mixer.h>
+#else
+  #include <SDL2/SDL.h>
+  #include <SDL2/SDL_image.h>
+  #include <SDL2/SDL_mixer.h>
+#endif
 
 #include <string>
 

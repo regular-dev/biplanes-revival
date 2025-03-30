@@ -22,11 +22,13 @@ set_target_properties(${TARGET} PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 
-find_package(SDL2 2.0.10 REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2_mixer REQUIRED)
+  find_package(SDL2 2.0.10 REQUIRED)
+  find_package(SDL2_image REQUIRED)
+  find_package(SDL2_mixer REQUIRED)
+endif()
 
 target_sources(${TARGET} PRIVATE
   src/biplanes.cpp
@@ -45,8 +47,6 @@ target_sources(${TARGET} PRIVATE
   include/textures.hpp
   include/variables.hpp
 
-  lib/Net.h
-
   src/icon.rc
   src/version.rc
 
@@ -63,9 +63,6 @@ target_sources(${TARGET} PRIVATE
   src/effects.cpp
   include/effects.hpp
 
-  src/matchmake.cpp
-  include/matchmake.hpp
-
   src/math.cpp
   include/math.hpp
 
@@ -77,9 +74,6 @@ target_sources(${TARGET} PRIVATE
   src/menu_help.cpp
   src/menu_stats.cpp
   include/menu.hpp
-
-  src/network.cpp
-  include/network.hpp
 
   src/plane.cpp
   src/plane_input.cpp
@@ -110,6 +104,18 @@ target_sources(${TARGET} PRIVATE
   src/ai_stuff.cpp
   include/ai_stuff.hpp
 )
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_sources(${TARGET} PRIVATE
+    lib/Net.h
+
+    src/matchmake.cpp
+    include/matchmake.hpp
+
+    src/network.cpp
+    include/network.hpp
+  )
+endif()
 
 
 add_subdirectory(deps/TimeUtils)
@@ -146,10 +152,27 @@ if (NOT ${BUILD_SHARED_LIBS})
   )
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_compile_options(${TARGET} PUBLIC
+    --use-port=sdl2
+    --use-port=sdl2_mixer
+    --use-port=sdl2_image:formats=png
+  )
+
+  target_link_options(${TARGET} PUBLIC
+    --use-port=sdl2
+    --use-port=sdl2_mixer
+    --use-port=sdl2_image:formats=png
+  )
+else()
+  target_link_libraries(${TARGET} PUBLIC
+    SDL2::Main
+    SDL2::Image
+    SDL2::Mixer
+  )
+endif()
+
 target_link_libraries(${TARGET} PUBLIC
-  SDL2::Main
-  SDL2::Image
-  SDL2::Mixer
   TimeUtils::TimeUtils
 )
 
