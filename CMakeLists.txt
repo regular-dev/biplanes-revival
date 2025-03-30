@@ -163,6 +163,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     --use-port=sdl2
     --use-port=sdl2_mixer
     --use-port=sdl2_image:formats=png
+    --embed-file bin/assets@/assets
   )
 else()
   target_link_libraries(${TARGET} PUBLIC
