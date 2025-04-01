@@ -73,7 +73,7 @@ jobs:
         name: 'Biplanes_Revival-wasm'
         path: |
           '${{ steps.strings.outputs.build-output-dir }}/bin'
-          !'${{ steps.strings.outputs.build-output-dir }}/bin/assets'
+          '!${{ steps.strings.outputs.build-output-dir }}/bin/assets'
         if-no-files-found: error
         compression-level: 9
 
