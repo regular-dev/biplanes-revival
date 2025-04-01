@@ -1,22 +1,20 @@
-name: Build (macOS)
+name: Build (Emscripten)
 
 on:
   push:
     paths-ignore:
       - '**/README.md'
-      - '.github/workflows/emscripten-build.yml'
+      - '.github/workflows/macos-build.yml'
       - '.github/workflows/ubuntu-build.yml'
       - '.github/workflows/windows-build-msvc.yml'
       - '.github/workflows/windows-build-msys2.yml'
       - 'appimage-data/**'
-      - 'assets/**'
       - 'flatpak-data/**'
-      - 'wasm-data/**'
 
   pull_request:
 
 jobs:
-  build-macos:
+  build-emscripten:
     runs-on: ${{ matrix.config.os }}
 
     strategy:
@@ -28,17 +26,14 @@ jobs:
 
         config:
         - {
-            os: macos-latest,
-            cc: "clang",
-            cxx: "clang++"
-          }
-        - {
-            os: macos-latest,
-            cc: "gcc-13",
-            cxx: "g++-13"
+            os: ubuntu-latest,
+            cc: "emcc",
+            cxx: "em++"
           }
 
     steps:
+    - uses: mymindstorm/setup-emsdk@v14
+
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
@@ -50,22 +45,35 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Install dependencies
+      shell: bash
       run: |
-        brew install ninja sdl2 sdl2_image sdl2_mixer
+        sudo apt update
+        sudo apt install -y ninja-build
 
     - name: Configure CMake
       run: >
-        cmake
+        emcmake cmake
         -G ${{ matrix.cmake_generator }}
         -S ${{ github.workspace }}
         -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
         -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DBUILD_SHARED_LIBS=OFF
 
     - name: Build
       run: >
         cmake
         --build ${{ steps.strings.outputs.build-output-dir }}
         --config ${{ matrix.build_type }}
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'Biplanes_Revival-wasm'
+        path: |
+          '${{ steps.strings.outputs.build-output-dir }}/bin'
+          !'${{ steps.strings.outputs.build-output-dir }}/bin/assets'
+        if-no-files-found: error
+        compression-level: 9
 
