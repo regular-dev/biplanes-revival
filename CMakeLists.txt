@@ -133,6 +133,7 @@ if (${${TARGET}_ENABLE_STEP_DEBUGGING})
   )
 endif()
 
+
 target_include_directories(${TARGET} PRIVATE
   ${SDL2_INCLUDE_DIR}
 
@@ -140,9 +141,11 @@ target_include_directories(${TARGET} PRIVATE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(${TARGET} PUBLIC -Wno-narrowing)
 endif()
+
 
 if (NOT ${BUILD_SHARED_LIBS})
   target_link_libraries(${TARGET} PUBLIC
@@ -163,7 +166,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     --use-port=sdl2
     --use-port=sdl2_mixer
     --use-port=sdl2_image:formats=png
-    --embed-file bin/assets@/assets
+    --embed-file ${CMAKE_INSTALL_BINDIR}/assets@/assets
   )
 else()
   target_link_libraries(${TARGET} PUBLIC
@@ -176,6 +179,7 @@ endif()
 target_link_libraries(${TARGET} PUBLIC
   TimeUtils::TimeUtils
 )
+
 
 if (WIN32)
   target_link_libraries(${TARGET} PUBLIC
@@ -204,7 +208,18 @@ if (WIN32)
 
 endif()
 
-file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+
+file(
+  COPY assets
+  DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  file(
+    COPY wasm-data/index.html
+    DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
 install(TARGETS ${TARGET}
   EXPORT ${TARGET} DESTINATION ${CMAKE_INSTALL_BINDIR}

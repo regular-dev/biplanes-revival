@@ -8,6 +8,7 @@ on:
       - '.github/workflows/windows-build-msvc.yml'
       - '.github/workflows/windows-build-msys2.yml'
       - 'flatpak-data/**'
+      - 'wasm-data/**'
 
   pull_request:
 

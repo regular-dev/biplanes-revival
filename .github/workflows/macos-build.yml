@@ -10,6 +10,7 @@ on:
       - 'appimage-data/**'
       - 'assets/**'
       - 'flatpak-data/**'
+      - 'wasm-data/**'
 
   pull_request:
 

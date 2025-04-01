@@ -9,6 +9,7 @@ on:
       - '.github/workflows/windows-build-msvc.yml'
       - 'appimage-data/**'
       - 'flatpak-data/**'
+      - 'wasm-data/**'
 
   pull_request:
 
