@@ -21,6 +21,9 @@
 #pragma once
 
 
+void game_main_loop();
+void game_shutdown();
+
 void game_reset();
 
 bool game_init_sp();

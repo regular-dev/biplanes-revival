@@ -52,6 +52,14 @@ Menu::screen_mp()
 
   switch (mSelectedItem)
   {
+#if defined(__EMSCRIPTEN__)
+    case MENU_MP::MMAKE:
+    case MENU_MP::DC:
+    {
+      draw_text( "Not available in Web version :(", 0.005f, 0.65f );
+      break;
+    }
+#endif
     case MENU_MP::HOTSEAT:
     {
       draw_text( "   You'd better connect      ", 0.005f, 0.65f );

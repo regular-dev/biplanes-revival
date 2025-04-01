@@ -43,7 +43,10 @@
 #include <include/variables.hpp>
 #include <include/ai_stuff.hpp>
 
-#if !defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__)
+  #include <emscripten/emscripten.h>
+  #include <emscripten/html5.h>
+#else
   #include <include/matchmake.hpp>
   #include <lib/Net.h>
 #endif
@@ -110,17 +113,30 @@ networkState()
 #if defined(__EMSCRIPTEN__)
 void eventPush( const EVENTS ) {}
 void eventsReset() {}
+
+static bool isInFocus {true};
+static bool focusChanged {false};
 #endif
 
+
+static double tickInterval {};
+
+static TimeUtils::Duration timePrevious {};
+static TimeUtils::Duration tickPrevious {};
 
 int
 main(
   int argc,
   char* args[] )
 {
+  auto& game = gameState();
+
+
+#if defined(__EMSCRIPTEN__)
+  game.output.toConsole = true;
+#endif
   logVersionAndReadSettings();
 
-  auto& game = gameState();
 
   if ( SDL_init(game.isVSyncEnabled, game.isAudioEnabled) != 0 )
   {
@@ -135,9 +151,11 @@ main(
     plane.pilot.setPlane(&plane);
   }
 
-  auto& network = networkState();
 
 #if !defined(__EMSCRIPTEN__)
+
+  auto& network = networkState();
+
   network.connection = new net::ReliableConnection(
     ProtocolId, ConnectionTimeout );
 
@@ -145,91 +163,148 @@ main(
   network.matchmaker = new MatchMaker();
 #endif
 
+
   textures_load();
   sounds_load();
 
 
-  const auto tickInterval = 1.0 / constants::tickRate;
+  tickInterval = 1.0 / constants::tickRate;
 
-  auto timePrevious = TimeUtils::Now();
-  auto tickPrevious = timePrevious + tickInterval;
-
-  const auto connection = network.connection;
+  timePrevious = TimeUtils::Now();
+  tickPrevious = timePrevious + tickInterval;
 
   log_message( "\nLOG: Reached main menu loop!\n\n" );
 
 
+#if defined(__EMSCRIPTEN__)
+  emscripten_set_visibilitychange_callback(
+    nullptr, false,
+    [] ( int, const EmscriptenVisibilityChangeEvent* event, void* )
+    {
+      focusChanged = true;
+      isInFocus = !event->hidden;
+      return false;
+    } );
+
+  emscripten_set_main_loop(
+    game_main_loop, 0, false );
+
+#else
   while ( game.isExiting == false )
-  {
-    TimeUtils::SleepUntil(tickPrevious + tickInterval);
+    game_main_loop();
 
-    const auto currentTime = TimeUtils::Now();
+  game_shutdown();
+#endif
 
-    deltaTime = static_cast <double> (currentTime - timePrevious);
+  return 0;
+}
 
-    timePrevious = currentTime;
+void
+game_main_loop()
+{
+  auto& game = gameState();
 
 
 #if !defined(__EMSCRIPTEN__)
-    if ( connection->IsRunning() == true )
-      connection->Update(deltaTime);
+  TimeUtils::SleepUntil(tickPrevious + tickInterval);
+#endif
 
-    network.matchmaker->Update();
+  const auto currentTime = TimeUtils::Now();
+
+  deltaTime = static_cast <double> (currentTime - timePrevious);
+
+  timePrevious = currentTime;
+
+
+#if !defined(__EMSCRIPTEN__)
+
+  auto& network = networkState();
+  const auto connection = network.connection;
+
+  if ( connection->IsRunning() == true )
+    connection->Update(deltaTime);
+
+  network.matchmaker->Update();
 #endif
 
 
-    while ( SDL_PollEvent(&windowEvent) != 0 )
+  while ( SDL_PollEvent(&windowEvent) != 0 )
+  {
+    if ( windowEvent.type == SDL_QUIT )
     {
-      if ( windowEvent.type == SDL_QUIT )
-      {
-        game.isExiting = true;
-        break;
-      }
+      game.isExiting = true;
 
-      queryWindowSize();
-      readKeyboardInput();
-      menu.UpdateControls();
+#if defined(__EMSCRIPTEN__)
+      game_shutdown();
+#endif
+
+      return;
     }
 
-
-    uint32_t ticks = 0;
-
-    for ( ; currentTime >= tickPrevious + tickInterval;
-            tickPrevious += tickInterval )
-      ++ticks;
-
-//    Fixed time step
-    deltaTime = ticks * tickInterval;
-
-
-//    TODO: independent render frequency
-    if ( ticks == 0 )
-      continue;
-
-
-    if ( gameState().isRoundRunning == true )
-    {
-      if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
-        game_loop_mp();
-      else
-        game_loop_sp();
-
-//      this prevents sticky keys when next event poll returns nothing
-      readKeyboardInput();
-
-      draw_game();
-    }
-
-    menu.DrawMenu();
-    draw_window_letterbox();
-
-    display_update();
+    queryWindowSize();
+    readKeyboardInput();
+    menu.UpdateControls();
   }
 
+
+  uint32_t ticks = 0;
+
+  for ( ; currentTime >= tickPrevious + tickInterval;
+          tickPrevious += tickInterval )
+    ++ticks;
+
+#if defined(__EMSCRIPTEN__)
+
+  if ( focusChanged == true )
+  {
+    focusChanged = false;
+
+    if ( isInFocus == false )
+      return;
+
+    ticks = 1;
+  }
+#endif
+
+//  Fixed time step
+  deltaTime = ticks * tickInterval;
+
+
+//  TODO: independent render frequency
+  if ( ticks == 0 )
+    return;
+
+
+  if ( gameState().isRoundRunning == true )
+  {
+    if ( game.gameMode == GAME_MODE::HUMAN_VS_HUMAN )
+      game_loop_mp();
+    else
+      game_loop_sp();
+
+//    this prevents sticky keys when next event poll returns nothing
+    readKeyboardInput();
+
+    draw_game();
+  }
+
+  menu.DrawMenu();
+  draw_window_letterbox();
+
+  display_update();
+}
+
+void
+game_shutdown()
+{
   log_message("EXIT: Exit sequence initiated\n");
 
 
 #if !defined(__EMSCRIPTEN__)
+
+  auto& network = networkState();
+  const auto connection = network.connection;
+
   if ( connection->IsConnected() == true )
   {
     sendDisconnectMessage();
@@ -252,8 +327,6 @@ main(
   textures_unload();
 
   SDL_close();
-
-  return 0;
 }
 
 void

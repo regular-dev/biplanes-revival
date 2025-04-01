@@ -39,7 +39,11 @@ Menu::Select()
   if ( mSelectedItem == mButtons[mCurrentRoom] )
   {
     if ( mCurrentRoom == ROOMS::MENU_MAIN )
+    {
+#if !defined(__EMSCRIPTEN__)
       gameState().isExiting = true;
+#endif
+    }
 
     else if ( mCurrentRoom != ROOMS::MENU_PAUSE )
       return GoBack();
@@ -216,6 +220,7 @@ Menu::Select()
     {
       switch (mSelectedItem)
       {
+#if !defined(__EMSCRIPTEN__)
         case MENU_MP::MMAKE:
         {
           ChangeRoom(ROOMS::MENU_MP_MMAKE);
@@ -229,6 +234,7 @@ Menu::Select()
           ChangeRoom(ROOMS::MENU_MP_DC);
           break;
         }
+#endif
 
         case MENU_MP::HOTSEAT:
         {

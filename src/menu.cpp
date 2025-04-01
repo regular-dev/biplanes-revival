@@ -77,6 +77,10 @@ Menu::Menu()
     {ROOMS::MENU_PAUSE, MENU_PAUSE::DISCONNECT},
   };
 
+#if defined(__EMSCRIPTEN__)
+  mButtons[ROOMS::MENU_MAIN] = MENU_MAIN::HELP;
+#endif
+
   mInputIp = SERVER_IP;
   mInputPortHost = std::to_string(LOCAL_PORT);
   mInputPortClient = std::to_string(REMOTE_PORT);
@@ -799,7 +803,10 @@ Menu::screen_main()
   draw_text( "Two Player Game ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Settings        ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Help            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+
+#if !defined(__EMSCRIPTEN__)
   draw_text( "Quit            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+#endif
 
   draw_text( "Navigate menu using arrows/WASD ", 0.005f, 0.65f );
   draw_text( " Press[RETURN] to enter submenu ", 0.005f, 0.70f );
