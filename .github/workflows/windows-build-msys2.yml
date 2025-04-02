@@ -4,11 +4,13 @@ on:
   push:
     paths-ignore:
       - '**/README.md'
+      - '.github/workflows/emscripten-build.yml'
       - '.github/workflows/macos-build.yml'
       - '.github/workflows/ubuntu-build.yml'
       - '.github/workflows/windows-build-msvc.yml'
       - 'appimage-data/**'
       - 'flatpak-data/**'
+      - 'wasm-data/**'
 
   pull_request:
 

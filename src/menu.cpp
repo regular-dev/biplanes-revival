@@ -27,12 +27,15 @@
 #include <include/network_state.hpp>
 #include <include/render.hpp>
 #include <include/biplanes.hpp>
-#include <include/matchmake.hpp>
 #include <include/controls.hpp>
 #include <include/plane.hpp>
 #include <include/textures.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
+
+#if !defined(__EMSCRIPTEN__)
+  #include <include/matchmake.hpp>
+#endif
 
 
 Menu::Menu()
@@ -73,6 +76,10 @@ Menu::Menu()
 
     {ROOMS::MENU_PAUSE, MENU_PAUSE::DISCONNECT},
   };
+
+#if defined(__EMSCRIPTEN__)
+  mButtons[ROOMS::MENU_MAIN] = MENU_MAIN::HELP;
+#endif
 
   mInputIp = SERVER_IP;
   mInputPortHost = std::to_string(LOCAL_PORT);
@@ -272,6 +279,7 @@ Menu::DrawMenu()
     {
       screen_mp_mmake();
 
+#if !defined(__EMSCRIPTEN__)
       auto& network = networkState();
 
       const auto mmakeState = network.matchmaker->state();
@@ -335,6 +343,7 @@ Menu::DrawMenu()
 
         break;
       }
+#endif
 
       break;
     }
@@ -794,7 +803,10 @@ Menu::screen_main()
   draw_text( "Two Player Game ", 0.255f, 0.2855f + 0.0721f + button::sizeY );
   draw_text( "Settings        ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Help            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+
+#if !defined(__EMSCRIPTEN__)
   draw_text( "Quit            ", 0.255f, 0.2855f + 0.0721f + button::sizeY * 4.f );
+#endif
 
   draw_text( "Navigate menu using arrows/WASD ", 0.005f, 0.65f );
   draw_text( " Press[RETURN] to enter submenu ", 0.005f, 0.70f );

@@ -67,18 +67,14 @@ SDL_init(
   }
 
 
+#if !defined(__EMSCRIPTEN__)
 //  Get screen resolution
   SDL_DisplayMode dm {};
   SDL_GetDesktopDisplayMode( DISPLAY_INDEX, &dm );
 
   canvas.windowWidth = std::min(dm.w * 0.75f, dm.h * 0.75f);
   canvas.windowHeight = canvas.windowWidth / constants::aspectRatio;
-
-  canvas.windowWidthNew = canvas.windowWidth;
-  canvas.windowHeightNew = canvas.windowHeight;
-
-  recalculateVirtualScreen();
-
+#endif
 
 //  Create window
   log_message( "SDL Startup: Creating SDL window..." );
@@ -98,16 +94,6 @@ SDL_init(
 
     return 1;
   }
-
-  SDL_SetWindowPosition(
-    gWindow,
-    dm.w * 0.5f - canvas.windowWidth * 0.5f,
-    dm.h * 0.5f - canvas.windowHeight * 0.5f );
-
-  SDL_SetWindowMinimumSize(
-    gWindow,
-    dm.w * 0.2f,
-    dm.h * 0.2f );
 
   log_message( "Done!\n" );
 
@@ -136,6 +122,30 @@ SDL_init(
     }
   }
   log_message( "Done!\n" );
+
+
+#if defined(__EMSCRIPTEN__)
+  SDL_GetWindowSize(
+    gWindow,
+    &canvas.windowWidth,
+    &canvas.windowHeight );
+#else
+  SDL_SetWindowPosition(
+    gWindow,
+    dm.w * 0.5f - canvas.windowWidth * 0.5f,
+    dm.h * 0.5f - canvas.windowHeight * 0.5f );
+
+  SDL_SetWindowMinimumSize(
+    gWindow,
+    dm.w * 0.2f,
+    dm.h * 0.2f );
+#endif
+
+  canvas.windowWidthNew = canvas.windowWidth;
+  canvas.windowHeightNew = canvas.windowHeight;
+
+  recalculateVirtualScreen();
+
 
   setVSync(enableVSync);
 

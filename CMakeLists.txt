@@ -22,11 +22,13 @@ set_target_properties(${TARGET} PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 
-find_package(SDL2 2.0.10 REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2_mixer REQUIRED)
+  find_package(SDL2 2.0.10 REQUIRED)
+  find_package(SDL2_image REQUIRED)
+  find_package(SDL2_mixer REQUIRED)
+endif()
 
 target_sources(${TARGET} PRIVATE
   src/biplanes.cpp
@@ -45,8 +47,6 @@ target_sources(${TARGET} PRIVATE
   include/textures.hpp
   include/variables.hpp
 
-  lib/Net.h
-
   src/icon.rc
   src/version.rc
 
@@ -63,9 +63,6 @@ target_sources(${TARGET} PRIVATE
   src/effects.cpp
   include/effects.hpp
 
-  src/matchmake.cpp
-  include/matchmake.hpp
-
   src/math.cpp
   include/math.hpp
 
@@ -77,9 +74,6 @@ target_sources(${TARGET} PRIVATE
   src/menu_help.cpp
   src/menu_stats.cpp
   include/menu.hpp
-
-  src/network.cpp
-  include/network.hpp
 
   src/plane.cpp
   src/plane_input.cpp
@@ -111,6 +105,18 @@ target_sources(${TARGET} PRIVATE
   include/ai_stuff.hpp
 )
 
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_sources(${TARGET} PRIVATE
+    lib/Net.h
+
+    src/matchmake.cpp
+    include/matchmake.hpp
+
+    src/network.cpp
+    include/network.hpp
+  )
+endif()
+
 
 add_subdirectory(deps/TimeUtils)
 
@@ -127,6 +133,7 @@ if (${${TARGET}_ENABLE_STEP_DEBUGGING})
   )
 endif()
 
+
 target_include_directories(${TARGET} PRIVATE
   ${SDL2_INCLUDE_DIR}
 
@@ -134,9 +141,11 @@ target_include_directories(${TARGET} PRIVATE
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(${TARGET} PUBLIC -Wno-narrowing)
 endif()
+
 
 if (NOT ${BUILD_SHARED_LIBS})
   target_link_libraries(${TARGET} PUBLIC
@@ -146,12 +155,31 @@ if (NOT ${BUILD_SHARED_LIBS})
   )
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  target_compile_options(${TARGET} PUBLIC
+    --use-port=sdl2
+    --use-port=sdl2_mixer
+    --use-port=sdl2_image:formats=png
+  )
+
+  target_link_options(${TARGET} PUBLIC
+    --use-port=sdl2
+    --use-port=sdl2_mixer
+    --use-port=sdl2_image:formats=png
+    --embed-file ${CMAKE_INSTALL_BINDIR}/assets@/assets
+  )
+else()
+  target_link_libraries(${TARGET} PUBLIC
+    SDL2::Main
+    SDL2::Image
+    SDL2::Mixer
+  )
+endif()
+
 target_link_libraries(${TARGET} PUBLIC
-  SDL2::Main
-  SDL2::Image
-  SDL2::Mixer
   TimeUtils::TimeUtils
 )
+
 
 if (WIN32)
   target_link_libraries(${TARGET} PUBLIC
@@ -180,7 +208,18 @@ if (WIN32)
 
 endif()
 
-file(COPY assets DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+
+file(
+  COPY assets
+  DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+  file(
+    COPY wasm-data/index.html
+    DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
 install(TARGETS ${TARGET}
   EXPORT ${TARGET} DESTINATION ${CMAKE_INSTALL_BINDIR}
