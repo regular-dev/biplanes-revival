@@ -19,6 +19,7 @@ An old cellphone arcade "BlueTooth BiPlanes"
 recreated for PC
 (originally developed by Morpheme Ltd. in 2004)
 
+# [PLAY IN BROWSER](https://itch.io/embed-upload/13252895?color=009AEF)
 
 ## Gameplay videos:
 
@@ -165,3 +166,24 @@ you should provide the following win32 releases of SDL2 as well:
 - [SDL2_image.dll](https://github.com/libsdl-org/SDL_image/releases)
 - [SDL2_mixer.dll](https://github.com/libsdl-org/SDL_mixer/releases)
 
+
+### WebAssembly (Emscripten)
+
+Install & activate [emsdk](https://emscripten.org/docs/getting_started/downloads.html#installation-instructions-using-the-emsdk-recommended)
+
+#### Build:
+```bash
+git clone --recurse-submodules https://github.com/regular-dev/biplanes-revival
+emcmake cmake -S biplanes-revival -B biplanes-revival-build -DBUILD_SHARED_LIBS=OFF
+cd biplanes-revival-build
+emmake make
+```
+Alternatively, you can use [Emscripten workflow](https://github.com/regular-dev/biplanes-revival/blob/master/.github/workflows/emscripten-build.yml#L53) steps
+
+#### Run:
+```bash
+cd bin
+emrun index.html
+```
+
+Until someone manages to solve [these problems](https://github.com/regular-dev/biplanes-revival/issues/4#issuecomment-2771024794), online multiplayer is cut from this version
