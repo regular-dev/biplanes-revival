@@ -34,6 +34,7 @@
 #include <include/cloud.hpp>
 #include <include/zeppelin.hpp>
 #include <include/controls.hpp>
+#include <include/matchmake.hpp>
 #include <include/effects.hpp>
 #include <include/canvas.hpp>
 #include <include/sounds.hpp>
@@ -46,11 +47,9 @@
 #if defined(__EMSCRIPTEN__)
   #include <emscripten/emscripten.h>
   #include <emscripten/html5.h>
-#else
-  #include <include/matchmake.hpp>
-  #include <lib/Net.h>
 #endif
 
+#include <lib/Net.h>
 #include <lib/picojson.h>
 #include <TimeUtils/Duration.hpp>
 
@@ -111,9 +110,6 @@ networkState()
 }
 
 #if defined(__EMSCRIPTEN__)
-void eventPush( const EVENTS ) {}
-void eventsReset() {}
-
 static bool isInFocus {true};
 static bool focusChanged {false};
 #endif
@@ -152,8 +148,6 @@ main(
   }
 
 
-#if !defined(__EMSCRIPTEN__)
-
   auto& network = networkState();
 
   network.connection = new net::ReliableConnection(
@@ -161,7 +155,6 @@ main(
 
   network.flowControl = new net::FlowControl();
   network.matchmaker = new MatchMaker();
-#endif
 
 
   textures_load();
@@ -216,8 +209,6 @@ game_main_loop()
   timePrevious = currentTime;
 
 
-#if !defined(__EMSCRIPTEN__)
-
   auto& network = networkState();
   const auto connection = network.connection;
 
@@ -225,7 +216,6 @@ game_main_loop()
     connection->Update(deltaTime);
 
   network.matchmaker->Update();
-#endif
 
 
   while ( SDL_PollEvent(&windowEvent) != 0 )
@@ -300,8 +290,6 @@ game_shutdown()
   log_message("EXIT: Exit sequence initiated\n");
 
 
-#if !defined(__EMSCRIPTEN__)
-
   auto& network = networkState();
   const auto connection = network.connection;
 
@@ -316,7 +304,6 @@ game_shutdown()
   delete network.connection;
 
   net::ShutdownSockets();
-#endif
 
 
   if ( gameState().output.stats == true )
@@ -389,8 +376,6 @@ game_init_sp()
 bool
 game_init_mp()
 {
-#if !defined(__EMSCRIPTEN__)
-
   auto& network = networkState();
   const auto connection = network.connection;
 
@@ -456,8 +441,6 @@ game_init_mp()
   log_message( "\nLOG: Multiplayer game initialized successfully!\n\n" );
 
   gameState().isRoundRunning = true;
-
-#endif
 
   return 0;
 }
@@ -533,8 +516,6 @@ game_loop_sp()
 void
 game_loop_mp()
 {
-#if !defined(__EMSCRIPTEN__)
-
   auto& game = gameState();
   auto& network = networkState();
   const auto connection = network.connection;
@@ -710,8 +691,6 @@ game_loop_mp()
 
   if ( network.sendCoordsTimer.isReady() == true )
     network.sendCoordsTimer.Start();
-
-#endif
 }
 
 

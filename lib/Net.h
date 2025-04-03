@@ -16,7 +16,7 @@
   #include <winsock2.h>
   #include <ws2tcpip.h>
 
-#elif defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__MACH__) || defined(__EMSCRIPTEN__)
 
   #define PLATFORM PLATFORM_UNIX
 

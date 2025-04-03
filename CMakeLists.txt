@@ -47,6 +47,8 @@ target_sources(${TARGET} PRIVATE
   include/textures.hpp
   include/variables.hpp
 
+  lib/Net.h
+
   src/icon.rc
   src/version.rc
 
@@ -63,6 +65,9 @@ target_sources(${TARGET} PRIVATE
   src/effects.cpp
   include/effects.hpp
 
+  src/matchmake.cpp
+  include/matchmake.hpp
+
   src/math.cpp
   include/math.hpp
 
@@ -74,6 +79,9 @@ target_sources(${TARGET} PRIVATE
   src/menu_help.cpp
   src/menu_stats.cpp
   include/menu.hpp
+
+  src/network.cpp
+  include/network.hpp
 
   src/plane.cpp
   src/plane_input.cpp
@@ -104,18 +112,6 @@ target_sources(${TARGET} PRIVATE
   src/ai_stuff.cpp
   include/ai_stuff.hpp
 )
-
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  target_sources(${TARGET} PRIVATE
-    lib/Net.h
-
-    src/matchmake.cpp
-    include/matchmake.hpp
-
-    src/network.cpp
-    include/network.hpp
-  )
-endif()
 
 
 add_subdirectory(deps/TimeUtils)
@@ -160,6 +156,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     --use-port=sdl2
     --use-port=sdl2_mixer
     --use-port=sdl2_image:formats=png
+    -pthread
   )
 
   target_link_options(${TARGET} PUBLIC
@@ -167,6 +164,20 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     --use-port=sdl2_mixer
     --use-port=sdl2_image:formats=png
     --embed-file ${CMAKE_INSTALL_BINDIR}/assets@/assets
+    -lwebsocket.js
+    -sPROXY_POSIX_SOCKETS
+    -pthread
+
+# This mandatory flag causes runtime errors.
+# Probably due to GL/SDL rendering attempts on non-main thread?
+    -sPROXY_TO_PTHREAD
+
+# The following flags might fix the errors,
+# but wasm-data/index.html will require modifications
+# to be compatible with offscreen rendering
+#    -sPTHREAD_POOL_SIZE=2
+#    -sOFFSCREEN_FRAMEBUFFER
+#    -sOFFSCREENCANVAS_SUPPORT
   )
 else()
   target_link_libraries(${TARGET} PUBLIC

@@ -24,13 +24,10 @@
 #include <include/game_state.hpp>
 #include <include/network.hpp>
 #include <include/network_state.hpp>
+#include <include/matchmake.hpp>
 #include <include/plane.hpp>
 #include <include/variables.hpp>
 #include <include/utility.hpp>
-
-#if !defined(__EMSCRIPTEN__)
-  #include <include/matchmake.hpp>
-#endif
 
 
 void
@@ -220,7 +217,6 @@ Menu::Select()
     {
       switch (mSelectedItem)
       {
-#if !defined(__EMSCRIPTEN__)
         case MENU_MP::MMAKE:
         {
           ChangeRoom(ROOMS::MENU_MP_MMAKE);
@@ -234,7 +230,6 @@ Menu::Select()
           ChangeRoom(ROOMS::MENU_MP_DC);
           break;
         }
-#endif
 
         case MENU_MP::HOTSEAT:
         {
@@ -316,7 +311,6 @@ Menu::Select()
       {
         case MENU_MP_MMAKE::FIND_GAME:
         {
-#if !defined(__EMSCRIPTEN__)
           setMessage(MESSAGE_TYPE::MMAKE_SEARCHING_OPPONENT);
 
           const auto matchmaker = networkState().matchmaker;
@@ -328,7 +322,6 @@ Menu::Select()
 
           if ( matchmaker->initNewSession() == true )
             ChangeRoom(ROOMS::MENU_MP_MMAKE_FIND_GAME);
-#endif
 
           break;
         }
@@ -419,7 +412,6 @@ Menu::Select()
       {
         case MENU_MP_DC_HOST::HOST_START:
         {
-#if !defined(__EMSCRIPTEN__)
           auto& network = networkState();
           auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
           auto& planeRed = planes.at(PLANE_TYPE::RED);
@@ -443,7 +435,6 @@ Menu::Select()
           }
           else
             ChangeRoom(ROOMS::GAME);
-#endif
 
           break;
         }
@@ -494,7 +485,6 @@ Menu::Select()
       {
         case MENU_MP_DC_JOIN::JOIN:
         {
-#if !defined(__EMSCRIPTEN__)
           auto& network = networkState();
           auto& planeBlue = planes.at(PLANE_TYPE::BLUE);
           auto& planeRed = planes.at(PLANE_TYPE::RED);
@@ -525,7 +515,6 @@ Menu::Select()
           }
           else
             ChangeRoom(ROOMS::GAME);
-#endif
 
           break;
         }
@@ -741,13 +730,11 @@ Menu::Select()
 
         case MENU_PAUSE::DISCONNECT:
         {
-#if !defined(__EMSCRIPTEN__)
           if ( gameState().gameMode == GAME_MODE::HUMAN_VS_HUMAN )
           {
             sendDisconnectMessage();
             networkState().connection->Stop();
           }
-#endif
 
           ReturnToMainMenu();
           setMessage(MESSAGE_TYPE::NONE);
@@ -879,7 +866,6 @@ Menu::GoBack()
 
     case ROOMS::MENU_MP_MMAKE_FIND_GAME:
     {
-#if !defined(__EMSCRIPTEN__)
       const auto matchmaker = networkState().matchmaker;
 
       matchmaker->Reset();
@@ -891,7 +877,6 @@ Menu::GoBack()
 
       ChangeRoom(ROOMS::MENU_MP);
       setMessage(MESSAGE_TYPE::NONE);
-#endif
 
       break;
     }
