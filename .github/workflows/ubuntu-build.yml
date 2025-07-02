@@ -26,12 +26,12 @@ jobs:
 
         config:
         - {
-            os: ubuntu-20.04,
+            os: ubuntu-22.04,
             cc: "gcc",
             cxx: "g++"
           }
         - {
-            os: ubuntu-20.04,
+            os: ubuntu-22.04,
             cc: "clang",
             cxx: "clang++"
           }
