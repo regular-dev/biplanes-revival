@@ -117,6 +117,29 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   )
 endif()
 
+if (${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(${TARGET} PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+    )
+  endif()
+else()
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(${TARGET} PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  else()
+    target_link_libraries(${TARGET} PUBLIC
+      -static
+      -static-libgcc
+      -static-libstdc++
+    )
+  endif()
+endif()
 
 add_subdirectory(deps/TimeUtils)
 
@@ -147,14 +170,6 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 
-if (NOT ${BUILD_SHARED_LIBS})
-  target_link_libraries(${TARGET} PUBLIC
-    -static
-    -static-libgcc
-    -static-libstdc++
-  )
-endif()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   target_compile_options(${TARGET} PUBLIC
     --use-port=sdl2
@@ -184,8 +199,6 @@ target_link_libraries(${TARGET} PUBLIC
 if (WIN32)
   target_link_libraries(${TARGET} PUBLIC
     ws2_32
-    -static-libgcc
-    -static-libstdc++
   )
 
   if (${${TARGET}_DISABLE_CONSOLE})
