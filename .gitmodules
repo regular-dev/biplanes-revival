@@ -1,4 +1,4 @@
 [submodule "deps/TimeUtils"]
 	path = deps/TimeUtils
 	url = https://github.com/casqade/TimeUtils
-	branch = v1.0.0
+	branch = v1.0.1
