@@ -216,7 +216,7 @@ Menu::UpdateTyping()
       if ( mInputIp.length() < maxInputFieldTextLength )
       {
         for ( const auto& digit : windowEvent.text.text )
-          if ( std::isdigit(digit) == true || digit == '.' )
+          if ( std::isdigit(digit) || digit == '.' )
             mInputIp += digit;
           else
             break;
@@ -253,7 +253,7 @@ Menu::UpdateTyping()
       if ( inputPort.length() < 5 )
       {
         for ( const auto& digit : windowEvent.text.text )
-          if ( std::isdigit(digit) == true )
+          if ( std::isdigit(digit) )
             inputPort += digit;
           else
             break;
