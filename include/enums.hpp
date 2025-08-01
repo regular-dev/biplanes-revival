@@ -128,6 +128,7 @@ namespace DIFFICULTY
     MEDIUM,
     HARD,
     DEVELOPER,
+    INSANE
   };
 }
 

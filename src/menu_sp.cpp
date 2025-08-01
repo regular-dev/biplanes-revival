@@ -76,6 +76,12 @@ Menu::screen_sp()
       aiDifficulty = "Developer";
       break;
     }
+
+    case DIFFICULTY::INSANE:
+    {
+      aiDifficulty = "Insane 0_o";
+      break;
+    }
   }
 
 

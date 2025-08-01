@@ -117,7 +117,7 @@ Menu::Select()
         {
           auto& difficulty = gameState().botDifficulty;
 
-          if ( difficulty < DIFFICULTY::DEVELOPER )
+          if ( difficulty < DIFFICULTY::INSANE )
             difficulty = static_cast <DIFFICULTY> (static_cast <uint8_t> (difficulty) + 1);
           else
             difficulty = DIFFICULTY::EASY;
