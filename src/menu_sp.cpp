@@ -24,6 +24,7 @@
 #include <include/constants.hpp>
 #include <include/game_state.hpp>
 #include <include/textures.hpp>
+#include <include/utility.hpp>
 
 
 void
@@ -92,6 +93,10 @@ Menu::screen_sp()
   draw_text( "AI difficulty: ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( aiDifficulty,      0.500f, 0.2855f + 0.0721f + button::sizeY * 2.f );
   draw_text( "Back           ", 0.040f, 0.2855f + 0.0721f + button::sizeY * 3.f );
+
+  if ( gameState().botDifficulty == DIFFICULTY::INSANE && !isInsaneUnlocked() &&
+       gameState().gameMode != GAME_MODE::BOT_VS_BOT)
+    draw_text( "First, beat up Developer!", 0.025f, 0.65f );
 }
 
 void
