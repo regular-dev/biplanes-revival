@@ -96,23 +96,22 @@ Bullet::Update()
 
   const auto& game = gameState();
 
-  if (  game.gameMode == GAME_MODE::HUMAN_VS_HUMAN &&
-        planes.at(mFiredBy).isLocal() == true )
-    return;
-
-
   Plane* planeShooter = &planes.at(PLANE_TYPE::BLUE);
   Plane* planeTarget = &planes.at(PLANE_TYPE::RED);
 
   if ( mFiredBy == PLANE_TYPE::RED )
     std::swap(planeShooter, planeTarget);
 
+  const bool shouldProcessDamage = !(game.gameMode == GAME_MODE::HUMAN_VS_HUMAN && 
+                                     planes.at(mFiredBy).isLocal() == true);
 
 //  HIT PLANE
   if ( planeTarget->isHit(mX, mY) == true )
   {
     Destroy();
-    planeTarget->Hit(*planeShooter);
+
+    if ( shouldProcessDamage )
+      planeTarget->Hit(*planeShooter);
 
     return;
   }
@@ -121,9 +120,13 @@ Bullet::Update()
   if ( planeTarget->pilot.ChuteIsHit(mX, mY) == true )
   {
     Destroy();
-    planeTarget->pilot.ChuteHit(*planeShooter);
 
-    eventPush(EVENTS::HIT_CHUTE);
+    if ( shouldProcessDamage )
+    {
+      planeTarget->pilot.ChuteHit(*planeShooter);
+      eventPush(EVENTS::HIT_CHUTE);
+    }
+
     return;
   }
 
@@ -131,9 +134,13 @@ Bullet::Update()
   if ( planeTarget->pilot.isHit(mX, mY) == true )
   {
     Destroy();
-    planeTarget->pilot.Kill(*planeShooter);
 
-    eventPush(EVENTS::HIT_PILOT);
+    if ( shouldProcessDamage )
+    {
+      planeTarget->pilot.Kill(*planeShooter);
+      eventPush(EVENTS::HIT_PILOT);
+    }
+
     return;
   }
 }
