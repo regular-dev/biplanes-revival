@@ -222,15 +222,20 @@ Menu::screen_stats_total_page2()
   sprintf( textbuf, "Survivability: %.2f%%", stats.survivability );
   draw_text( textbuf, 0, 0.600f );
 
-
   sprintf( textbuf, "  %d wins", stats.wins );
-  draw_text( textbuf, 0.025f, 0.750f );
+  draw_text( textbuf, 0.025f, 0.700f );
 
   sprintf( textbuf, "  %d losses", stats.losses );
-  draw_text( textbuf, 0.025f, 0.800f );
+  draw_text( textbuf, 0.025f, 0.750f );
 
   sprintf( textbuf, "Win-Lose ratio: %.2f%%", winLose );
-  draw_text( textbuf, 0, 0.850f );
+  draw_text( textbuf, 0, 0.800f );
+
+  sprintf( textbuf, "  %d Developer victories", stats.wins_vs_developer );
+  draw_text( textbuf, 0.025f, 0.850f );
+
+  sprintf( textbuf, "  %d Insane victories", stats.wins_vs_insane );
+  draw_text( textbuf, 0.025f, 0.900f );
 }
 
 
