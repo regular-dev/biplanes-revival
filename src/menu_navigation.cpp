@@ -97,6 +97,11 @@ Menu::Select()
       {
         case MENU_SP::SETUP_GAME:
         {
+          // Block setup if INSANE is selected but not unlocked
+          if ( gameState().botDifficulty == DIFFICULTY::INSANE && !isInsaneUnlocked() &&
+               gameState().gameMode != GAME_MODE::BOT_VS_BOT )
+            break;
+          
           ChangeRoom(ROOMS::MENU_SP_SETUP);
           break;
         }
@@ -117,7 +122,7 @@ Menu::Select()
         {
           auto& difficulty = gameState().botDifficulty;
 
-          if ( difficulty < DIFFICULTY::DEVELOPER )
+          if ( difficulty < DIFFICULTY::INSANE )
             difficulty = static_cast <DIFFICULTY> (static_cast <uint8_t> (difficulty) + 1);
           else
             difficulty = DIFFICULTY::EASY;
