@@ -40,5 +40,8 @@ obj/
 *.ini
 *.log
 *.logs
+Makefile
+CMakeFiles/
+CMakeCache.txt
 CMakeLists.txt.user
 
