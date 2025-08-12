@@ -16,7 +16,7 @@
 ---
 
 An old cellphone arcade "BlueTooth BiPlanes"
-recreated for PC
+recreated for PC [and PS Vita](https://github.com/DvaMishkiLapa/biplanes-revival-vita?tab=readme-ov-file#download-the-game)
 (originally developed by Morpheme Ltd. in 2004)
 
 # [PLAY IN BROWSER](https://itch.io/embed-upload/13252895?color=009AEF)
@@ -99,6 +99,9 @@ Big thanks to [punchingdig](https://www.youtube.com/user/punchingdig)
 for his artistic help (upscaling the splash screen,
 making custom soundpacks & cozy Christmas theme, redrawing some of the sprites & frames, etc.).
 Not to mention countless hours of patient playtesting...
+
+Huge thanks to [DvaMishkiLapa](https://github.com/DvaMishkiLapa) 
+for bringing the game to PS Vita!
 
 
 ## Building:
