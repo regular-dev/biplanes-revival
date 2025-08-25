@@ -41,6 +41,8 @@ struct Statistics
 
   uint32_t wins {};
   uint32_t losses {};
+  uint32_t wins_vs_developer {};
+  uint32_t wins_vs_insane {};
 
 
 //  These are calculated

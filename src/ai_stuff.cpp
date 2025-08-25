@@ -606,6 +606,16 @@ AiStatePlane::AiStatePlane(
     case DIFFICULTY::DEVELOPER:
       break;
 
+    case DIFFICULTY::INSANE:
+    {
+      throttleWeight = ReactionTimeToWeights(0.05f, 0.05f);
+      pitchWeight = ReactionTimeToWeights(0.05f, 0.05f);
+      shootWeight = ReactionTimeToWeights(0.02f, 0.02f);
+      jumpWeight = ReactionTimeToWeights(0.02f, 0.02f);
+
+      break;
+    }
+
     default:
       assert(false);
   }
@@ -1168,6 +1178,7 @@ AiStatePlane::update(
         }
 
         case DIFFICULTY::DEVELOPER:
+        case DIFFICULTY::INSANE:
         {
           if ( facesBarn == true || facesGround == true )
             actions.push_back(AiAction::Jump);
@@ -1178,7 +1189,8 @@ AiStatePlane::update(
     }
 
 //    Eject during combat
-    else if ( selfHp == 0.f && botDifficulty > DIFFICULTY::EASY )
+    else if ( selfHp == 0.f && botDifficulty > DIFFICULTY::EASY &&
+              botDifficulty != DIFFICULTY::INSANE )
     {
       bool allowJump =
         gameState().features.oneShotKills == false;
@@ -1377,6 +1389,9 @@ AiStatePilot::AiStatePilot(
     }
 
     case DIFFICULTY::DEVELOPER:
+      break;
+
+    case DIFFICULTY::INSANE:
       break;
 
     default:

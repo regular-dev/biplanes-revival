@@ -915,6 +915,20 @@ Plane::ScoreChange(
   mStats.wins++;
   opponentPlane.mStats.losses++;
 
+  // Track victory against DEVELOPER bot for INSANE unlock
+  if ( game.gameMode == GAME_MODE::HUMAN_VS_BOT &&
+       mIsBot == false &&
+       opponentPlane.isBot() == true &&
+       game.botDifficulty == DIFFICULTY::DEVELOPER )
+    mStats.wins_vs_developer++;
+
+  // Track victories against INSANE bot
+  if ( game.gameMode == GAME_MODE::HUMAN_VS_BOT &&
+       mIsBot == false &&
+       opponentPlane.isBot() == true &&
+       game.botDifficulty == DIFFICULTY::INSANE )
+    mStats.wins_vs_insane++;
+
   game.isRoundFinished = true;
 
   updateRecentStats();

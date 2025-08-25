@@ -529,6 +529,8 @@ stats_write()
   jsonStats["Rescues"]      = picojson::value( (double) stats.rescues );
   jsonStats["Shots"]        = picojson::value( (double) stats.shots );
   jsonStats["Wins"]         = picojson::value( (double) stats.wins );
+  jsonStats["WinsVsDeveloper"] = picojson::value( (double) stats.wins_vs_developer );
+  jsonStats["WinsVsInsane"] = picojson::value( (double) stats.wins_vs_insane );
 
 
   std::string jsonOutput = picojson::value( jsonStats ).serialize( true );
@@ -611,12 +613,25 @@ statsRead()
 
     try { stats.wins = jsonStats.at( "Wins" ).get <double> (); }
     catch ( const std::exception& ) {};
+
+    try { stats.wins_vs_developer = jsonStats.at( "WinsVsDeveloper" ).get <double> (); }
+    catch ( const std::exception& ) {};
+
+    try { stats.wins_vs_insane = jsonStats.at( "WinsVsInsane" ).get <double> (); }
+    catch ( const std::exception& ) {};
   }
   catch ( const std::exception& ) {};
 
   calcDerivedStats(stats);
 
   return true;
+}
+
+bool
+isInsaneUnlocked()
+{
+  const auto& stats = gameState().stats.total;
+  return stats.wins_vs_developer > 0;
 }
 
 
